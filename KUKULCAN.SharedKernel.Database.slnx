@@ -1,0 +1,58 @@
+<Solution>
+  <!--
+    KUKULCAN.SharedKernel.Database
+    Database infrastructure library for Kukulcán Software Designer applications.
+
+    Provee:
+      - KukulkanDbContextBase		→ base for all module DbContexts
+      - AddKukulcanDbContext<T>()	→ DI extension that logs DbContext + IUnitOfWork + SlowQueryInterceptor
+      - UnitOfWork<TContext>		→ IUnitOfWork implementation
+      - 5 interceptores EF Core		→ AuditSaveChanges, SoftDelete, DomainEventDispatch,
+										ImmutableEntity, SlowQuery
+      - ModelBuilderExtensions		→ ApplySoftDeleteFilter, ApplyTenantFilter
+      - KukulkanDatabaseOptions		→ multi-vendor configuration
+      - DatabaseProvider			→ enum: SqlServer, PostgreSql
+
+    Format: .slnx (XML, .NET 9+ / Visual Studio 2022 17.12+)
+
+    Solution dependency tree:
+      KUKULKAN.Kernel.Abstractions
+              ↑
+      KUKULKAN.Kernel.Domain
+              ↑
+      KUKULKAN.Kernel.Database     ← main project of this solution
+  -->
+  <Folder Name="/Solution Items/">
+    <File Path=".editorconfig" />
+    <File Path=".gitignore" />
+    <File Path="CHANGELOG.md" />
+    <File Path="CODE_OF_CONDUCT.md" />
+    <File Path="CONTRIBUTING.md" />
+    <File Path="Directory.Build.props" />
+    <File Path="global.json" />
+    <File Path="GOVERNANCE.md" />
+    <File Path="LICENSE" />
+    <File Path="MIGRATION.SharedKernel.md" />
+    <File Path="README.md" />
+    <File Path="RELEASE_NOTES.md" />
+    <File Path="ROADMAP.md" />
+    <File Path="SECURITY.md" />
+    <File Path="SUPPORT.md" />
+  </Folder>
+  
+  <Folder Name="/Solution Items/.github/" />
+  <Folder Name="/Solution Items/.github/workflows/">
+    <File Path=".github/workflows/delete-merged-branches.yml" />
+  </Folder>
+
+  <Folder Name="/Source/">
+    <Project Path="Source/KUKULCAN.SharedKernel.Database/KUKULCAN.SharedKernel.Database.csproj" />
+  </Folder>
+  
+  <Folder Name="/Source Client/">
+    <Project Path="SourceClient/KUKULCAN.SharedKernel.Database.Client.csproj" />
+  </Folder>
+
+  <Folder Name="/Tests/" />
+
+</Solution>

@@ -1,0 +1,25 @@
+name: Delete merged branches (except main/develop)
+
+on:
+  pull_request:
+    types: [closed]
+
+jobs:
+  delete-branch:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Determine branch name
+        id: vars
+        run: echo "branch=${GITHUB_HEAD_REF}" >> $GITHUB_OUTPUT
+
+      - name: Delete branch if allowed
+        if: |
+          steps.vars.outputs.branch != 'main' &&
+          steps.vars.outputs.branch != 'develop'
+        run: |
+          echo "Deleting branch: ${GITHUB_HEAD_REF}"
+          git config --global user.email "actions@github.com"
+          git config --global user.name "GitHub Actions"
+          git push origin --delete "${GITHUB_HEAD_REF}"

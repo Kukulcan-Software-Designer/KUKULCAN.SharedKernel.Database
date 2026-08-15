@@ -1,0 +1,34 @@
+<Project>
+    <PropertyGroup Condition="'$(Configuration)' == 'Release'">
+        <GeneratePackageOnBuild Condition="'$(Configuration)'=='Release'">true</GeneratePackageOnBuild>
+        <SolutionDir>$(MSBuildThisFileDirectory)</SolutionDir>
+        <PackageId>$(AssemblyName)</PackageId>
+        <Version>$(VersionPrefix)</Version>
+        <Authors>Kukulcán Software Designer</Authors>
+        <Company>Kukulcán Software Designer</Company>
+        <Copyright>GPL 2026 Kukulcán Software Designer</Copyright>
+        <PackageProjectUrl>https://www.kukulcan.org.mx/Software/SharedKernel/Database</PackageProjectUrl>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
+        <PackageOutputPath>$(SolutionDir)NuGet\</PackageOutputPath>
+        <PackageTags>kukulcan;sharedkernel;efcore;infrastructure</PackageTags>
+        <PackageLicenseFile>LICENSE</PackageLicenseFile>
+        <PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
+        <PackageReleaseNotes>
+            This revision corrects the following:
+
+            - Spelling errors related to the URL where the class library is located.
+            - Spelling errors in the organization name.
+            - The reference to KUKULCAN.SharedKernel has been updated to the latest version.
+        </PackageReleaseNotes>
+        <RepositoryUrl>https://github.com/Kukulcan-Software-Designer/KUKULCAN.SharedKernel.Database</RepositoryUrl>
+        <RepositoryType>git</RepositoryType>
+        <Description>KUKULCAN.SharedKernel.Database is a foundational library designed to provide shared database abstractions and infrastructure components across the entire "Kukulcán Software Designer" application ecosystem.
+This project acts as part of the SharedKernel, enabling consistency, reuse, and standardization of database-related concerns across multiple modules and bounded contexts.
+        </Description>
+    </PropertyGroup>
+
+	<ItemGroup Condition="'$(Configuration)' == 'Release'">
+		<None Include="$(SolutionDir)LICENSE" Pack="true" PackagePath="\" />
+		<None Include="$(SolutionDir)README.md" Pack="true" PackagePath="\" />
+	</ItemGroup>
+</Project>

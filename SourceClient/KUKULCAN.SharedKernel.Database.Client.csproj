@@ -1,0 +1,56 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <LangVersion>latestmajor</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>KUKULCAN.SharedKernel.Database.Client</RootNamespace>
+    <AssemblyName>KUKULCAN.SharedKernel.Database.Client</AssemblyName>
+  </PropertyGroup>
+
+  <!--
+    ── Ruta asumida ──────────────────────────────────────────────────────────────
+    La solución tiene esta estructura:
+      KUKULCAN.SharedKernel.Database/
+        Source/
+          KUKULCAN.SharedKernel.Database/          ← librería
+        Sourcxe Client/
+          KUKULCAN.SharedKernel.Database.Client/     ← este proyecto
+    ─────────────────────────────────────────────────────────────────────────────
+  -->
+  <ItemGroup>
+    <ProjectReference Include="..\Source\KUKULCAN.SharedKernel.Database\KUKULCAN.SharedKernel.Database.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- ── Acceso a las funciones del Nucleo KUKULCAN ────────────── -->
+
+    <!-- ── Proveedores de BD (los 3 requeridos) ────────────────────────────── -->
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="10.*" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.*" />
+
+    <!-- ── EF Core Tools (migraciones) ────────────────────────────────────── -->
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="10.*" />
+
+    <!-- ── Configuración ───────────────────────────────────────────────────── -->
+    <PackageReference Include="Microsoft.Extensions.Configuration" Version="10.*" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="10.*" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="10.*" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="10.*" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.*" />
+    <PackageReference Include="Microsoft.Extensions.Logging" Version="10.*" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="10.*" />
+
+    <!-- ── UI de consola ───────────────────────────────────────────────────── -->
+    <PackageReference Include="Spectre.Console" Version="0.57.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="appsettings.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+</Project>
