@@ -4,23 +4,23 @@
     Database infrastructure library for Kukulcán Software Designer applications.
 
     Provee:
-      - KukulkanDbContextBase		→ base for all module DbContexts
+      - KukulcanDbContextBase		→ base for all module DbContexts
       - AddKukulcanDbContext<T>()	→ DI extension that logs DbContext + IUnitOfWork + SlowQueryInterceptor
       - UnitOfWork<TContext>		→ IUnitOfWork implementation
       - 5 interceptores EF Core		→ AuditSaveChanges, SoftDelete, DomainEventDispatch,
 										ImmutableEntity, SlowQuery
       - ModelBuilderExtensions		→ ApplySoftDeleteFilter, ApplyTenantFilter
-      - KukulkanDatabaseOptions		→ multi-vendor configuration
+      - KukulcanDatabaseOptions		→ multi-vendor configuration
       - DatabaseProvider			→ enum: SqlServer, PostgreSql
 
     Format: .slnx (XML, .NET 9+ / Visual Studio 2022 17.12+)
 
     Solution dependency tree:
-      KUKULKAN.Kernel.Abstractions
+      KUKULCAN.Kernel.Abstractions
               ↑
-      KUKULKAN.Kernel.Domain
+      KUKULCAN.Kernel.Domain
               ↑
-      KUKULKAN.Kernel.Database     ← main project of this solution
+      KUKULCAN.Kernel.Database     ← main project of this solution
   -->
   <Folder Name="/Solution Items/">
     <File Path=".editorconfig" />
@@ -39,7 +39,7 @@
     <File Path="SECURITY.md" />
     <File Path="SUPPORT.md" />
   </Folder>
-  
+
   <Folder Name="/Solution Items/.github/" />
   <Folder Name="/Solution Items/.github/workflows/">
     <File Path=".github/workflows/delete-merged-branches.yml" />
@@ -48,11 +48,13 @@
   <Folder Name="/Source/">
     <Project Path="Source/KUKULCAN.SharedKernel.Database/KUKULCAN.SharedKernel.Database.csproj" />
   </Folder>
-  
+
   <Folder Name="/Source Client/">
-    <Project Path="SourceClient/KUKULCAN.SharedKernel.Database.Client.csproj" />
+    <Project Path="SourceClient/KUKULCAN.SharedKernel.Database.SourceClient/KUKULCAN.SharedKernel.Database.Client.csproj" />
   </Folder>
 
-  <Folder Name="/Tests/" />
+  <Folder Name="/Tests/">
+    <Project Path="Tests/KUKULCAN.SharedKernel.Database.Tests/KUKULCAN.SharedKernel.Database.Tests.csproj" />
+  </Folder>
 
 </Solution>

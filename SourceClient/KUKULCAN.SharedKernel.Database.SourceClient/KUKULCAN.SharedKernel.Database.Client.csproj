@@ -20,9 +20,6 @@
           KUKULCAN.SharedKernel.Database.Client/     ← este proyecto
     ─────────────────────────────────────────────────────────────────────────────
   -->
-  <ItemGroup>
-    <ProjectReference Include="..\Source\KUKULCAN.SharedKernel.Database\KUKULCAN.SharedKernel.Database.csproj" />
-  </ItemGroup>
 
   <ItemGroup>
     <!-- ── Acceso a las funciones del Nucleo KUKULCAN ────────────── -->
@@ -51,6 +48,10 @@
     <None Update="appsettings.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\Source\KUKULCAN.SharedKernel.Database\KUKULCAN.SharedKernel.Database.csproj" />
   </ItemGroup>
 
 </Project>
