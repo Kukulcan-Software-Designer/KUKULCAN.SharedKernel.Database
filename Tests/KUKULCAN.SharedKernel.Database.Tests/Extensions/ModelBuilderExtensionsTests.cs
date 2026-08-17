@@ -1,6 +1,5 @@
-using System.Linq.Expressions;
-using KUKULCAN.SharedKernel.Database.Tests.TestInfrastructure;
 using KUKULCAN.SharedKernel.Database.Tests.TestInfrastructure.internals;
+using Microsoft.EntityFrameworkCore.Metadata;
 
 namespace KUKULCAN.SharedKernel.Database.Tests.Extensions;
 
@@ -12,15 +11,17 @@ public sealed class ModelBuilderExtensionsTests
     {
         Assert.That(
             () => ModelBuilderExtensions.ApplySoftDeleteFilter(null!),
-            Throws.ArgumentNullException);
+            Throws.TypeOf<ArgumentNullException>());
     }
 
     [Test]
     public void ApplyTenantFilter_WithNullModelBuilder_ShouldThrow()
     {
         Assert.That(
-            () => ModelBuilderExtensions.ApplyTenantFilter(null!, new TestTenantContext(Guid.NewGuid())),
-            Throws.ArgumentNullException);
+            () => ModelBuilderExtensions.ApplyTenantFilter(
+                null!,
+                new TestTenantContext(Guid.NewGuid())),
+            Throws.TypeOf<ArgumentNullException>());
     }
 
     [Test]
@@ -30,7 +31,7 @@ public sealed class ModelBuilderExtensionsTests
 
         Assert.That(
             () => builder.ApplyTenantFilter(null!),
-            Throws.ArgumentNullException);
+            Throws.TypeOf<ArgumentNullException>());
     }
 
     [Test]
@@ -42,14 +43,20 @@ public sealed class ModelBuilderExtensionsTests
 
         ModelBuilder returned = builder.ApplySoftDeleteFilter();
 
+        IReadOnlyCollection<IQueryFilter> softDeleteFilters = builder.Model
+            .FindEntityType(typeof(SoftDeleteEntityForTests))!
+            .GetDeclaredQueryFilters();
+
+        IReadOnlyCollection<IQueryFilter> normalFilters = builder.Model
+            .FindEntityType(typeof(ImmutableEntityForTests))!
+            .GetDeclaredQueryFilters();
+
         Assert.That(returned, Is.SameAs(builder));
-        LambdaExpression? softFilter = builder.Model.FindEntityType(typeof(SoftDeleteEntityForTests))!.GetQueryFilter();
-        LambdaExpression? normalFilter = builder.Model.FindEntityType(typeof(ImmutableEntityForTests))!.GetQueryFilter();
 
         using (Assert.EnterMultipleScope())
         {
-            Assert.That(softFilter, Is.Not.Null);
-            Assert.That(normalFilter, Is.Null);
+            Assert.That(softDeleteFilters, Is.Not.Empty);
+            Assert.That(normalFilters, Is.Empty);
         }
     }
 
@@ -58,20 +65,26 @@ public sealed class ModelBuilderExtensionsTests
     {
         var tenantId = Guid.NewGuid();
         var builder = new ModelBuilder();
+
         builder.Entity<TenantEntityForTests>();
         builder.Entity<SoftDeleteEntityForTests>();
 
-        ModelBuilder returned = builder.ApplyTenantFilter(new TestTenantContext(tenantId));
+        ModelBuilder returned =
+            builder.ApplyTenantFilter(new TestTenantContext(tenantId));
+
+        IReadOnlyCollection<IQueryFilter> tenantFilters = builder.Model
+            .FindEntityType(typeof(TenantEntityForTests))!
+            .GetDeclaredQueryFilters();
+
+        IReadOnlyCollection<IQueryFilter> softDeleteFilters = builder.Model
+            .FindEntityType(typeof(SoftDeleteEntityForTests))!
+            .GetDeclaredQueryFilters();
 
         using (Assert.EnterMultipleScope())
         {
             Assert.That(returned, Is.SameAs(builder));
-            Assert.That(
-                builder.Model.FindEntityType(typeof(TenantEntityForTests))!.GetQueryFilter(),
-                Is.Not.Null);
-            Assert.That(
-                builder.Model.FindEntityType(typeof(SoftDeleteEntityForTests))!.GetQueryFilter(),
-                Is.Null);
+            Assert.That(tenantFilters, Is.Not.Empty);
+            Assert.That(softDeleteFilters, Is.Empty);
         }
     }
 }

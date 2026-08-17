@@ -11,7 +11,7 @@ public sealed class UnitOfWorkTests
     {
         Assert.That(
             () => new UnitOfWork<TestDbContext>(null!),
-            Throws.ArgumentNullException);
+            Throws.TypeOf<ArgumentNullException>());
     }
 
     [Test]

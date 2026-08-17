@@ -41,7 +41,7 @@ public sealed class SlowQueryInterceptorTests
             logger,
             Options.Create(new KukulcanDatabaseOptions { EnableSensitiveDataLogging = false }));
 
-        SlowQueryInterceptor.SlowQueryThresholdMs = 0;
+        SlowQueryInterceptor.SlowQueryThresholdMs = -1;
 
         await using var context = new SqliteTestContext(interceptor);
         await context.Database.OpenConnectionAsync();
@@ -64,7 +64,7 @@ public sealed class SlowQueryInterceptorTests
             logger,
             Options.Create(new KukulcanDatabaseOptions { EnableSensitiveDataLogging = true }));
 
-        SlowQueryInterceptor.SlowQueryThresholdMs = 0;
+        SlowQueryInterceptor.SlowQueryThresholdMs = -1;
 
         await using var context = new SqliteTestContext(interceptor);
         await context.Database.OpenConnectionAsync();
@@ -88,7 +88,7 @@ public sealed class SlowQueryInterceptorTests
             logger,
             Options.Create(new KukulcanDatabaseOptions { EnableSensitiveDataLogging = true }));
 
-        SlowQueryInterceptor.SlowQueryThresholdMs = 0;
+        SlowQueryInterceptor.SlowQueryThresholdMs = -1;
 
         using var context = new SqliteTestContext(interceptor);
         context.Database.OpenConnection();

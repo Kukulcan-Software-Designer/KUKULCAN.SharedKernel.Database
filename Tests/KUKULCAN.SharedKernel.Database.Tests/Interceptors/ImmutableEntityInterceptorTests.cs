@@ -43,7 +43,7 @@ public sealed class ImmutableEntityInterceptorTests
         context.Remove(entity);
 
         Assert.That(
-            context.SaveChanges,
+            () => context.SaveChanges(),
             Throws.TypeOf<InvalidOperationException>()
                 .With.Message.Contains("immutable"));
     }
