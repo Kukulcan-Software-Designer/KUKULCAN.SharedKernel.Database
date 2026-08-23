@@ -9,17 +9,21 @@ public sealed class RemainingExecutableCoverageTests
     [Test]
     public void TenantModelCacheKeyFactory_WithNonKukulcanContext_ShouldUseNullTenant()
     {
-        var factory = new TenantModelCacheKeyFactory();
+        Type factoryType = typeof(KukulcanDbContextBase).Assembly
+            .GetType("KUKULCAN.SharedKernel.Database.Infrastructure.TenantModelCacheKeyFactory", throwOnError: true)!;
+
+        object factory = Activator.CreateInstance(factoryType)!;
         using var context = new PlainDbContext();
 
-        (Type ContextType, Guid? TenantId, bool DesignTime) key =
-            ((Type, Guid?, bool))factory.Create(context, designTime: false);
+        MethodInfo createMethod = factoryType.GetMethod("Create")!;
+        object keyObject = createMethod.Invoke(factory, [context, false])!;
+        Type keyType = keyObject.GetType();
 
         using (Assert.EnterMultipleScope())
         {
-            Assert.That(key.ContextType, Is.EqualTo(typeof(PlainDbContext)));
-            Assert.That(key.TenantId, Is.Null);
-            Assert.That(key.DesignTime, Is.False);
+            Assert.That(keyType.GetProperty("ContextType")!.GetValue(keyObject), Is.EqualTo(typeof(PlainDbContext)));
+            Assert.That(keyType.GetProperty("TenantId")!.GetValue(keyObject), Is.Null);
+            Assert.That(keyType.GetProperty("DesignTime")!.GetValue(keyObject), Is.False);
         }
     }
 
