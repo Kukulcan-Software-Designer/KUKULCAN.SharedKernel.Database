@@ -220,7 +220,8 @@ public sealed class KukulcanDbContextBaseTests
         var options = Options.Create(new KukulcanDatabaseOptions
         {
             Provider = DatabaseProvider.SqlServer,
-            ConnectionString = null!,
+            ConnectionString = "Server=localhost;Database=KukulcanCoverage;Integrated Security=true;TrustServerCertificate=true",
+            CommandTimeoutSeconds = -1,
             Retry = new KukulcanDatabaseOptions.RetryOptions { Enabled = false }
         });
 
@@ -247,7 +248,8 @@ public sealed class KukulcanDbContextBaseTests
         var options = Options.Create(new KukulcanDatabaseOptions
         {
             Provider = DatabaseProvider.PostgresSql,
-            ConnectionString = null!,
+            ConnectionString = "Host=localhost;Database=KukulcanCoverage;Username=test;Password=test",
+            CommandTimeoutSeconds = -1,
             Retry = new KukulcanDatabaseOptions.RetryOptions { Enabled = false }
         });
 
@@ -328,26 +330,3 @@ public sealed class KukulcanDbContextBaseTests
         IDomainEventDispatcher dispatcher)
         : KukulcanDbContextBase(options, tenantContext, clock, dispatcher)
     {
-    }
-
-    private sealed class CombinedFilterTestDbContext(
-        IOptions<KukulcanDatabaseOptions> options,
-        ITenantContext tenantContext,
-        IClock clock,
-        IDomainEventDispatcher dispatcher)
-        : KukulcanDbContextBase(options, tenantContext, clock, dispatcher)
-    {
-        public DbSet<CombinedFilterEntity> Entities => Set<CombinedFilterEntity>();
-
-        protected override void ConfigureProvider(DbContextOptionsBuilder optionsBuilder)
-            => optionsBuilder.UseInMemoryDatabase(Guid.NewGuid().ToString());
-    }
-
-    private sealed class CombinedFilterEntity : ISoftDelete
-    {
-        public int Id { get; set; }
-        public Guid TenantId { get; set; }
-        public bool IsDeleted { get; set; }
-        public DateTimeOffset? DeletedOn { get; set; }
-    }
-}
