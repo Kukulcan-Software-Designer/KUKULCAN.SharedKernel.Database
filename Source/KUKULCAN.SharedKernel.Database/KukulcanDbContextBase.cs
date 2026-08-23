@@ -85,7 +85,7 @@ public abstract class KukulcanDbContextBase(IOptions<KukulcanDatabaseOptions>? o
 
         if (optionsBuilder.IsConfigured) return;
 
-        // Register all five interceptors
+        // Register all four interceptors owned directly by this base class.
         optionsBuilder.AddInterceptors(
             new AuditSaveChangesInterceptor(_clock),
             new SoftDeleteInterceptor(_clock),
@@ -140,18 +140,14 @@ public abstract class KukulcanDbContextBase(IOptions<KukulcanDatabaseOptions>? o
                 "Microsoft.EntityFrameworkCore.SqlServerDbContextOptionsExtensions, " +
                 "Microsoft.EntityFrameworkCore.SqlServer") ?? throw NotInstalled("Microsoft.EntityFrameworkCore.SqlServer");
 
-            type.GetMethod("UseSqlServer",
-                    [typeof(DbContextOptionsBuilder), typeof(string), typeof(Action<object>)])
-                ?.Invoke(null, [optionsBuilder, connectionString,
-                    (Action<object>)(o =>
-                    {
-                        Type t = o.GetType();
-                        t.GetMethod(_commandTimeoutMethodName)?.Invoke(o, [timeoutSec]);
-                        if (maxRetry > 0)
-                            t.GetMethod("EnableRetryOnFailure",
-                                    [typeof(int), typeof(TimeSpan), typeof(IEnumerable<int>)])
-                                ?.Invoke(o, [maxRetry, maxDelay, null]);
-                    })]);
+            InvokeProviderUseMethod(
+                type,
+                "UseSqlServer",
+                optionsBuilder,
+                connectionString,
+                timeoutSec,
+                maxRetry,
+                maxDelay);
         }
         catch (Exception ex) when (ex is not NotSupportedException)
         {
@@ -164,27 +160,91 @@ public abstract class KukulcanDbContextBase(IOptions<KukulcanDatabaseOptions>? o
     {
         try
         {
-            var type = Type.GetType(
+            Type type = Type.GetType(
                 "Microsoft.EntityFrameworkCore.NpgsqlDbContextOptionsBuilderExtensions, " +
-                "Npgsql.EntityFrameworkCore.PostgresSQL") ?? throw NotInstalled("Npgsql.EntityFrameworkCore.PostgresSQL");
+                "Npgsql.EntityFrameworkCore.PostgreSQL") ?? throw NotInstalled("Npgsql.EntityFrameworkCore.PostgreSQL");
 
-            type.GetMethod("UseNpgsql",
-                    [typeof(DbContextOptionsBuilder), typeof(string), typeof(Action<object>)])
-                ?.Invoke(null, [optionsBuilder, connectionString,
-                    (Action<object>)(o =>
-                    {
-                        var t = o.GetType();
-                        t.GetMethod(_commandTimeoutMethodName)?.Invoke(o, [timeoutSec]);
-                        if (maxRetry > 0)
-                            t.GetMethod("EnableRetryOnFailure",
-                                    [typeof(int), typeof(TimeSpan), typeof(IEnumerable<string>)])
-                                ?.Invoke(o, [maxRetry, maxDelay, null]);
-                    })]);
+            InvokeProviderUseMethod(
+                type,
+                "UseNpgsql",
+                optionsBuilder,
+                connectionString,
+                timeoutSec,
+                maxRetry,
+                maxDelay);
         }
         catch (Exception ex) when (ex is not NotSupportedException)
         {
-            throw NotInstalled("Npgsql.EntityFrameworkCore.PostgresSQL", ex);
+            throw NotInstalled("Npgsql.EntityFrameworkCore.PostgreSQL", ex);
         }
+    }
+
+    private static void InvokeProviderUseMethod(
+        Type extensionType,
+        string methodName,
+        DbContextOptionsBuilder optionsBuilder,
+        string connectionString,
+        int timeoutSec,
+        int maxRetry,
+        TimeSpan maxDelay)
+    {
+        MethodInfo? method = extensionType
+            .GetMethods(BindingFlags.Public | BindingFlags.Static)
+            .Where(m => m.Name == methodName && !m.IsGenericMethodDefinition)
+            .FirstOrDefault(m =>
+            {
+                ParameterInfo[] parameters = m.GetParameters();
+                return parameters.Length == 3
+                       && parameters[0].ParameterType == typeof(DbContextOptionsBuilder)
+                       && parameters[1].ParameterType == typeof(string)
+                       && parameters[2].ParameterType.IsGenericType
+                       && parameters[2].ParameterType.GetGenericTypeDefinition() == typeof(Action<>);
+            });
+
+        if (method is null)
+            throw new NotSupportedException(
+                $"Provider '{extensionType.Assembly.GetName().Name}' does not expose a compatible {methodName} method.");
+
+        Type providerOptionsBuilderType = method.GetParameters()[2].ParameterType.GetGenericArguments()[0];
+
+        typeof(KukulcanDbContextBase)
+            .GetMethod(nameof(InvokeProviderUseMethodGeneric), BindingFlags.NonPublic | BindingFlags.Static)!
+            .MakeGenericMethod(providerOptionsBuilderType)
+            .Invoke(null,
+            [method, optionsBuilder, connectionString, timeoutSec, maxRetry, maxDelay]);
+    }
+
+    private static void InvokeProviderUseMethodGeneric<TProviderOptionsBuilder>(
+        MethodInfo method,
+        DbContextOptionsBuilder optionsBuilder,
+        string connectionString,
+        int timeoutSec,
+        int maxRetry,
+        TimeSpan maxDelay)
+    {
+        Action<TProviderOptionsBuilder> configure = providerOptions =>
+        {
+            Type providerOptionsType = providerOptions!.GetType();
+            providerOptionsType
+                .GetMethod(_commandTimeoutMethodName)
+                ?.Invoke(providerOptions, [timeoutSec]);
+
+            if (maxRetry <= 0) return;
+
+            MethodInfo? retryMethod = providerOptionsType
+                .GetMethods(BindingFlags.Public | BindingFlags.Instance)
+                .FirstOrDefault(m =>
+                    m.Name == "EnableRetryOnFailure" &&
+                    m.GetParameters().Length == 3);
+
+            if (retryMethod is null)
+                throw new NotSupportedException(
+                    $"Provider '{providerOptionsType.FullName}' does not expose a compatible EnableRetryOnFailure method.");
+
+            retryMethod.Invoke(providerOptions, [maxRetry, maxDelay, null]);
+        };
+
+        method.Invoke(null, [optionsBuilder, connectionString, configure]);
     }
 
     private static NotSupportedException NotInstalled(string package, Exception? inner = null)

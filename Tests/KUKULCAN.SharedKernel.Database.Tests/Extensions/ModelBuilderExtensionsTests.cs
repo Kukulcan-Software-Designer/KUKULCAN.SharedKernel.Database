@@ -87,4 +87,67 @@ public sealed class ModelBuilderExtensionsTests
             Assert.That(softDeleteFilters, Is.Empty);
         }
     }
+
+    [Test]
+    public void ApplyTenantFilter_ShouldIgnoreEntitiesWithoutTenantId()
+    {
+        var builder = new ModelBuilder();
+        builder.Entity<ImmutableEntityForTests>();
+
+        builder.ApplyTenantFilter(new TestTenantContext(Guid.NewGuid()));
+
+        IReadOnlyCollection<IQueryFilter> filters = builder.Model
+            .FindEntityType(typeof(ImmutableEntityForTests))!
+            .GetDeclaredQueryFilters();
+
+        Assert.That(filters, Is.Empty);
+    }
+
+    [Test]
+    public void ApplyTenantFilter_ShouldIgnoreTenantIdWithWrongType()
+    {
+        var builder = new ModelBuilder();
+        builder.Entity<StringTenantEntity>();
+
+        builder.ApplyTenantFilter(new TestTenantContext(Guid.NewGuid()));
+
+        IReadOnlyCollection<IQueryFilter> filters = builder.Model
+            .FindEntityType(typeof(StringTenantEntity))!
+            .GetDeclaredQueryFilters();
+
+        Assert.That(filters, Is.Empty);
+    }
+
+    [Test]
+    public void ApplyTenantFilter_ShouldIgnoreOwnedEntities()
+    {
+        var builder = new ModelBuilder();
+        builder.Entity<OwnedTenantOwner>();
+        builder.Entity<OwnedTenantOwner>().OwnsOne(x => x.Owned);
+
+        builder.ApplyTenantFilter(new TestTenantContext(Guid.NewGuid()));
+
+        IReadOnlyCollection<IQueryFilter> filters = builder.Model
+            .FindEntityType(typeof(OwnedTenantValue))!
+            .GetDeclaredQueryFilters();
+
+        Assert.That(filters, Is.Empty);
+    }
+
+    private sealed class StringTenantEntity
+    {
+        public int Id { get; set; }
+        public string TenantId { get; set; } = string.Empty;
+    }
+
+    private sealed class OwnedTenantOwner
+    {
+        public int Id { get; set; }
+        public OwnedTenantValue Owned { get; set; } = new();
+    }
+
+    private sealed class OwnedTenantValue
+    {
+        public Guid TenantId { get; set; }
+    }
 }

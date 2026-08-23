@@ -32,70 +32,160 @@ public sealed class SlowQueryInterceptorTests
     [Test]
     public async Task ReaderExecuted_WhenDurationExceedsThreshold_ShouldLogWarning()
     {
-        var messages = new List<string>();
-        using ILoggerFactory factory = LoggerFactory.Create(builder =>
-            builder.AddProvider(new ListLoggerProvider(messages)));
+        List<string> messages = CreateMessages(out ILoggerFactory factory, out ILogger<SlowQueryInterceptor> logger);
+        using (factory)
+        {
+            var interceptor = new SlowQueryInterceptor(
+                logger,
+                Options.Create(new KukulcanDatabaseOptions { EnableSensitiveDataLogging = false }));
 
-        var logger = new Logger<SlowQueryInterceptor>(factory);
-        var interceptor = new SlowQueryInterceptor(
-            logger,
-            Options.Create(new KukulcanDatabaseOptions { EnableSensitiveDataLogging = false }));
+            SlowQueryInterceptor.SlowQueryThresholdMs = -1;
 
-        SlowQueryInterceptor.SlowQueryThresholdMs = -1;
+            await using var context = new SqliteTestContext(interceptor);
+            await context.Database.OpenConnectionAsync();
+            await context.Database.EnsureCreatedAsync();
+            await context.Database.ExecuteSqlRawAsync("SELECT 1");
 
-        await using var context = new SqliteTestContext(interceptor);
-        await context.Database.OpenConnectionAsync();
-        await context.Database.EnsureCreatedAsync();
-        await context.Database.ExecuteSqlRawAsync("SELECT 1");
-
-        Assert.That(messages, Has.Some.Contains("[SlowQuery]"));
-        Assert.That(messages, Has.Some.Contains("[SQL hidden"));
+            Assert.That(messages, Has.Some.Contains("[SlowQuery]"));
+            Assert.That(messages, Has.Some.Contains("[SQL hidden"));
+        }
     }
 
     [Test]
     public async Task ReaderExecuted_WhenSensitiveLoggingEnabled_ShouldIncludeSql()
     {
-        var messages = new List<string>();
-        using ILoggerFactory factory = LoggerFactory.Create(builder =>
-            builder.AddProvider(new ListLoggerProvider(messages)));
+        List<string> messages = CreateMessages(out ILoggerFactory factory, out ILogger<SlowQueryInterceptor> logger);
+        using (factory)
+        {
+            var interceptor = new SlowQueryInterceptor(
+                logger,
+                Options.Create(new KukulcanDatabaseOptions { EnableSensitiveDataLogging = true }));
 
-        var logger = new Logger<SlowQueryInterceptor>(factory);
-        var interceptor = new SlowQueryInterceptor(
-            logger,
-            Options.Create(new KukulcanDatabaseOptions { EnableSensitiveDataLogging = true }));
+            SlowQueryInterceptor.SlowQueryThresholdMs = -1;
 
-        SlowQueryInterceptor.SlowQueryThresholdMs = -1;
+            await using var context = new SqliteTestContext(interceptor);
+            await context.Database.OpenConnectionAsync();
+            await context.Database.EnsureCreatedAsync();
+            await context.Database.ExecuteSqlRawAsync("SELECT 42");
 
-        await using var context = new SqliteTestContext(interceptor);
-        await context.Database.OpenConnectionAsync();
-        await context.Database.EnsureCreatedAsync();
-        await context.Database.ExecuteSqlRawAsync("SELECT 42");
-
-        Assert.That(messages, Has.Some.Contains("SELECT 42"));
+            Assert.That(messages, Has.Some.Contains("SELECT 42"));
+        }
     }
-
-
 
     [Test]
     public void ReaderExecuted_SyncPath_WhenDurationExceedsThreshold_ShouldLogWarning()
     {
+        List<string> messages = CreateMessages(out ILoggerFactory factory, out ILogger<SlowQueryInterceptor> logger);
+        using (factory)
+        {
+            var interceptor = new SlowQueryInterceptor(
+                logger,
+                Options.Create(new KukulcanDatabaseOptions { EnableSensitiveDataLogging = true }));
+
+            SlowQueryInterceptor.SlowQueryThresholdMs = -1;
+
+            using var context = new SqliteTestContext(interceptor);
+            context.Database.OpenConnection();
+            context.Database.EnsureCreated();
+            context.Database.ExecuteSqlRaw("SELECT 99");
+
+            Assert.That(messages, Has.Some.Contains("SELECT 99"));
+        }
+    }
+
+    [Test]
+    public async Task ReaderExecutedAsync_WhenDurationExceedsThreshold_ShouldLogWarning()
+    {
+        List<string> messages = CreateMessages(out ILoggerFactory factory, out ILogger<SlowQueryInterceptor> logger);
+        using (factory)
+        {
+            var interceptor = new SlowQueryInterceptor(
+                logger,
+                Options.Create(new KukulcanDatabaseOptions { EnableSensitiveDataLogging = true }));
+
+            SlowQueryInterceptor.SlowQueryThresholdMs = -1;
+
+            await using var context = new SqliteTestContext(interceptor);
+            await context.Database.OpenConnectionAsync();
+            await context.Database.EnsureCreatedAsync();
+            await context.Database.ExecuteSqlRawAsync("SELECT 123");
+
+            Assert.That(messages, Has.Some.Contains("SELECT 123"));
+        }
+    }
+
+    [Test]
+    public async Task NonQueryExecuted_WhenDurationExceedsThreshold_ShouldLogWarning()
+    {
+        List<string> messages = CreateMessages(out ILoggerFactory factory, out ILogger<SlowQueryInterceptor> logger);
+        using (factory)
+        {
+            var interceptor = new SlowQueryInterceptor(
+                logger,
+                Options.Create(new KukulcanDatabaseOptions { EnableSensitiveDataLogging = true }));
+
+            SlowQueryInterceptor.SlowQueryThresholdMs = -1;
+
+            await using var context = new SqliteTestContext(interceptor);
+            await context.Database.OpenConnectionAsync();
+            await context.Database.EnsureCreatedAsync();
+            await context.Database.ExecuteSqlRawAsync("CREATE TABLE TestSlowQuery (Id INTEGER)");
+
+            Assert.That(messages, Has.Some.Contains("CREATE TABLE TestSlowQuery"));
+        }
+    }
+
+    [Test]
+    public async Task NonQueryExecutedAsync_WhenDurationExceedsThreshold_ShouldLogWarning()
+    {
+        List<string> messages = CreateMessages(out ILoggerFactory factory, out ILogger<SlowQueryInterceptor> logger);
+        using (factory)
+        {
+            var interceptor = new SlowQueryInterceptor(
+                logger,
+                Options.Create(new KukulcanDatabaseOptions { EnableSensitiveDataLogging = true }));
+
+            SlowQueryInterceptor.SlowQueryThresholdMs = -1;
+
+            await using var context = new SqliteTestContext(interceptor);
+            await context.Database.OpenConnectionAsync();
+            await context.Database.EnsureCreatedAsync();
+            await context.Database.ExecuteSqlRawAsync("CREATE TABLE TestSlowQueryAsync (Id INTEGER)");
+
+            Assert.That(messages, Has.Some.Contains("CREATE TABLE TestSlowQueryAsync"));
+        }
+    }
+
+    [Test]
+    public async Task CommandAtOrBelowThreshold_ShouldNotLogSlowQuery()
+    {
+        List<string> messages = CreateMessages(out ILoggerFactory factory, out ILogger<SlowQueryInterceptor> logger);
+        using (factory)
+        {
+            var interceptor = new SlowQueryInterceptor(
+                logger,
+                Options.Create(new KukulcanDatabaseOptions { EnableSensitiveDataLogging = true }));
+
+            SlowQueryInterceptor.SlowQueryThresholdMs = int.MaxValue;
+
+            await using var context = new SqliteTestContext(interceptor);
+            await context.Database.OpenConnectionAsync();
+            await context.Database.EnsureCreatedAsync();
+            await context.Database.ExecuteSqlRawAsync("SELECT 7");
+
+            Assert.That(messages, Has.None.Contains("[SlowQuery]"));
+        }
+    }
+
+    private static List<string> CreateMessages(
+        out ILoggerFactory factory,
+        out ILogger<SlowQueryInterceptor> logger)
+    {
         var messages = new List<string>();
-        using ILoggerFactory factory = LoggerFactory.Create(builder =>
+        factory = LoggerFactory.Create(builder =>
             builder.AddProvider(new ListLoggerProvider(messages)));
-
-        var logger = new Logger<SlowQueryInterceptor>(factory);
-        var interceptor = new SlowQueryInterceptor(
-            logger,
-            Options.Create(new KukulcanDatabaseOptions { EnableSensitiveDataLogging = true }));
-
-        SlowQueryInterceptor.SlowQueryThresholdMs = -1;
-
-        using var context = new SqliteTestContext(interceptor);
-        context.Database.OpenConnection();
-        context.Database.EnsureCreated();
-        context.Database.ExecuteSqlRaw("SELECT 99");
-
-        Assert.That(messages, Has.Some.Contains("SELECT 99"));
+        logger = new Logger<SlowQueryInterceptor>(factory);
+        return messages;
     }
 
     private sealed class SqliteTestContext(SlowQueryInterceptor interceptor) : DbContext

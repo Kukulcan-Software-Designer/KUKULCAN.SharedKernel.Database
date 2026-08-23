@@ -37,7 +37,6 @@ public sealed class UnitOfWorkTests
             async () => await unit.BeginTransactionAsync());
 
         Assert.That(exception!.Message, Does.Contain("already in progress"));
-
         await unit.RollbackTransactionAsync();
     }
 
@@ -67,6 +66,24 @@ public sealed class UnitOfWorkTests
     }
 
     [Test]
+    public async Task CommitTransaction_WhenSaveIsCancelled_ShouldReleaseTransaction()
+    {
+        await using var fixture = TransactionContextFixture.Create();
+        var unit = new UnitOfWork<TransactionTestDbContext>(fixture.Context);
+        await unit.BeginTransactionAsync();
+
+        using var cancellation = new CancellationTokenSource();
+        cancellation.Cancel();
+
+        Assert.ThrowsAsync(
+            Is.InstanceOf<OperationCanceledException>(),
+            async () => await unit.CommitTransactionAsync(cancellation.Token));
+
+        Assert.DoesNotThrowAsync(() => unit.BeginTransactionAsync());
+        await unit.RollbackTransactionAsync();
+    }
+
+    [Test]
     public async Task RollbackTransaction_WhenInactive_ShouldThrow()
     {
         await using var fixture = TransactionContextFixture.Create();
@@ -86,6 +103,24 @@ public sealed class UnitOfWorkTests
 
         await unit.BeginTransactionAsync();
         await unit.RollbackTransactionAsync();
+
+        Assert.DoesNotThrowAsync(() => unit.BeginTransactionAsync());
+        await unit.RollbackTransactionAsync();
+    }
+
+    [Test]
+    public async Task RollbackTransaction_WhenCancelled_ShouldReleaseTransaction()
+    {
+        await using var fixture = TransactionContextFixture.Create();
+        var unit = new UnitOfWork<TransactionTestDbContext>(fixture.Context);
+        await unit.BeginTransactionAsync();
+
+        using var cancellation = new CancellationTokenSource();
+        cancellation.Cancel();
+
+        Assert.ThrowsAsync(
+            Is.InstanceOf<OperationCanceledException>(),
+            async () => await unit.RollbackTransactionAsync(cancellation.Token));
 
         Assert.DoesNotThrowAsync(() => unit.BeginTransactionAsync());
         await unit.RollbackTransactionAsync();
@@ -123,10 +158,20 @@ public sealed class UnitOfWorkTests
         var unit = new UnitOfWork<TransactionTestDbContext>(fixture.Context);
 
         await unit.BeginTransactionAsync();
-        await unit.DisposeAsync();
+        unit.Dispose();
 
         Assert.DoesNotThrowAsync(() => unit.BeginTransactionAsync());
         await unit.RollbackTransactionAsync();
+    }
+
+    [Test]
+    public async Task Dispose_WhenNoTransactionIsActive_ShouldBeIdempotent()
+    {
+        await using var fixture = TransactionContextFixture.Create();
+        var unit = new UnitOfWork<TransactionTestDbContext>(fixture.Context);
+
+        Assert.DoesNotThrow(() => unit.Dispose());
+        Assert.DoesNotThrow(() => unit.Dispose());
     }
 
     [Test]
