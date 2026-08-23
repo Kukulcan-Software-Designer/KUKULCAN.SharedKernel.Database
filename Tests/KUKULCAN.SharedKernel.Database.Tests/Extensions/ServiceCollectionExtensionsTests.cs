@@ -97,6 +97,10 @@ public sealed class ServiceCollectionExtensionsTests
             .Build();
 
         services.AddKukulcanDbContext<TestDbContext>(configuration);
+        services.AddSingleton<ITenantContext>(new TestTenantContext(Guid.NewGuid()));
+        services.AddSingleton<IClock>(new TestClock(DateTimeOffset.UtcNow));
+        services.AddSingleton<IDomainEventDispatcher>(Mock.Of<IDomainEventDispatcher>());
+
         using ServiceProvider provider = services.BuildServiceProvider();
         using TestDbContext context = provider.GetRequiredService<TestDbContext>();
 
