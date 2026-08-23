@@ -31,8 +31,8 @@ public sealed class AbstractionsTests
             Assert.That(typeof(IUnitOfWork).GetMethod(nameof(IUnitOfWork.CommitTransactionAsync)), Is.Not.Null);
             Assert.That(typeof(IUnitOfWork).GetMethod(nameof(IUnitOfWork.RollbackTransactionAsync)), Is.Not.Null);
             Assert.That(typeof(IUnitOfWork).GetMethod(nameof(IUnitOfWork.EndTransactionAsync)), Is.Not.Null);
-            Assert.That(typeof(IUnitOfWork), Is.AssignableTo<IDisposable>());
-            Assert.That(typeof(IUnitOfWork), Is.AssignableTo<IAsyncDisposable>());
+            Assert.That(typeof(IUnitOfWork).GetInterfaces(), Does.Contain(typeof(IDisposable)));
+            Assert.That(typeof(IUnitOfWork).GetInterfaces(), Does.Contain(typeof(IAsyncDisposable)));
         });
     }
 
