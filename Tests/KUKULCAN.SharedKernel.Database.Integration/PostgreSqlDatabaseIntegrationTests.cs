@@ -220,12 +220,12 @@ public sealed class PostgreSqlDatabaseIntegrationTests
         await unitOfWork.DisposeAsync();
     }
 
-    private sealed class IntegrationTenantContext(Guid tenantId) : ITenantContext
+    internal sealed class IntegrationTenantContext(Guid tenantId) : ITenantContext
     {
         public Guid TenantId { get; } = tenantId;
     }
 
-    private sealed class FixedClock(DateTimeOffset now) : IClock
+    internal sealed class FixedClock(DateTimeOffset now) : IClock
     {
         public DateTimeOffset UtcNow { get; } = now;
     }
