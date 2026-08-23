@@ -47,8 +47,18 @@ public static class ModelBuilderExtensions
         {
             if (entityType.IsOwned()) continue;
 
-            IMutableProperty? tenantProperty = entityType.FindProperty("TenantId");
-            if (tenantProperty?.ClrType != typeof(Guid)) continue;
+            // ModelBuilder can expose the entity before convention-based scalar
+            // properties have been materialized in its metadata. Inspect the CLR
+            // contract first, then explicitly register the property so the query
+            // filter is consistently available both on a raw ModelBuilder and on
+            // a DbContext model.
+            PropertyInfo? tenantProperty = entityType.ClrType.GetProperty(
+                "TenantId",
+                BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+
+            if (tenantProperty?.PropertyType != typeof(Guid)) continue;
+
+            modelBuilder.Entity(entityType.ClrType).Property<Guid>("TenantId");
 
             typeof(ModelBuilderExtensions)
                 .GetMethod(nameof(SetTenantFilter), BindingFlags.NonPublic | BindingFlags.Static)!
