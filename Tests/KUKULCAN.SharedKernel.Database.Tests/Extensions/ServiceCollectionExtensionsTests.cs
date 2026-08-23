@@ -1,5 +1,6 @@
 using KUKULCAN.SharedKernel.Database.Tests.TestInfrastructure;
 using KUKULCAN.SharedKernel.Database.Tests.TestInfrastructure.internals;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 
 namespace KUKULCAN.SharedKernel.Database.Tests.Extensions;
 
@@ -81,5 +82,32 @@ public sealed class ServiceCollectionExtensionsTests
             Assert.That(options.Retry.Enabled, Is.False);
             Assert.That(options.Retry.MaxRetryCount, Is.EqualTo(9));
         }
+    }
+
+    [Test]
+    public void AddKukulcanDbContext_ShouldAttachSlowQueryInterceptorToDbContext()
+    {
+        var services = new ServiceCollection();
+        IConfiguration configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                [$"{KukulcanDatabaseOptions.SectionKey}:ConnectionString"] = "DataSource=test",
+                [$"{KukulcanDatabaseOptions.SectionKey}:Provider"] = "SqlServer"
+            })
+            .Build();
+
+        services.AddKukulcanDbContext<TestDbContext>(configuration);
+        using ServiceProvider provider = services.BuildServiceProvider();
+        using TestDbContext context = provider.GetRequiredService<TestDbContext>();
+
+        CoreOptionsExtension coreOptions = context
+            .GetService<IDbContextOptions>()
+            .Extensions
+            .OfType<CoreOptionsExtension>()
+            .Single();
+
+        Assert.That(
+            coreOptions.Interceptors,
+            Has.Some.TypeOf<SlowQueryInterceptor>());
     }
 }
