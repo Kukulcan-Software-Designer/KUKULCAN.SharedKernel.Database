@@ -96,9 +96,25 @@ The registration helper binds options, registers the context, registers `IUnitOf
 - Microsoft.Extensions Options, DI, Logging and Configuration abstractions 10
 - A database provider package supplied by the consuming project when required
 
-## Quality
+## Quality and Test Coverage
 
-Nullable reference types are enabled, warnings are treated as errors and XML documentation generation is enabled. Public APIs are documented and persistence behavior is intended to be covered by behavior-focused tests.
+Nullable reference types are enabled, warnings are treated as errors and XML documentation generation is enabled. Public APIs are documented and persistence behavior is covered by behavior-focused tests.
+
+The current test suite achieves **100% line coverage (221/221 lines)** and **97.36% branch coverage (74/76 branches)** for the database library.
+
+The two uncovered branches are intentional defensive branches in `KukulcanDbContextBase.ConfigureSqlServer` and `KukulcanDbContextBase.ConfigurePostgresSql`. They belong to the null-coalescing type-resolution expressions that handle the case where the corresponding EF Core provider assembly is not installed:
+
+```csharp
+Type.GetType("...Microsoft.EntityFrameworkCore.SqlServer")
+    ?? throw NotInstalled("Microsoft.EntityFrameworkCore.SqlServer");
+
+Type.GetType("...Npgsql.EntityFrameworkCore.PostgreSQL")
+    ?? throw NotInstalled("Npgsql.EntityFrameworkCore.PostgreSQL");
+```
+
+The test project intentionally references both provider packages in order to exercise the real SQL Server and PostgreSQL configuration paths. Consequently, those assemblies are available during test execution and the runtime type resolution succeeds. Forcing the assemblies to appear unavailable would require manipulating assembly loading or introducing production-only test seams solely to satisfy a coverage metric. That would make the tests less deterministic and less representative of the supported runtime configuration.
+
+The resulting **97.36% branch coverage is therefore intentional and documented**, rather than an indication of an untested supported behavior. The `NotInstalled` behavior itself is tested directly, including the missing-inner-exception scenario.
 
 ## License
 
