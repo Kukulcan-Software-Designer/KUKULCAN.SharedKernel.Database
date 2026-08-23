@@ -132,11 +132,13 @@ public sealed class UnitOfWorkTransactionIntegrationTests
         public DbSet<TransactionEntity> Entities => Set<TransactionEntity>();
     }
 
-    private sealed class TransactionEntity
+    private sealed class TransactionEntity : IAuditable
     {
         public int Id { get; set; }
         public Guid TenantId { get; set; }
         public string Name { get; set; } = string.Empty;
+        public DateTimeOffset CreatedOn { get; set; }
+        public DateTimeOffset? ModifiedOn { get; set; }
     }
 
     private sealed class TransactionTenantContext(Guid tenantId) : ITenantContext
