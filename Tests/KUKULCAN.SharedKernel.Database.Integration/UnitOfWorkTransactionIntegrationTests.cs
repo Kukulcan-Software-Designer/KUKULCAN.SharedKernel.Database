@@ -139,6 +139,7 @@ public sealed class UnitOfWorkTransactionIntegrationTests
         public string Name { get; set; } = string.Empty;
         public DateTimeOffset CreatedOn { get; set; }
         public DateTimeOffset? ModifiedOn { get; set; }
+        public bool IsDeleted { get; set; }
     }
 
     private sealed class TransactionTenantContext(Guid tenantId) : ITenantContext
