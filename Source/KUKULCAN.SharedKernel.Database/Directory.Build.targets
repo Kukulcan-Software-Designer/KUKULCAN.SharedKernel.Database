@@ -1,7 +1,7 @@
 <Project>
     <PropertyGroup Condition="'$(Configuration)' == 'Release'">
         <GeneratePackageOnBuild Condition="'$(Configuration)'=='Release'">true</GeneratePackageOnBuild>
-        <SolutionDir>$(MSBuildThisFileDirectory)</SolutionDir>
+        <SolutionDir>$(MSBuildThisFileDirectory)..\..\</SolutionDir>
         <PackageId>$(AssemblyName)</PackageId>
         <Version>$(VersionPrefix)</Version>
         <Authors>Kukulcán Software Designer</Authors>
@@ -20,13 +20,13 @@
         </PackageReleaseNotes>
         <RepositoryUrl>https://github.com/Kukulcan-Software-Designer/KUKULCAN.SharedKernel.Database</RepositoryUrl>
         <RepositoryType>git</RepositoryType>
-        <Description>KUKULCAN.SharedKernel.Database is a foundational library designed to provide shared database abstractions and infrastructure components across the entire "Kukulcán Software Designer" application ecosystem.
+        <Description>KUKULCAN.SharedKernel.Database is a foundational library designed to provide shared database abstractions and infrastructure components across multiple modules and bounded contexts.
 This project acts as part of the SharedKernel, enabling consistency, reuse, and standardization of database-related concerns across multiple modules and bounded contexts.
         </Description>
     </PropertyGroup>
 
-	<ItemGroup Condition="'$(Configuration)' == 'Release'">
-		<None Include="$(SolutionDir)LICENSE" Pack="true" PackagePath="\" />
-		<None Include="$(SolutionDir)README.md" Pack="true" PackagePath="\" />
-	</ItemGroup>
+    <ItemGroup Condition="'$(Configuration)' == 'Release'">
+        <None Include="$(SolutionDir)LICENSE" Pack="true" PackagePath="\" />
+        <None Include="$(SolutionDir)README.md" Pack="true" PackagePath="\" />
+    </ItemGroup>
 </Project>
