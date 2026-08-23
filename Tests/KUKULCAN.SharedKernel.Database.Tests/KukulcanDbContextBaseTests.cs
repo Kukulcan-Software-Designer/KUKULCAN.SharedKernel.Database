@@ -217,56 +217,58 @@ public sealed class KukulcanDbContextBaseTests
     [Test]
     public void ConfigureSqlServer_WhenProviderConfigurationFails_ShouldWrapOriginalException()
     {
-        var options = Options.Create(new KukulcanDatabaseOptions
-        {
-            Provider = DatabaseProvider.SqlServer,
-            ConnectionString = "Server=localhost;Database=KukulcanCoverage;Integrated Security=true;TrustServerCertificate=true",
-            CommandTimeoutSeconds = -1,
-            Retry = new KukulcanDatabaseOptions.RetryOptions { Enabled = false }
-        });
+        MethodInfo method = typeof(KukulcanDbContextBase).GetMethod(
+            "ConfigureSqlServer",
+            BindingFlags.NonPublic | BindingFlags.Static)!;
 
-        using var context = new TestDbContextWithOptions(
-            options,
-            new TestTenantContext(Guid.NewGuid()),
-            new TestClock(DateTimeOffset.UtcNow),
-            Mock.Of<IDomainEventDispatcher>());
+        var optionsBuilder = new DbContextOptionsBuilder();
 
-        var exception = Assert.Throws<NotSupportedException>(
-            () => context.Database.EnsureCreated());
+        var invocation = Assert.Throws<TargetInvocationException>(() => method.Invoke(
+            null,
+            [
+                optionsBuilder,
+                "Server=localhost;Database=KukulcanCoverage;Integrated Security=true;TrustServerCertificate=true",
+                int.MinValue,
+                0,
+                TimeSpan.Zero
+            ]));
+
+        Assert.That(invocation!.InnerException, Is.TypeOf<NotSupportedException>());
 
         using (Assert.EnterMultipleScope())
         {
-            Assert.That(exception!.Message, Does.Contain("Failed to configure provider."));
-            Assert.That(exception.Message, Does.Contain("Microsoft.EntityFrameworkCore.SqlServer"));
-            Assert.That(exception.InnerException, Is.Not.Null);
+            Assert.That(invocation.InnerException!.Message, Does.Contain("Failed to configure provider."));
+            Assert.That(invocation.InnerException.Message, Does.Contain("Microsoft.EntityFrameworkCore.SqlServer"));
+            Assert.That(invocation.InnerException.InnerException, Is.Not.Null);
         }
     }
 
     [Test]
     public void ConfigurePostgresSql_WhenProviderConfigurationFails_ShouldWrapOriginalException()
     {
-        var options = Options.Create(new KukulcanDatabaseOptions
-        {
-            Provider = DatabaseProvider.PostgresSql,
-            ConnectionString = "Host=localhost;Database=KukulcanCoverage;Username=test;Password=test",
-            CommandTimeoutSeconds = -1,
-            Retry = new KukulcanDatabaseOptions.RetryOptions { Enabled = false }
-        });
+        MethodInfo method = typeof(KukulcanDbContextBase).GetMethod(
+            "ConfigurePostgresSql",
+            BindingFlags.NonPublic | BindingFlags.Static)!;
 
-        using var context = new TestDbContextWithOptions(
-            options,
-            new TestTenantContext(Guid.NewGuid()),
-            new TestClock(DateTimeOffset.UtcNow),
-            Mock.Of<IDomainEventDispatcher>());
+        var optionsBuilder = new DbContextOptionsBuilder();
 
-        var exception = Assert.Throws<NotSupportedException>(
-            () => context.Database.EnsureCreated());
+        var invocation = Assert.Throws<TargetInvocationException>(() => method.Invoke(
+            null,
+            [
+                optionsBuilder,
+                "Host=localhost;Database=KukulcanCoverage;Username=test;Password=test",
+                int.MinValue,
+                0,
+                TimeSpan.Zero
+            ]));
+
+        Assert.That(invocation!.InnerException, Is.TypeOf<NotSupportedException>());
 
         using (Assert.EnterMultipleScope())
         {
-            Assert.That(exception!.Message, Does.Contain("Failed to configure provider."));
-            Assert.That(exception.Message, Does.Contain("Npgsql.EntityFrameworkCore.PostgreSQL"));
-            Assert.That(exception.InnerException, Is.Not.Null);
+            Assert.That(invocation.InnerException!.Message, Does.Contain("Failed to configure provider."));
+            Assert.That(invocation.InnerException.Message, Does.Contain("Npgsql.EntityFrameworkCore.PostgreSQL"));
+            Assert.That(invocation.InnerException.InnerException, Is.Not.Null);
         }
     }
 
