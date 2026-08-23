@@ -104,6 +104,137 @@ public sealed class UnitOfWorkTransactionIntegrationTests
         await unitOfWork.DisposeAsync();
     }
 
+    [Test]
+    public async Task SaveChanges_ShouldPersistThroughRealPostgreSqlUnitOfWork()
+    {
+        var unitOfWork = new UnitOfWork<TransactionDbContext>(_context);
+        var entity = new TransactionEntity { TenantId = _tenantId, Name = "UnitOfWork-SaveChanges" };
+
+        _context.Entities.Add(entity);
+        int saved = await unitOfWork.SaveChangesAsync();
+
+        Assert.That(saved, Is.EqualTo(1));
+        Assert.That(entity.Id, Is.GreaterThan(0));
+        Assert.That(
+            await _context.Entities.AnyAsync(x => x.Id == entity.Id && x.Name == entity.Name),
+            Is.True);
+
+        await unitOfWork.DisposeAsync();
+    }
+
+    [Test]
+    public async Task CommitTransaction_ShouldPersistChangesAfterExplicitSaveChangesAgainstRealPostgreSql()
+    {
+        var unitOfWork = new UnitOfWork<TransactionDbContext>(_context);
+        await unitOfWork.BeginTransactionAsync();
+
+        var entity = new TransactionEntity { TenantId = _tenantId, Name = "Explicit-Save-Then-Commit" };
+        _context.Entities.Add(entity);
+        int saved = await unitOfWork.SaveChangesAsync();
+
+        Assert.That(saved, Is.EqualTo(1));
+
+        await unitOfWork.CommitTransactionAsync();
+
+        Assert.That(
+            await _context.Entities.AnyAsync(x => x.Id == entity.Id && x.Name == entity.Name),
+            Is.True);
+
+        await unitOfWork.DisposeAsync();
+    }
+
+    [Test]
+    public async Task RollbackTransaction_ShouldDiscardPreviouslySavedChangesAgainstRealPostgreSql()
+    {
+        var unitOfWork = new UnitOfWork<TransactionDbContext>(_context);
+        await unitOfWork.BeginTransactionAsync();
+
+        var entity = new TransactionEntity { TenantId = _tenantId, Name = "Should-Rollback" };
+        _context.Entities.Add(entity);
+        await unitOfWork.SaveChangesAsync();
+        Assert.That(entity.Id, Is.GreaterThan(0));
+
+        await unitOfWork.RollbackTransactionAsync();
+
+        Assert.That(
+            await _context.Entities.IgnoreQueryFilters().AnyAsync(x => x.Id == entity.Id),
+            Is.False);
+
+        await unitOfWork.DisposeAsync();
+    }
+
+    [Test]
+    public async Task Dispose_ShouldReleaseActiveRealPostgreSqlTransactionAndAllowAnotherTransaction()
+    {
+        var unitOfWork = new UnitOfWork<TransactionDbContext>(_context);
+        await unitOfWork.BeginTransactionAsync();
+
+        _context.Entities.Add(new TransactionEntity { TenantId = _tenantId, Name = "Disposed-Transaction" });
+        await unitOfWork.SaveChangesAsync();
+        unitOfWork.Dispose();
+
+        await unitOfWork.BeginTransactionAsync();
+        _context.Entities.Add(new TransactionEntity { TenantId = _tenantId, Name = "After-Dispose" });
+        await unitOfWork.CommitTransactionAsync();
+
+        Assert.That(
+            await _context.Entities.AnyAsync(x => x.Name == "After-Dispose"),
+            Is.True);
+        Assert.That(
+            await _context.Entities.IgnoreQueryFilters().AnyAsync(x => x.Name == "Disposed-Transaction"),
+            Is.False);
+
+        await unitOfWork.DisposeAsync();
+    }
+
+    [Test]
+    public async Task DisposeAsync_ShouldReleaseActiveRealPostgreSqlTransactionAndAllowAnotherTransaction()
+    {
+        var unitOfWork = new UnitOfWork<TransactionDbContext>(_context);
+        await unitOfWork.BeginTransactionAsync();
+
+        _context.Entities.Add(new TransactionEntity { TenantId = _tenantId, Name = "Async-Disposed-Transaction" });
+        await unitOfWork.SaveChangesAsync();
+        await unitOfWork.DisposeAsync();
+
+        await unitOfWork.BeginTransactionAsync();
+        _context.Entities.Add(new TransactionEntity { TenantId = _tenantId, Name = "After-Async-Dispose" });
+        await unitOfWork.CommitTransactionAsync();
+
+        Assert.That(
+            await _context.Entities.AnyAsync(x => x.Name == "After-Async-Dispose"),
+            Is.True);
+        Assert.That(
+            await _context.Entities.IgnoreQueryFilters().AnyAsync(x => x.Name == "Async-Disposed-Transaction"),
+            Is.False);
+
+        await unitOfWork.DisposeAsync();
+    }
+
+    [Test]
+    public async Task UnitOfWork_ShouldSupportMultipleConsecutiveRealPostgreSqlTransactions()
+    {
+        var unitOfWork = new UnitOfWork<TransactionDbContext>(_context);
+
+        await unitOfWork.BeginTransactionAsync();
+        _context.Entities.Add(new TransactionEntity { TenantId = _tenantId, Name = "Transaction-1" });
+        await unitOfWork.CommitTransactionAsync();
+
+        await unitOfWork.BeginTransactionAsync();
+        _context.Entities.Add(new TransactionEntity { TenantId = _tenantId, Name = "Transaction-2" });
+        await unitOfWork.CommitTransactionAsync();
+
+        await unitOfWork.BeginTransactionAsync();
+        _context.Entities.Add(new TransactionEntity { TenantId = _tenantId, Name = "Transaction-3" });
+        await unitOfWork.CommitTransactionAsync();
+
+        Assert.That(
+            await _context.Entities.CountAsync(x => x.Name.StartsWith("Transaction-")),
+            Is.EqualTo(3));
+
+        await unitOfWork.DisposeAsync();
+    }
+
     private TransactionDbContext CreateContext()
     {
         var options = Options.Create(new KukulcanDatabaseOptions
