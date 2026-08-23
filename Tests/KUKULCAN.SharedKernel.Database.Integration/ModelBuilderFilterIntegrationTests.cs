@@ -73,8 +73,13 @@ public sealed class ModelBuilderFilterIntegrationTests
         currentTenantDeleted.DeletedOn = PostgreSqlDatabaseIntegrationTests.FixedNow;
         await context.SaveChangesAsync();
 
+        // The integration database is shared by the test fixture. Restrict the
+        // assertion to the two tenants created by this test so previous test data
+        // cannot affect the expected cardinality while IgnoreQueryFilters() still
+        // disables both global filters for these rows.
         List<(Guid TenantId, string Name, bool IsDeleted)> visible = await context.Entities
             .IgnoreQueryFilters()
+            .Where(x => x.TenantId == tenantId || x.TenantId == otherTenantId)
             .OrderBy(x => x.Name)
             .Select(x => new ValueTuple<Guid, string, bool>(x.TenantId, x.Name, x.IsDeleted))
             .ToListAsync();
