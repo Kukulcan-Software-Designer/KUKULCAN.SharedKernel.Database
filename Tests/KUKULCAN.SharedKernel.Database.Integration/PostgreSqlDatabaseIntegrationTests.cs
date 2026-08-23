@@ -220,12 +220,12 @@ public sealed class PostgreSqlDatabaseIntegrationTests
         await unitOfWork.DisposeAsync();
     }
 
-    internal sealed class IntegrationTenantContext(Guid tenantId) : ITenantContext
+    private sealed class IntegrationTenantContext(Guid tenantId) : ITenantContext
     {
         public Guid TenantId { get; } = tenantId;
     }
 
-    internal sealed class FixedClock(DateTimeOffset now) : IClock
+    private sealed class FixedClock(DateTimeOffset now) : IClock
     {
         public DateTimeOffset UtcNow { get; } = now;
     }
@@ -250,7 +250,7 @@ public sealed class PostgreSqlDatabaseIntegrationTests
             => optionsBuilder.UseNpgsql(_connectionString);
     }
 
-    internal sealed class IntegrationEntity : IAuditable, ISoftDelete
+    private sealed class IntegrationEntity : IAuditable, ISoftDelete
     {
         public int Id { get; set; }
         public Guid TenantId { get; set; }
