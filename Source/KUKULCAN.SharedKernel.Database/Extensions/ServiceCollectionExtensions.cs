@@ -66,19 +66,15 @@ public static class ServiceCollectionExtensions
                 $"Missing required configuration: {KukulcanDatabaseOptions.SectionKey}:ConnectionString. " +
                 $"Ensure it is set in app-settings.json or environment variables.");
 
-        // ② Register the slow-query interceptor once and compose it into the
-        // DbContext options without marking the database provider as configured.
-        // This allows KukulcanDbContextBase.OnConfiguring to retain responsibility
-        // for provider selection and its four save-change interceptors.
+        // ② Register the slow-query interceptor once. It must be attached from
+        // the AddDbContext options callback so that the DbContext registration
+        // cannot replace the previously composed options.
         services.AddSingleton<SlowQueryInterceptor>();
-        services.ConfigureDbContext<TContext>((serviceProvider, optionsBuilder) =>
+        services.AddDbContext<TContext>((serviceProvider, optionsBuilder) =>
             optionsBuilder.AddInterceptors(
                 serviceProvider.GetRequiredService<SlowQueryInterceptor>()));
 
-        // ③ Register the DbContext (scoped — one per HTTP request / unit of work)
-        services.AddDbContext<TContext>();
-
-        // ④ Register IUnitOfWork backed by this specific module's context
+        // ③ Register IUnitOfWork backed by this specific module's context
         services.AddScoped<IUnitOfWork, UnitOfWork<TContext>>();
 
         return services;
