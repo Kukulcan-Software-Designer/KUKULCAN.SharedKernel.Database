@@ -206,7 +206,7 @@ public sealed class PostgreSqlDatabaseIntegrationTests
         public DbSet<IntegrationEntity> Entities => Set<IntegrationEntity>();
 
         protected override void ConfigureProvider(DbContextOptionsBuilder optionsBuilder)
-            => optionsBuilder.UseNpgsql(options.ConnectionString);
+            => optionsBuilder.UseNpgsql(options.Value.ConnectionString);
     }
 
     private sealed class IntegrationEntity : IAuditable, ISoftDelete
