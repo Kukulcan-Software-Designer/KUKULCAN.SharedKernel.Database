@@ -200,17 +200,24 @@ public sealed class PostgreSqlDatabaseIntegrationTests
         public DateTimeOffset UtcNow { get; } = now;
     }
 
-    private sealed class IntegrationDbContext(
-        IOptions<KukulcanDatabaseOptions> options,
-        ITenantContext tenantContext,
-        IClock clock,
-        IDomainEventDispatcher dispatcher)
-        : KukulcanDbContextBase(options, tenantContext, clock, dispatcher)
+    private sealed class IntegrationDbContext : KukulcanDbContextBase
     {
+        private readonly string _connectionString;
+
+        public IntegrationDbContext(
+            IOptions<KukulcanDatabaseOptions> options,
+            ITenantContext tenantContext,
+            IClock clock,
+            IDomainEventDispatcher dispatcher)
+            : base(options, tenantContext, clock, dispatcher)
+        {
+            _connectionString = options.Value.ConnectionString;
+        }
+
         public DbSet<IntegrationEntity> Entities => Set<IntegrationEntity>();
 
         protected override void ConfigureProvider(DbContextOptionsBuilder optionsBuilder)
-            => optionsBuilder.UseNpgsql(options.Value.ConnectionString);
+            => optionsBuilder.UseNpgsql(_connectionString);
     }
 
     private sealed class IntegrationEntity : IAuditable, ISoftDelete
