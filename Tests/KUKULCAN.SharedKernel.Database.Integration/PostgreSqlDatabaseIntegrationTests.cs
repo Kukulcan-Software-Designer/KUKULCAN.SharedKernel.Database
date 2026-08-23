@@ -37,7 +37,7 @@ public sealed class IntegrationTestDatabase
             await _container.DisposeAsync();
     }
 
-    public static async Task<IntegrationDbContext> CreateContextAsync(Guid tenantId)
+    internal static async Task<PostgreSqlDatabaseIntegrationTests.IntegrationDbContext> CreateContextAsync(Guid tenantId)
     {
         var options = Options.Create(new KukulcanDatabaseOptions
         {
@@ -47,10 +47,10 @@ public sealed class IntegrationTestDatabase
             Pool = new KukulcanDatabaseOptions.PoolOptions { Enabled = false },
         });
 
-        var context = new IntegrationDbContext(
+        var context = new PostgreSqlDatabaseIntegrationTests.IntegrationDbContext(
             options,
-            new IntegrationTenantContext(tenantId),
-            new FixedClock(PostgreSqlDatabaseIntegrationTests.FixedNow),
+            new PostgreSqlDatabaseIntegrationTests.IntegrationTenantContext(tenantId),
+            new PostgreSqlDatabaseIntegrationTests.FixedClock(PostgreSqlDatabaseIntegrationTests.FixedNow),
             Mock.Of<IDomainEventDispatcher>());
 
         await context.Database.EnsureCreatedAsync();
@@ -220,12 +220,12 @@ public sealed class PostgreSqlDatabaseIntegrationTests
         await unitOfWork.DisposeAsync();
     }
 
-    private sealed class IntegrationTenantContext(Guid tenantId) : ITenantContext
+    internal sealed class IntegrationTenantContext(Guid tenantId) : ITenantContext
     {
         public Guid TenantId { get; } = tenantId;
     }
 
-    private sealed class FixedClock(DateTimeOffset now) : IClock
+    internal sealed class FixedClock(DateTimeOffset now) : IClock
     {
         public DateTimeOffset UtcNow { get; } = now;
     }
@@ -250,7 +250,7 @@ public sealed class PostgreSqlDatabaseIntegrationTests
             => optionsBuilder.UseNpgsql(_connectionString);
     }
 
-    private sealed class IntegrationEntity : IAuditable, ISoftDelete
+    internal sealed class IntegrationEntity : IAuditable, ISoftDelete
     {
         public int Id { get; set; }
         public Guid TenantId { get; set; }
