@@ -1,3 +1,4 @@
+using System.Reflection;
 using KUKULCAN.SharedKernel.Database.Tests.TestInfrastructure;
 using KUKULCAN.SharedKernel.Database.Tests.TestInfrastructure.internals;
 
@@ -66,6 +67,28 @@ public sealed class DomainEventDispatchInterceptorTests
         await context.SaveChangesAsync();
 
         result.Dispatcher.Verify(
+            x => x.DispatchAsync(It.IsAny<IDomainEvent>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+    }
+
+    [Test]
+    public async Task DispatchDomainEventsAsync_WithNullContext_ShouldReturnWithoutDispatching()
+    {
+        var dispatcher = new Mock<IDomainEventDispatcher>();
+        var interceptor = new DomainEventDispatchInterceptor(dispatcher.Object);
+        var method = typeof(DomainEventDispatchInterceptor).GetMethod(
+            "DispatchDomainEventsAsync",
+            BindingFlags.Instance | BindingFlags.NonPublic);
+
+        Assert.That(method, Is.Not.Null);
+
+        var task = (Task)method!.Invoke(
+            interceptor,
+            [null, CancellationToken.None])!;
+
+        await task;
+
+        dispatcher.Verify(
             x => x.DispatchAsync(It.IsAny<IDomainEvent>(), It.IsAny<CancellationToken>()),
             Times.Never);
     }
