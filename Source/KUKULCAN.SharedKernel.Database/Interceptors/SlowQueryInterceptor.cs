@@ -58,6 +58,27 @@ public sealed class SlowQueryInterceptor(ILogger<SlowQueryInterceptor> logger, I
         return base.ReaderExecutedAsync(command, eventData, result, cancellationToken);
     }
 
+    /// <inheritdoc/>
+    public override int NonQueryExecuted(
+        DbCommand command,
+        CommandExecutedEventData eventData,
+        int result)
+    {
+        LogIfSlow(command, eventData.Duration);
+        return base.NonQueryExecuted(command, eventData, result);
+    }
+
+    /// <inheritdoc/>
+    public override ValueTask<int> NonQueryExecutedAsync(
+        DbCommand command,
+        CommandExecutedEventData eventData,
+        int result,
+        CancellationToken cancellationToken = default)
+    {
+        LogIfSlow(command, eventData.Duration);
+        return base.NonQueryExecutedAsync(command, eventData, result, cancellationToken);
+    }
+
     // ── Private helpers ───────────────────────────────────────────────────────
 
     private void LogIfSlow(DbCommand command, TimeSpan duration)
