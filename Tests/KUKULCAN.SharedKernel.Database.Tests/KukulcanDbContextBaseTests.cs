@@ -153,16 +153,11 @@ public sealed class KukulcanDbContextBaseTests
     [Test]
     public async Task OnConfiguring_WhenOptionsAreAlreadyConfigured_ShouldNotReconfigureProvider()
     {
-        var builder = new DbContextOptionsBuilder<PreconfiguredDbContext>()
-            .UseInMemoryDatabase(Guid.NewGuid().ToString());
-        var options = Options.Create(new KukulcanDatabaseOptions());
-
         await using var context = new PreconfiguredDbContext(
-            options,
+            Options.Create(new KukulcanDatabaseOptions()),
             new TestTenantContext(Guid.NewGuid()),
             new TestClock(DateTimeOffset.UtcNow),
-            Mock.Of<IDomainEventDispatcher>(),
-            builder.Options);
+            Mock.Of<IDomainEventDispatcher>());
 
         await context.Database.EnsureCreatedAsync();
 
@@ -233,29 +228,21 @@ public sealed class KukulcanDbContextBaseTests
         IOptions<KukulcanDatabaseOptions> options,
         ITenantContext tenantContext,
         IClock clock,
-        IDomainEventDispatcher dispatcher,
-        DbContextOptions<PreconfiguredDbContext> dbOptions)
+        IDomainEventDispatcher dispatcher)
         : KukulcanDbContextBase(options, tenantContext, clock, dispatcher)
     {
         public bool ConfigureProviderCalled { get; private set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-            => base.OnConfiguring(optionsBuilder);
+        {
+            optionsBuilder.UseInMemoryDatabase(Guid.NewGuid().ToString());
+            base.OnConfiguring(optionsBuilder);
+        }
 
         protected override void ConfigureProvider(DbContextOptionsBuilder optionsBuilder)
         {
             ConfigureProviderCalled = true;
             throw new AssertionException("ConfigureProvider must not be called for preconfigured options.");
-        }
-
-        public PreconfiguredDbContext(
-            IOptions<KukulcanDatabaseOptions> options,
-            ITenantContext tenantContext,
-            IClock clock,
-            IDomainEventDispatcher dispatcher,
-            DbContextOptions dbOptions)
-            : this(options, tenantContext, clock, dispatcher, (DbContextOptions<PreconfiguredDbContext>)dbOptions)
-        {
         }
     }
 
