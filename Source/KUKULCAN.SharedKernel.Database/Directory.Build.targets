@@ -14,11 +14,9 @@
         <PackageLicenseFile>LICENSE</PackageLicenseFile>
         <PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
         <PackageReleaseNotes>
-            This revision corrects the following:
+            This hotfix fixes the following:
 
-            - Spelling errors related to the URL where the class library is located.
-            - Spelling errors in the organization name.
-            - The reference to KUKULCAN.SharedKernel has been updated to the latest version.
+            - In the ASP.NET Core DI container, the correct thing to do is to request ILogger&lt;T&gt;, not the concrete Logger&lt;T&gt; implementation.
         </PackageReleaseNotes>
         <RepositoryUrl>https://github.com/Kukulcan-Software-Designer/KUKULCAN.SharedKernel.Database</RepositoryUrl>
         <RepositoryType>git</RepositoryType>
