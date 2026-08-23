@@ -18,6 +18,7 @@ public sealed class UnitOfWorkTransactionIntegrationTests
     private static readonly DateTimeOffset FixedNow =
         new(2030, 1, 2, 3, 4, 5, TimeSpan.Zero);
 
+    private readonly Guid _tenantId = Guid.NewGuid();
     private TransactionDbContext _context = null!;
 
     [SetUp]
@@ -103,9 +104,7 @@ public sealed class UnitOfWorkTransactionIntegrationTests
         await unitOfWork.DisposeAsync();
     }
 
-    private Guid _tenantId = Guid.NewGuid();
-
-    private static TransactionDbContext CreateContext()
+    private TransactionDbContext CreateContext()
     {
         var options = Options.Create(new KukulcanDatabaseOptions
         {
@@ -118,7 +117,7 @@ public sealed class UnitOfWorkTransactionIntegrationTests
 
         return new TransactionDbContext(
             options,
-            new TransactionTenantContext(Guid.NewGuid()),
+            new TransactionTenantContext(_tenantId),
             new FixedClock(FixedNow),
             Mock.Of<IDomainEventDispatcher>());
     }
