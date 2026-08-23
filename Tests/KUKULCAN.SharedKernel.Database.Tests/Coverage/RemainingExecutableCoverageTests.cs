@@ -10,7 +10,7 @@ public sealed class RemainingExecutableCoverageTests
     public void TenantModelCacheKeyFactory_WithNonKukulcanContext_ShouldUseNullTenant()
     {
         Type factoryType = typeof(KukulcanDbContextBase).Assembly
-            .GetType("KUKULCAN.SharedKernel.Database.Infrastructure.TenantModelCacheKeyFactory", throwOnError: true)!;
+            .GetType("KUKULCAN.SharedKernel.Database.TenantModelCacheKeyFactory", throwOnError: true)!;
 
         object factory = Activator.CreateInstance(factoryType)!;
         using var context = new PlainDbContext();
@@ -64,10 +64,10 @@ public sealed class RemainingExecutableCoverageTests
 
         TargetInvocationException exception = Assert.Throws<TargetInvocationException>(() =>
             method.Invoke(null,
-                [new DbContextOptionsBuilder(), null!, 30, 0, TimeSpan.FromSeconds(5)]))!;
+                [null, "ignored", 30, 0, TimeSpan.FromSeconds(5)]))!;
 
         Assert.That(exception.InnerException, Is.TypeOf<NotSupportedException>());
-        Assert.That(exception.InnerException!.Message, Does.Contain("Microsoft.EntityFrameworkCore.SqlServer"));
+        Assert.That(exception.InnerException!.Message, Does.Contain("Failed to configure provider"));
     }
 
     [Test]
@@ -78,10 +78,10 @@ public sealed class RemainingExecutableCoverageTests
 
         TargetInvocationException exception = Assert.Throws<TargetInvocationException>(() =>
             method.Invoke(null,
-                [new DbContextOptionsBuilder(), null!, 30, 0, TimeSpan.FromSeconds(5)]))!;
+                [null, "ignored", 30, 0, TimeSpan.FromSeconds(5)]))!;
 
         Assert.That(exception.InnerException, Is.TypeOf<NotSupportedException>());
-        Assert.That(exception.InnerException!.Message, Does.Contain("Npgsql.EntityFrameworkCore.PostgreSQL"));
+        Assert.That(exception.InnerException!.Message, Does.Contain("Failed to configure provider"));
     }
 
     [Test]
