@@ -244,7 +244,7 @@ public sealed class PostgreSqlDatabaseIntegrationTests
             _connectionString = options.Value.ConnectionString;
         }
 
-        public DbSet<IntegrationEntity> Entities => Set<IntegrationEntity>();
+        internal DbSet<IntegrationEntity> Entities => Set<IntegrationEntity>();
 
         protected override void ConfigureProvider(DbContextOptionsBuilder optionsBuilder)
             => optionsBuilder.UseNpgsql(_connectionString);
