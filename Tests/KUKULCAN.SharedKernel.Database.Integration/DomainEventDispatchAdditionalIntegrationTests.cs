@@ -1,3 +1,4 @@
+using KUKULCAN.SharedKernel.Database.Configuration;
 using KUKULCAN.SharedKernel.DomainEvents.Abstractions;
 using Microsoft.Extensions.Options;
 using Moq;
@@ -16,7 +17,7 @@ public sealed class DomainEventDispatchAdditionalIntegrationTests
         var dispatcher = new Mock<IDomainEventDispatcher>();
 
         await using var context = new PostgreSqlDatabaseIntegrationTests.IntegrationDbContext(
-            Options.Create(new PostgreSqlDatabaseIntegrationTests.IntegrationDatabaseOptionsFactory().Create()),
+            CreateOptions(),
             new PostgreSqlDatabaseIntegrationTests.IntegrationTenantContext(tenantId),
             new PostgreSqlDatabaseIntegrationTests.FixedClock(PostgreSqlDatabaseIntegrationTests.FixedNow),
             dispatcher.Object);
@@ -65,7 +66,7 @@ public sealed class DomainEventDispatchAdditionalIntegrationTests
         CancellationToken cancellationToken = cancellation.Token;
 
         await using var context = new PostgreSqlDatabaseIntegrationTests.IntegrationDbContext(
-            Options.Create(new PostgreSqlDatabaseIntegrationTests.IntegrationDatabaseOptionsFactory().Create()),
+            CreateOptions(),
             new PostgreSqlDatabaseIntegrationTests.IntegrationTenantContext(tenantId),
             new PostgreSqlDatabaseIntegrationTests.FixedClock(PostgreSqlDatabaseIntegrationTests.FixedNow),
             dispatcher.Object);
@@ -83,9 +84,16 @@ public sealed class DomainEventDispatchAdditionalIntegrationTests
 
         await context.SaveChangesAsync(cancellationToken);
 
-        dispatcher.Verify(
-            x => x.DispatchAsync(domainEvent, cancellationToken),
-            Times.Once);
+        dispatcher.Verify(x => x.DispatchAsync(domainEvent, cancellationToken), Times.Once);
         Assert.That(entity.DomainEvents, Is.Empty);
     }
+
+    private static IOptions<KukulcanDatabaseOptions> CreateOptions()
+        => Options.Create(new KukulcanDatabaseOptions
+        {
+            Provider = DatabaseProvider.PostgresSql,
+            ConnectionString = IntegrationTestDatabase.ConnectionString,
+            Retry = new KukulcanDatabaseOptions.RetryOptions { Enabled = false },
+            Pool = new KukulcanDatabaseOptions.PoolOptions { Enabled = false }
+        });
 }
