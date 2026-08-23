@@ -1,30 +1,78 @@
+using KUKULCAN.SharedKernel.Abstractions;
+using KUKULCAN.SharedKernel.Database.Abstractions;
+using KUKULCAN.SharedKernel.Database.Configuration;
+using KUKULCAN.SharedKernel.DomainEvents.Abstractions;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
+using Moq;
 using NUnit.Framework;
+using Testcontainers.PostgreSql;
 
 namespace KUKULCAN.SharedKernel.Database.Integration;
+
+[SetUpFixture]
+public sealed class IntegrationTestDatabase
+{
+    private static PostgreSqlContainer? _container;
+
+    public static string ConnectionString => _container?.GetConnectionString()
+        ?? throw new InvalidOperationException("The integration test database has not been initialized.");
+
+    [OneTimeSetUp]
+    public async Task SetUpAsync()
+    {
+        _container = new PostgreSqlBuilder("postgres:16-alpine")
+            .WithDatabase("database_integration_tests")
+            .WithUsername("postgres")
+            .WithPassword("postgres")
+            .Build();
+
+        await _container.StartAsync();
+    }
+
+    [OneTimeTearDown]
+    public async Task TearDownAsync()
+    {
+        if (_container is not null)
+            await _container.DisposeAsync();
+    }
+
+    internal static async Task<PostgreSqlDatabaseIntegrationTests.IntegrationDbContext> CreateContextAsync(Guid tenantId)
+    {
+        var options = Options.Create(new KukulcanDatabaseOptions
+        {
+            Provider = DatabaseProvider.PostgresSql,
+            ConnectionString = ConnectionString,
+            Retry = new KukulcanDatabaseOptions.RetryOptions { Enabled = false },
+            Pool = new KukulcanDatabaseOptions.PoolOptions { Enabled = false },
+        });
+
+        var context = new PostgreSqlDatabaseIntegrationTests.IntegrationDbContext(
+            options,
+            new PostgreSqlDatabaseIntegrationTests.IntegrationTenantContext(tenantId),
+            new PostgreSqlDatabaseIntegrationTests.FixedClock(PostgreSqlDatabaseIntegrationTests.FixedNow),
+            Mock.Of<IDomainEventDispatcher>());
+
+        await context.Database.EnsureCreatedAsync();
+        return context;
+    }
+}
 
 [TestFixture]
 [NonParallelizable]
 public sealed class PostgreSqlDatabaseIntegrationTests
 {
-    private static readonly DateTimeOffset FixedNow =
+    internal static readonly DateTimeOffset FixedNow =
         new(2030, 1, 2, 3, 4, 5, TimeSpan.Zero);
 
     private IntegrationDbContext _context = null!;
     private Guid _tenantId;
 
-    [OneTimeSetUp]
-    public async Task OneTimeSetUp()
-    {
-        await using var context = CreateContext(Guid.NewGuid());
-        await context.Database.EnsureDeletedAsync();
-        await context.Database.EnsureCreatedAsync();
-    }
-
     [SetUp]
     public async Task SetUp()
     {
         _tenantId = Guid.NewGuid();
-        _context = CreateContext(_tenantId);
+        _context = await IntegrationTestDatabase.CreateContextAsync(_tenantId);
 
         await _context.Entities
             .IgnoreQueryFilters()
@@ -36,7 +84,7 @@ public sealed class PostgreSqlDatabaseIntegrationTests
         => await _context.DisposeAsync();
 
     [Test]
-    public async Task Provider_ShouldConnectAndPersistData()
+    public async Task Provider_ShouldUsePostgreSqlAndPersistData()
     {
         var entity = new IntegrationEntity
         {
@@ -53,6 +101,8 @@ public sealed class PostgreSqlDatabaseIntegrationTests
 
         using (Assert.EnterMultipleScope())
         {
+            Assert.That(_context.Database.ProviderName, Is.EqualTo("Npgsql.EntityFrameworkCore.PostgreSQL"));
+            Assert.That(_context.Database.IsNpgsql(), Is.True);
             Assert.That(affected, Is.EqualTo(1));
             Assert.That(persisted.Name, Is.EqualTo("PostgreSQL integration"));
             Assert.That(persisted.TenantId, Is.EqualTo(_tenantId));
@@ -74,6 +124,49 @@ public sealed class PostgreSqlDatabaseIntegrationTests
 
         Assert.That(visible, Has.Count.EqualTo(1));
         Assert.That(visible[0].Name, Is.EqualTo("Current tenant"));
+    }
+
+    [Test]
+    public async Task TenantModelCache_ShouldKeepTenantModelsIndependentAcrossContexts()
+    {
+        Guid firstTenant = Guid.NewGuid();
+        Guid secondTenant = Guid.NewGuid();
+
+        await using IntegrationDbContext firstContext =
+            await IntegrationTestDatabase.CreateContextAsync(firstTenant);
+        await using IntegrationDbContext secondContext =
+            await IntegrationTestDatabase.CreateContextAsync(secondTenant);
+
+        firstContext.Entities.Add(new IntegrationEntity
+        {
+            TenantId = firstTenant,
+            Name = "First tenant"
+        });
+
+        secondContext.Entities.Add(new IntegrationEntity
+        {
+            TenantId = secondTenant,
+            Name = "Second tenant"
+        });
+
+        await firstContext.SaveChangesAsync();
+        await secondContext.SaveChangesAsync();
+
+        List<string> firstVisible = await firstContext.Entities
+            .OrderBy(x => x.Name)
+            .Select(x => x.Name)
+            .ToListAsync();
+
+        List<string> secondVisible = await secondContext.Entities
+            .OrderBy(x => x.Name)
+            .Select(x => x.Name)
+            .ToListAsync();
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(firstVisible, Is.EqualTo(new[] { "First tenant" }));
+            Assert.That(secondVisible, Is.EqualTo(new[] { "Second tenant" }));
+        }
     }
 
     [Test]
@@ -172,40 +265,18 @@ public sealed class PostgreSqlDatabaseIntegrationTests
         await unitOfWork.DisposeAsync();
     }
 
-    private static IntegrationDbContext CreateContext(Guid tenantId)
-    {
-        var options = Options.Create(new KukulcanDatabaseOptions
-        {
-            Provider = DatabaseProvider.PostgresSql,
-            ConnectionString = GetConnectionString(),
-            Retry = new KukulcanDatabaseOptions.RetryOptions { Enabled = false }
-        });
-
-        return new IntegrationDbContext(
-            options,
-            new IntegrationTenantContext(tenantId),
-            new FixedClock(FixedNow),
-            Mock.Of<IDomainEventDispatcher>());
-    }
-
-    private static string GetConnectionString()
-        => Environment.GetEnvironmentVariable("KUKULCAN_DATABASE_INTEGRATION_CONNECTION_STRING")
-           ?? "Host=localhost;Port=5432;Database=kukulcan_sharedkernel_database_integration;Username=postgres;Password=postgres";
-
-    private sealed class IntegrationTenantContext(Guid tenantId) : ITenantContext
+    internal sealed class IntegrationTenantContext(Guid tenantId) : ITenantContext
     {
         public Guid TenantId { get; } = tenantId;
     }
 
-    private sealed class FixedClock(DateTimeOffset now) : IClock
+    internal sealed class FixedClock(DateTimeOffset now) : IClock
     {
         public DateTimeOffset UtcNow { get; } = now;
     }
 
-    private sealed class IntegrationDbContext : KukulcanDbContextBase
+    internal sealed class IntegrationDbContext : KukulcanDbContextBase
     {
-        private readonly string _connectionString;
-
         public IntegrationDbContext(
             IOptions<KukulcanDatabaseOptions> options,
             ITenantContext tenantContext,
@@ -213,16 +284,12 @@ public sealed class PostgreSqlDatabaseIntegrationTests
             IDomainEventDispatcher dispatcher)
             : base(options, tenantContext, clock, dispatcher)
         {
-            _connectionString = options.Value.ConnectionString;
         }
 
-        public DbSet<IntegrationEntity> Entities => Set<IntegrationEntity>();
-
-        protected override void ConfigureProvider(DbContextOptionsBuilder optionsBuilder)
-            => optionsBuilder.UseNpgsql(_connectionString);
+        internal DbSet<IntegrationEntity> Entities => Set<IntegrationEntity>();
     }
 
-    private sealed class IntegrationEntity : IAuditable, ISoftDelete
+    internal sealed class IntegrationEntity : IAuditable, ISoftDelete
     {
         public int Id { get; set; }
         public Guid TenantId { get; set; }
