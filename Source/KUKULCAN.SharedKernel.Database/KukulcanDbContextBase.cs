@@ -30,50 +30,51 @@ namespace KUKULCAN.SharedKernel.Database;
 /// <para>
 /// <b>How to create a module DbContext:</b>
 /// <code>
-/// public sealed class CrmDbContext : KukulcanDbContextBase
+/// public sealed class CrmDbContext(
+///     IOptions&lt;KukulcanDatabaseOptions&gt; options,
+///     ITenantContext tenantContext,
+///     IClock clock,
+///     IDomainEventDispatcher domainEventDispatcher,
+///     SlowQueryInterceptor slowQueryInterceptor)
+///     : KukulcanDbContextBase(
+///         options,
+///         tenantContext,
+///         clock,
+///         domainEventDispatcher,
+///         slowQueryInterceptor)
 /// {
-///     public CrmDbContext(
-///         IOptions&lt;KukulcanDatabaseOptions&gt; options,
-///         ITenantContext      tenantContext,
-///         IClock              clock,
-///         IDomainEventDispatcher domainEventDispatcher)
-///         : base(options, tenantContext, clock, domainEventDispatcher)
-///     { }
-///
 ///     public DbSet&lt;Customer&gt; Customers =&gt; Set&lt;Customer&gt;();
-///     public DbSet&lt;Contact&gt;  Contacts  =&gt; Set&lt;Contact&gt;();
-///
-///     protected override void OnModelCreating(ModelBuilder mBuilder)
-///     {
-///         mBuilder.HasDefaultSchema("crm");
-///         base.OnModelCreating(mBuilder);   // runs auto-discovery + filters
-///     }
+///     public DbSet&lt;Contact&gt; Contacts =&gt; Set&lt;Contact&gt;();
 /// }
 /// </code>
 /// </para>
-/// </remarks>
-/// <remarks>
-/// Initializes a new instance with all required cross-cutting services.
 /// </remarks>
 /// <param name="options">Database configuration options.</param>
 /// <param name="tenantContext">Current tenant context used by persistence filters.</param>
 /// <param name="clock">Clock used by audit and soft-delete interceptors.</param>
 /// <param name="domainEventDispatcher">Dispatcher used after successful saves.</param>
-public abstract class KukulcanDbContextBase(IOptions<KukulcanDatabaseOptions>? options,
-    ITenantContext tenantContext, IClock clock, IDomainEventDispatcher domainEventDispatcher) : DbContext
+/// <param name="slowQueryInterceptor">
+/// Optional slow-query interceptor registered by <see cref="Extensions.ServiceCollectionExtensions.AddKukulcanDbContext{TContext}"/>.
+/// It is optional to preserve compatibility with contexts created outside dependency injection.
+/// </param>
+public abstract class KukulcanDbContextBase(
+    IOptions<KukulcanDatabaseOptions>? options,
+    ITenantContext tenantContext,
+    IClock clock,
+    IDomainEventDispatcher domainEventDispatcher,
+    SlowQueryInterceptor? slowQueryInterceptor = null) : DbContext
 {
     private readonly KukulcanDatabaseOptions _opts = options?.Value ?? throw new ArgumentNullException(nameof(options));
     private readonly ITenantContext _tenantContext = tenantContext ?? throw new ArgumentNullException(nameof(tenantContext));
     private readonly IClock _clock = clock ?? throw new ArgumentNullException(nameof(clock));
     private readonly IDomainEventDispatcher _domainEventDispatcher = domainEventDispatcher ?? throw new ArgumentNullException(nameof(domainEventDispatcher));
+    private readonly SlowQueryInterceptor? _slowQueryInterceptor = slowQueryInterceptor;
     private const string _commandTimeoutMethodName = "CommandTimeout";
 
     /// <summary>
     /// Gets the current tenant identifier used to build the EF Core model cache key.
     /// </summary>
     internal Guid CurrentTenantId => _tenantContext.TenantId;
-
-    // ── OnConfiguring — provider selection ────────────────────────────────────
 
     /// <inheritdoc/>
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
@@ -83,7 +84,13 @@ public abstract class KukulcanDbContextBase(IOptions<KukulcanDatabaseOptions>? o
         // consuming context has already configured its database provider.
         optionsBuilder.ReplaceService<IModelCacheKeyFactory, TenantModelCacheKeyFactory>();
 
-        if (optionsBuilder.IsConfigured) return;
+        // The slow-query interceptor is supplied through constructor injection rather
+        // than through AddDbContext's options callback. This is required because module
+        // DbContexts intentionally do not need to expose DbContextOptions in their
+        // constructors; OnConfiguring therefore remains the authoritative composition
+        // point for all interceptors.
+        if (_slowQueryInterceptor is not null)
+            optionsBuilder.AddInterceptors(_slowQueryInterceptor);
 
         // Register all four interceptors owned directly by this base class.
         optionsBuilder.AddInterceptors(
@@ -91,6 +98,8 @@ public abstract class KukulcanDbContextBase(IOptions<KukulcanDatabaseOptions>? o
             new SoftDeleteInterceptor(_clock),
             new DomainEventDispatchInterceptor(_domainEventDispatcher),
             new ImmutableEntityInterceptor());
+
+        if (optionsBuilder.IsConfigured) return;
 
         if (_opts.EnableSensitiveDataLogging)
             optionsBuilder.EnableSensitiveDataLogging();
@@ -108,8 +117,8 @@ public abstract class KukulcanDbContextBase(IOptions<KukulcanDatabaseOptions>? o
     /// <param name="optionsBuilder">EF Core options builder to configure.</param>
     protected virtual void ConfigureProvider(DbContextOptionsBuilder optionsBuilder)
     {
-        var connStr  = _opts.ConnectionString;
-        var timeout  = _opts.CommandTimeoutSeconds;
+        var connStr = _opts.ConnectionString;
+        var timeout = _opts.CommandTimeoutSeconds;
         var maxRetry = _opts.Retry.Enabled ? _opts.Retry.MaxRetryCount : 0;
         var maxDelay = TimeSpan.FromSeconds(_opts.Retry.MaxRetryDelaySeconds);
 
@@ -127,12 +136,12 @@ public abstract class KukulcanDbContextBase(IOptions<KukulcanDatabaseOptions>? o
         }
     }
 
-    // ── Provider-specific configuration ───────────────────────────────────────
-    // Each method uses reflection to avoid direct package references in this library.
-    // A clear error is thrown when the required NuGet package is missing.
-
-    private static void ConfigureSqlServer(DbContextOptionsBuilder optionsBuilder,
-        string connectionString, int timeoutSec, int maxRetry, TimeSpan maxDelay)
+    private static void ConfigureSqlServer(
+        DbContextOptionsBuilder optionsBuilder,
+        string connectionString,
+        int timeoutSec,
+        int maxRetry,
+        TimeSpan maxDelay)
     {
         try
         {
@@ -140,14 +149,7 @@ public abstract class KukulcanDbContextBase(IOptions<KukulcanDatabaseOptions>? o
                 "Microsoft.EntityFrameworkCore.SqlServerDbContextOptionsExtensions, " +
                 "Microsoft.EntityFrameworkCore.SqlServer") ?? throw NotInstalled("Microsoft.EntityFrameworkCore.SqlServer");
 
-            InvokeProviderUseMethod(
-                type,
-                "UseSqlServer",
-                optionsBuilder,
-                connectionString,
-                timeoutSec,
-                maxRetry,
-                maxDelay);
+            InvokeProviderUseMethod(type, "UseSqlServer", optionsBuilder, connectionString, timeoutSec, maxRetry, maxDelay);
         }
         catch (Exception ex) when (ex is not NotSupportedException)
         {
@@ -155,8 +157,12 @@ public abstract class KukulcanDbContextBase(IOptions<KukulcanDatabaseOptions>? o
         }
     }
 
-    private static void ConfigurePostgresSql(DbContextOptionsBuilder optionsBuilder,
-        string connectionString, int timeoutSec, int maxRetry, TimeSpan maxDelay)
+    private static void ConfigurePostgresSql(
+        DbContextOptionsBuilder optionsBuilder,
+        string connectionString,
+        int timeoutSec,
+        int maxRetry,
+        TimeSpan maxDelay)
     {
         try
         {
@@ -164,14 +170,7 @@ public abstract class KukulcanDbContextBase(IOptions<KukulcanDatabaseOptions>? o
                 "Microsoft.EntityFrameworkCore.NpgsqlDbContextOptionsBuilderExtensions, " +
                 "Npgsql.EntityFrameworkCore.PostgreSQL") ?? throw NotInstalled("Npgsql.EntityFrameworkCore.PostgreSQL");
 
-            InvokeProviderUseMethod(
-                type,
-                "UseNpgsql",
-                optionsBuilder,
-                connectionString,
-                timeoutSec,
-                maxRetry,
-                maxDelay);
+            InvokeProviderUseMethod(type, "UseNpgsql", optionsBuilder, connectionString, timeoutSec, maxRetry, maxDelay);
         }
         catch (Exception ex) when (ex is not NotSupportedException)
         {
@@ -210,8 +209,7 @@ public abstract class KukulcanDbContextBase(IOptions<KukulcanDatabaseOptions>? o
         typeof(KukulcanDbContextBase)
             .GetMethod(nameof(InvokeProviderUseMethodGeneric), BindingFlags.NonPublic | BindingFlags.Static)!
             .MakeGenericMethod(providerOptionsBuilderType)
-            .Invoke(null,
-            [method, optionsBuilder, connectionString, timeoutSec, maxRetry, maxDelay]);
+            .Invoke(null, [method, optionsBuilder, connectionString, timeoutSec, maxRetry, maxDelay]);
     }
 
     private static void InvokeProviderUseMethodGeneric<TProviderOptionsBuilder>(
@@ -225,17 +223,13 @@ public abstract class KukulcanDbContextBase(IOptions<KukulcanDatabaseOptions>? o
         Action<TProviderOptionsBuilder> configure = providerOptions =>
         {
             Type providerOptionsType = providerOptions!.GetType();
-            providerOptionsType
-                .GetMethod(_commandTimeoutMethodName)
-                ?.Invoke(providerOptions, [timeoutSec]);
+            providerOptionsType.GetMethod(_commandTimeoutMethodName)?.Invoke(providerOptions, [timeoutSec]);
 
             if (maxRetry <= 0) return;
 
             MethodInfo? retryMethod = providerOptionsType
                 .GetMethods(BindingFlags.Public | BindingFlags.Instance)
-                .FirstOrDefault(m =>
-                    m.Name == "EnableRetryOnFailure" &&
-                    m.GetParameters().Length == 3);
+                .FirstOrDefault(m => m.Name == "EnableRetryOnFailure" && m.GetParameters().Length == 3);
 
             if (retryMethod is null)
                 throw new NotSupportedException(
@@ -256,20 +250,12 @@ public abstract class KukulcanDbContextBase(IOptions<KukulcanDatabaseOptions>? o
                 $"Failed to configure provider. " +
                 $"Ensure '{package}' is installed in the consuming project.", inner);
 
-    // ── OnModelCreating ────────────────────────────────────────────────────────
-
     /// <inheritdoc/>
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
-
-        // Auto-discover all IEntityTypeConfiguration<T> in the derived module's assembly
         modelBuilder.ApplyConfigurationsFromAssembly(GetType().Assembly);
-
-        // Global soft-delete filter: WHERE IsDeleted = false
         modelBuilder.ApplySoftDeleteFilter();
-
-        // Global tenant isolation filter: WHERE TenantId = @currentTenantId
         modelBuilder.ApplyTenantFilter(_tenantContext);
     }
 }

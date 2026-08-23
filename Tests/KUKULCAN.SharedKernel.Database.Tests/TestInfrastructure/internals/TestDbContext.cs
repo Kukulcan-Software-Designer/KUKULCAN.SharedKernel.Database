@@ -1,7 +1,17 @@
 namespace KUKULCAN.SharedKernel.Database.Tests.TestInfrastructure.internals;
 
-internal sealed class TestDbContext(IOptions<KukulcanDatabaseOptions> options, ITenantContext tenantContext,
-    IClock clock, IDomainEventDispatcher dispatcher) : KukulcanDbContextBase(options, tenantContext, clock, dispatcher)
+internal sealed class TestDbContext(
+    IOptions<KukulcanDatabaseOptions> options,
+    ITenantContext tenantContext,
+    IClock clock,
+    IDomainEventDispatcher dispatcher,
+    SlowQueryInterceptor? slowQueryInterceptor = null)
+    : KukulcanDbContextBase(
+        options,
+        tenantContext,
+        clock,
+        dispatcher,
+        slowQueryInterceptor)
 {
     public DbSet<AuditableEntityForTests> AuditableEntities => Set<AuditableEntityForTests>();
     public DbSet<SoftDeleteEntityForTests> SoftDeleteEntities => Set<SoftDeleteEntityForTests>();
@@ -20,5 +30,3 @@ internal sealed class TestDbContext(IOptions<KukulcanDatabaseOptions> options, I
     protected override void ConfigureProvider(DbContextOptionsBuilder optionsBuilder)
         => optionsBuilder.UseInMemoryDatabase(Guid.NewGuid().ToString());
 }
-
-
