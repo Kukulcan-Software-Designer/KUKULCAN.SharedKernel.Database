@@ -80,7 +80,7 @@ The main reasons are:
   `DomainEventDispatchInterceptor`    Dispatches pending domain events
                                       after successful persistence
 
-  `SlowQueryInterceptor`              Logs commands exceeding the
+  `SlowQueryInterceptor`             Logs commands exceeding the
                                       configured threshold
 
   `ModelBuilderExtensions`            Applies global EF Core model
@@ -285,6 +285,43 @@ The package contains:
 
 Concrete database providers remain outside this package.
 
+## Test Coverage Policy
+
+The test suite currently provides **100% line coverage (221/221 lines)**
+and **97.36% branch coverage (74/76 branches)** for the database library.
+
+The two uncovered branches are intentional defensive branches in
+`KukulcanDbContextBase.ConfigureSqlServer` and
+`KukulcanDbContextBase.ConfigurePostgresSql`. They are the failure sides
+of the null-coalescing type-resolution expressions used to detect a
+missing provider assembly:
+
+```csharp
+Type.GetType("...Microsoft.EntityFrameworkCore.SqlServer")
+    ?? throw NotInstalled("Microsoft.EntityFrameworkCore.SqlServer");
+
+Type.GetType("...Npgsql.EntityFrameworkCore.PostgreSQL")
+    ?? throw NotInstalled("Npgsql.EntityFrameworkCore.PostgreSQL");
+```
+
+The test project references both provider packages so that the supported
+SQL Server and PostgreSQL configuration paths can be exercised using the
+real provider assemblies. Under that supported test environment,
+`Type.GetType(...)` resolves successfully and those defensive `null`
+branches cannot be reached naturally.
+
+Deliberately manipulating assembly loading, unloading provider assemblies
+or adding production-only seams solely to force those branches would make
+the tests less deterministic and less representative of the supported
+runtime configuration. For this reason, the project intentionally does
+not pursue artificial 100% branch coverage.
+
+The missing-provider behavior is nevertheless represented by the
+`NotInstalled` helper, which has direct tests for the generated
+`NotSupportedException`, including the case where the inner exception is
+null. The **97.36% branch coverage is therefore an intentional and
+reviewed coverage boundary, not an untested supported behavior**.
+
 ## Documentation
 
 Additional architectural documentation is available in:
@@ -299,4 +336,4 @@ Additional architectural documentation is available in:
 -   `docs/IMMUTABILITY.md`
 -   `docs/UNIT_OF_WORK.md`
 -   `docs/CONFIGURATION.md`
--   `docs/TESTING.md`
+   

@@ -1,3 +1,4 @@
+using System.Reflection;
 using KUKULCAN.SharedKernel.Database.Tests.TestInfrastructure.internals;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
@@ -211,6 +212,84 @@ public sealed class KukulcanDbContextBaseTests
             () => context.Database.EnsureCreated(),
             Throws.TypeOf<NotSupportedException>()
                 .With.Message.Contains("not supported"));
+    }
+
+    [Test]
+    public void ConfigureSqlServer_WhenProviderConfigurationFails_ShouldWrapOriginalException()
+    {
+        MethodInfo method = typeof(KukulcanDbContextBase).GetMethod(
+            "ConfigureSqlServer",
+            BindingFlags.NonPublic | BindingFlags.Static)!;
+
+        var optionsBuilder = new DbContextOptionsBuilder();
+
+        var invocation = Assert.Throws<TargetInvocationException>(() => method.Invoke(
+            null,
+            [
+                optionsBuilder,
+                "Server=localhost;Database=KukulcanCoverage;Integrated Security=true;TrustServerCertificate=true",
+                int.MinValue,
+                0,
+                TimeSpan.Zero
+            ]));
+
+        Assert.That(invocation!.InnerException, Is.TypeOf<NotSupportedException>());
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(invocation.InnerException!.Message, Does.Contain("Failed to configure provider."));
+            Assert.That(invocation.InnerException.Message, Does.Contain("Microsoft.EntityFrameworkCore.SqlServer"));
+            Assert.That(invocation.InnerException.InnerException, Is.Not.Null);
+        }
+    }
+
+    [Test]
+    public void ConfigurePostgresSql_WhenProviderConfigurationFails_ShouldWrapOriginalException()
+    {
+        MethodInfo method = typeof(KukulcanDbContextBase).GetMethod(
+            "ConfigurePostgresSql",
+            BindingFlags.NonPublic | BindingFlags.Static)!;
+
+        var optionsBuilder = new DbContextOptionsBuilder();
+
+        var invocation = Assert.Throws<TargetInvocationException>(() => method.Invoke(
+            null,
+            [
+                optionsBuilder,
+                "Host=localhost;Database=KukulcanCoverage;Username=test;Password=test",
+                int.MinValue,
+                0,
+                TimeSpan.Zero
+            ]));
+
+        Assert.That(invocation!.InnerException, Is.TypeOf<NotSupportedException>());
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(invocation.InnerException!.Message, Does.Contain("Failed to configure provider."));
+            Assert.That(invocation.InnerException.Message, Does.Contain("Npgsql.EntityFrameworkCore.PostgreSQL"));
+            Assert.That(invocation.InnerException.InnerException, Is.Not.Null);
+        }
+    }
+
+    [Test]
+    public void NotInstalled_WhenInnerExceptionIsNull_ShouldCreateMissingPackageException()
+    {
+        MethodInfo method = typeof(KukulcanDbContextBase)
+            .GetMethod(
+                "NotInstalled",
+                BindingFlags.NonPublic | BindingFlags.Static,
+                binder: null,
+                types: [typeof(string), typeof(Exception)],
+                modifiers: null)!;
+
+        var exception = (NotSupportedException)method.Invoke(null, ["Test.Provider", null])!;
+
+        Assert.That(
+            exception.Message,
+            Is.EqualTo(
+                "Package 'Test.Provider' is not installed. " +
+                "Add it to the consuming module's Infrastructure project."));
     }
 
     private sealed class ConfigurableDbContext(
