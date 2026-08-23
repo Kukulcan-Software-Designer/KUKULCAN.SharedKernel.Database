@@ -1,7 +1,5 @@
 using KUKULCAN.SharedKernel.Database.Abstractions;
-using KUKULCAN.SharedKernel.Database.Configuration;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Options;
 using NUnit.Framework;
 
 namespace KUKULCAN.SharedKernel.Database.Integration;
@@ -18,8 +16,8 @@ public sealed class TransactionErrorIntegrationTests
             await IntegrationTestDatabase.CreateContextAsync(tenantId);
 
         await context.Database.ExecuteSqlRawAsync(
-            "CREATE UNIQUE INDEX IF NOT EXISTS \"UX_IntegrationEntity_TenantId_Name\" " +
-            "ON \"IntegrationEntity\" (\"TenantId\", \"Name\");");
+            "CREATE UNIQUE INDEX IF NOT EXISTS \"UX_Entities_TenantId_Name\" " +
+            "ON \"Entities\" (\"TenantId\", \"Name\");");
 
         var unitOfWork = new UnitOfWork<PostgreSqlDatabaseIntegrationTests.IntegrationDbContext>(context);
 
