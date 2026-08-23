@@ -1,6 +1,7 @@
 using KUKULCAN.SharedKernel.Database.Configuration;
 using KUKULCAN.SharedKernel.Database.Extensions;
 using KUKULCAN.SharedKernel.Database.Interceptors;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.Extensions.Options;
 
 namespace KUKULCAN.SharedKernel.Database;
@@ -39,8 +40,8 @@ namespace KUKULCAN.SharedKernel.Database;
 ///         : base(options, tenantContext, clock, domainEventDispatcher)
 ///     { }
 ///
-///     public DbSet&lt;Customer&gt; Customers => Set&lt;Customer&gt;();
-///     public DbSet&lt;Contact&gt;  Contacts  => Set&lt;Contact&gt;();
+///     public DbSet&lt;Customer&gt; Customers =&gt; Set&lt;Customer&gt;();
+///     public DbSet&lt;Contact&gt;  Contacts  =&gt; Set&lt;Contact&gt;();
 ///
 ///     protected override void OnModelCreating(ModelBuilder mBuilder)
 ///     {
@@ -67,11 +68,21 @@ public abstract class KukulcanDbContextBase(IOptions<KukulcanDatabaseOptions>? o
     private readonly IDomainEventDispatcher _domainEventDispatcher = domainEventDispatcher ?? throw new ArgumentNullException(nameof(domainEventDispatcher));
     private const string _commandTimeoutMethodName = "CommandTimeout";
 
+    /// <summary>
+    /// Gets the current tenant identifier used to build the EF Core model cache key.
+    /// </summary>
+    internal Guid CurrentTenantId => _tenantContext.TenantId;
+
     // ── OnConfiguring — provider selection ────────────────────────────────────
 
     /// <inheritdoc/>
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
+        // EF Core caches the model by DbContext type. Tenant filters are tenant-specific,
+        // therefore the tenant must participate in the model cache key even when the
+        // consuming context has already configured its database provider.
+        optionsBuilder.ReplaceService<IModelCacheKeyFactory, TenantModelCacheKeyFactory>();
+
         if (optionsBuilder.IsConfigured) return;
 
         // Register all five interceptors
@@ -176,7 +187,7 @@ public abstract class KukulcanDbContextBase(IOptions<KukulcanDatabaseOptions>? o
         }
     }
 
-     private static NotSupportedException NotInstalled(string package, Exception? inner = null)
+    private static NotSupportedException NotInstalled(string package, Exception? inner = null)
         => inner is null
             ? new NotSupportedException(
                 $"Package '{package}' is not installed. " +
