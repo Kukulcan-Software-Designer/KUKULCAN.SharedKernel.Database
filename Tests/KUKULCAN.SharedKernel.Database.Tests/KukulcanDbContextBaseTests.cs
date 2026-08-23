@@ -213,6 +213,80 @@ public sealed class KukulcanDbContextBaseTests
                 .With.Message.Contains("not supported"));
     }
 
+    [Test]
+    public void ConfigureSqlServer_WhenProviderConfigurationFails_ShouldWrapOriginalException()
+    {
+        var options = Options.Create(new KukulcanDatabaseOptions
+        {
+            Provider = DatabaseProvider.SqlServer,
+            ConnectionString = null!,
+            Retry = new KukulcanDatabaseOptions.RetryOptions { Enabled = false }
+        });
+
+        using var context = new TestDbContextWithOptions(
+            options,
+            new TestTenantContext(Guid.NewGuid()),
+            new TestClock(DateTimeOffset.UtcNow),
+            Mock.Of<IDomainEventDispatcher>());
+
+        var exception = Assert.Throws<NotSupportedException>(
+            () => context.Database.EnsureCreated());
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(exception!.Message, Does.Contain("Failed to configure provider."));
+            Assert.That(exception.Message, Does.Contain("Microsoft.EntityFrameworkCore.SqlServer"));
+            Assert.That(exception.InnerException, Is.Not.Null);
+        }
+    }
+
+    [Test]
+    public void ConfigurePostgresSql_WhenProviderConfigurationFails_ShouldWrapOriginalException()
+    {
+        var options = Options.Create(new KukulcanDatabaseOptions
+        {
+            Provider = DatabaseProvider.PostgresSql,
+            ConnectionString = null!,
+            Retry = new KukulcanDatabaseOptions.RetryOptions { Enabled = false }
+        });
+
+        using var context = new TestDbContextWithOptions(
+            options,
+            new TestTenantContext(Guid.NewGuid()),
+            new TestClock(DateTimeOffset.UtcNow),
+            Mock.Of<IDomainEventDispatcher>());
+
+        var exception = Assert.Throws<NotSupportedException>(
+            () => context.Database.EnsureCreated());
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(exception!.Message, Does.Contain("Failed to configure provider."));
+            Assert.That(exception.Message, Does.Contain("Npgsql.EntityFrameworkCore.PostgreSQL"));
+            Assert.That(exception.InnerException, Is.Not.Null);
+        }
+    }
+
+    [Test]
+    public void NotInstalled_WhenInnerExceptionIsNull_ShouldCreateMissingPackageException()
+    {
+        MethodInfo method = typeof(KukulcanDbContextBase)
+            .GetMethod(
+                "NotInstalled",
+                BindingFlags.NonPublic | BindingFlags.Static,
+                binder: null,
+                types: [typeof(string), typeof(Exception)],
+                modifiers: null)!;
+
+        var exception = (NotSupportedException)method.Invoke(null, ["Test.Provider", null])!;
+
+        Assert.That(
+            exception.Message,
+            Is.EqualTo(
+                "Package 'Test.Provider' is not installed. " +
+                "Add it to the consuming module's Infrastructure project."));
+    }
+
     private sealed class ConfigurableDbContext(
         IOptions<KukulcanDatabaseOptions> options,
         ITenantContext tenantContext,
