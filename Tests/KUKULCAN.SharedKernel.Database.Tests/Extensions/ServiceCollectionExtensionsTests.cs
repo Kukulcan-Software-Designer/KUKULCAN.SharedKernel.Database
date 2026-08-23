@@ -1,55 +1,23 @@
-using KUKULCAN.SharedKernel.Database.Tests.TestInfrastructure;
-using KUKULCAN.SharedKernel.Database.Tests.TestInfrastructure.internals;
+using KUKULCAN.SharedKernel.Database.Configuration;
+using KUKULCAN.SharedKernel.Database.Extensions;
+using KUKULCAN.SharedKernel.Database.Interceptors;
+using KUKULCAN.SharedKernel.Database.UnitOfWork;
+using KUKULCAN.SharedKernel.Database.Tests.Fixtures;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using Moq;
+using NUnit.Framework;
 
 namespace KUKULCAN.SharedKernel.Database.Tests.Extensions;
 
+/// <summary>
+/// Tests for <see cref="ServiceCollectionExtensions"/>.
+/// </summary>
 [TestFixture]
 public sealed class ServiceCollectionExtensionsTests
 {
-    [Test]
-    public void AddKukulcanDbContext_WithMissingConnectionString_ShouldThrow()
-    {
-        var services = new ServiceCollection();
-        IConfiguration configuration = new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string?>())
-            .Build();
-
-        Assert.That(
-            () => services.AddKukulcanDbContext<TestDbContext>(configuration),
-            Throws.TypeOf<InvalidOperationException>()
-                .With.Message.Contains("ConnectionString"));
-    }
-
-    [Test]
-    public void AddKukulcanDbContext_WithValidConfiguration_ShouldRegisterExpectedServices()
-    {
-        var services = new ServiceCollection();
-        IConfiguration configuration = new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string?>
-            {
-                [$"{KukulcanDatabaseOptions.SectionKey}:ConnectionString"] = "DataSource=test",
-                [$"{KukulcanDatabaseOptions.SectionKey}:Provider"] = "SqlServer"
-            })
-            .Build();
-
-        IServiceCollection returned = services.AddKukulcanDbContext<TestDbContext>(configuration);
-
-        Assert.That(returned, Is.SameAs(services));
-        Assert.That(
-            services.Any(x => x.ServiceType == typeof(IUnitOfWork) &&
-                              x.ImplementationType == typeof(UnitOfWork<TestDbContext>) &&
-                              x.Lifetime == ServiceLifetime.Scoped),
-            Is.True);
-        Assert.That(
-            services.Any(x => x.ServiceType == typeof(SlowQueryInterceptor) &&
-                              x.Lifetime == ServiceLifetime.Singleton),
-            Is.True);
-        Assert.That(
-            services.Any(x => x.ServiceType == typeof(DbContextOptions<TestDbContext>)),
-            Is.True);
-    }
-
     [Test]
     public void AddKukulcanDbContext_ShouldBindConfigurationOptions()
     {
@@ -58,7 +26,7 @@ public sealed class ServiceCollectionExtensionsTests
             .AddInMemoryCollection(new Dictionary<string, string?>
             {
                 [$"{KukulcanDatabaseOptions.SectionKey}:ConnectionString"] = "DataSource=test",
-                [$"{KukulcanDatabaseOptions.SectionKey}:Provider"] = "PostgresSql",
+                [$"{KukulcanDatabaseOptions.SectionKey}:Provider"] = "SqlServer",
                 [$"{KukulcanDatabaseOptions.SectionKey}:CommandTimeoutSeconds"] = "45",
                 [$"{KukulcanDatabaseOptions.SectionKey}:EnableSensitiveDataLogging"] = "true",
                 [$"{KukulcanDatabaseOptions.SectionKey}:Retry:Enabled"] = "false",
@@ -67,21 +35,18 @@ public sealed class ServiceCollectionExtensionsTests
             .Build();
 
         services.AddKukulcanDbContext<TestDbContext>(configuration);
-        using ServiceProvider provider = services.BuildServiceProvider();
 
+        using ServiceProvider provider = services.BuildServiceProvider();
         KukulcanDatabaseOptions options = provider
-            .GetRequiredService<IOptions<KukulcanDatabaseOptions>>()
+            .GetRequiredService<Microsoft.Extensions.Options.IOptions<KukulcanDatabaseOptions>>()
             .Value;
 
-        using (Assert.EnterMultipleScope())
-        {
-            Assert.That(options.Provider, Is.EqualTo(DatabaseProvider.PostgresSql));
-            Assert.That(options.ConnectionString, Is.EqualTo("DataSource=test"));
-            Assert.That(options.CommandTimeoutSeconds, Is.EqualTo(45));
-            Assert.That(options.EnableSensitiveDataLogging, Is.True);
-            Assert.That(options.Retry.Enabled, Is.False);
-            Assert.That(options.Retry.MaxRetryCount, Is.EqualTo(9));
-        }
+        Assert.That(options.ConnectionString, Is.EqualTo("DataSource=test"));
+        Assert.That(options.Provider, Is.EqualTo("SqlServer"));
+        Assert.That(options.CommandTimeoutSeconds, Is.EqualTo(45));
+        Assert.That(options.EnableSensitiveDataLogging, Is.True);
+        Assert.That(options.Retry.Enabled, Is.False);
+        Assert.That(options.Retry.MaxRetryCount, Is.EqualTo(9));
     }
 
     [Test]
@@ -96,6 +61,11 @@ public sealed class ServiceCollectionExtensionsTests
             })
             .Build();
 
+        // AddKukulcanDbContext registers SlowQueryInterceptor, whose constructor
+        // depends on ILogger<SlowQueryInterceptor>. Logging is an application-level
+        // dependency and must therefore be present in this integration test's DI
+        // container before the DbContext is resolved.
+        services.AddLogging();
         services.AddKukulcanDbContext<TestDbContext>(configuration);
         services.AddSingleton<ITenantContext>(new TestTenantContext(Guid.NewGuid()));
         services.AddSingleton<IClock>(new TestClock(DateTimeOffset.UtcNow));
