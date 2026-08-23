@@ -250,7 +250,7 @@ public sealed class PostgreSqlDatabaseIntegrationTests
             => optionsBuilder.UseNpgsql(_connectionString);
     }
 
-    private sealed class IntegrationEntity : IAuditable, ISoftDelete
+    internal sealed class IntegrationEntity : IAuditable, ISoftDelete
     {
         public int Id { get; set; }
         public Guid TenantId { get; set; }
