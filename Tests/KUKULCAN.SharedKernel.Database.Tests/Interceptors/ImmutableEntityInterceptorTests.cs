@@ -33,6 +33,22 @@ public sealed class ImmutableEntityInterceptorTests
     }
 
     [Test]
+    public void SavingChanges_SyncPath_WhenImmutableEntityIsModified_ShouldThrow()
+    {
+        using var context = DatabaseTestContextFactory.Create().Context;
+        var entity = new ImmutableEntityForTests { Value = "original" };
+        context.Add(entity);
+        context.SaveChanges();
+
+        entity.Value = "changed";
+
+        Assert.That(
+            () => context.SaveChanges(),
+            Throws.TypeOf<InvalidOperationException>()
+                .With.Message.Contains("immutable"));
+    }
+
+    [Test]
     public void SavingChanges_SyncPath_WhenImmutableEntityIsDeleted_ShouldThrow()
     {
         using var context = DatabaseTestContextFactory.Create().Context;
@@ -46,5 +62,30 @@ public sealed class ImmutableEntityInterceptorTests
             () => context.SaveChanges(),
             Throws.TypeOf<InvalidOperationException>()
                 .With.Message.Contains("immutable"));
+    }
+
+    [Test]
+    public async Task SavingChangesAsync_WhenImmutableEntityIsDeleted_ShouldThrow()
+    {
+        await using var context = DatabaseTestContextFactory.Create().Context;
+        var entity = new ImmutableEntityForTests { Value = "original" };
+        context.Add(entity);
+        await context.SaveChangesAsync();
+
+        context.Remove(entity);
+
+        Assert.That(
+            () => context.SaveChangesAsync(),
+            Throws.TypeOf<InvalidOperationException>()
+                .With.Message.Contains("immutable"));
+    }
+
+    [Test]
+    public async Task SavingChanges_WhenNoImmutableEntityIsModified_ShouldSucceed()
+    {
+        await using var context = DatabaseTestContextFactory.Create().Context;
+        context.Add(new ImmutableEntityForTests { Value = "original" });
+
+        Assert.That(await context.SaveChangesAsync(), Is.EqualTo(1));
     }
 }
