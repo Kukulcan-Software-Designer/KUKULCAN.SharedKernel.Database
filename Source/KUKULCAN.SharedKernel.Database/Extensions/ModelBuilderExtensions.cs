@@ -71,9 +71,11 @@ public static class ModelBuilderExtensions
 
     private static void SetSoftDeleteFilter<T>(ModelBuilder modelBuilder)
         where T : class, ISoftDelete
-        => modelBuilder.Entity<T>().HasQueryFilter(e => !e.IsDeleted);
+        => modelBuilder.Entity<T>()
+            .HasQueryFilter("SoftDeleteFilter", e => !e.IsDeleted);
 
     private static void SetTenantFilter<T>(ModelBuilder modelBuilder, ITenantContext tenantContext)
         where T : class
-        => modelBuilder.Entity<T>().HasQueryFilter(e => EF.Property<Guid>(e, "TenantId") == tenantContext.TenantId);
+        => modelBuilder.Entity<T>()
+            .HasQueryFilter("TenantFilter", e => EF.Property<Guid>(e, "TenantId") == tenantContext.TenantId);
 }
