@@ -330,3 +330,26 @@ public sealed class KukulcanDbContextBaseTests
         IDomainEventDispatcher dispatcher)
         : KukulcanDbContextBase(options, tenantContext, clock, dispatcher)
     {
+    }
+
+    private sealed class CombinedFilterTestDbContext(
+        IOptions<KukulcanDatabaseOptions> options,
+        ITenantContext tenantContext,
+        IClock clock,
+        IDomainEventDispatcher dispatcher)
+        : KukulcanDbContextBase(options, tenantContext, clock, dispatcher)
+    {
+        public DbSet<CombinedFilterEntity> Entities => Set<CombinedFilterEntity>();
+
+        protected override void ConfigureProvider(DbContextOptionsBuilder optionsBuilder)
+            => optionsBuilder.UseInMemoryDatabase(Guid.NewGuid().ToString());
+    }
+
+    private sealed class CombinedFilterEntity : ISoftDelete
+    {
+        public int Id { get; set; }
+        public Guid TenantId { get; set; }
+        public bool IsDeleted { get; set; }
+        public DateTimeOffset? DeletedOn { get; set; }
+    }
+}
