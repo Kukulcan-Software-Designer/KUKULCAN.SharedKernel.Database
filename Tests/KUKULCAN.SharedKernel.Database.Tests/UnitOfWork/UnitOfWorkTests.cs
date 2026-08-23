@@ -1,6 +1,3 @@
-using KUKULCAN.SharedKernel.Database.Tests.TestInfrastructure;
-using KUKULCAN.SharedKernel.Database.Tests.TestInfrastructure.internals;
-
 namespace KUKULCAN.SharedKernel.Database.Tests.UnitOfWork;
 
 [TestFixture]
@@ -10,19 +7,8 @@ public sealed class UnitOfWorkTests
     public void Constructor_WithNullContext_ShouldThrow()
     {
         Assert.That(
-            () => new UnitOfWork<TestDbContext>(null!),
+            () => new UnitOfWork<TransactionTestDbContext>(null!),
             Throws.TypeOf<ArgumentNullException>());
-    }
-
-    [Test]
-    public async Task SaveChangesAsync_ShouldDelegateToContext()
-    {
-        await using var fixture = TransactionContextFixture.Create();
-        var unit = new UnitOfWork<TransactionTestDbContext>(fixture.Context);
-
-        int result = await unit.SaveChangesAsync();
-
-        Assert.That(result, Is.EqualTo(0));
     }
 
     [Test]
@@ -37,7 +23,6 @@ public sealed class UnitOfWorkTests
             async () => await unit.BeginTransactionAsync());
 
         Assert.That(exception!.Message, Does.Contain("already in progress"));
-
         await unit.RollbackTransactionAsync();
     }
 
@@ -75,7 +60,8 @@ public sealed class UnitOfWorkTests
         using var cancellation = new CancellationTokenSource();
         cancellation.Cancel();
 
-        Assert.ThrowsAsync<OperationCanceledException>(
+        Assert.ThrowsAsync(
+            Is.InstanceOf<OperationCanceledException>(),
             async () => await unit.CommitTransactionAsync(cancellation.Token));
 
         Assert.DoesNotThrowAsync(() => unit.BeginTransactionAsync());
@@ -116,7 +102,8 @@ public sealed class UnitOfWorkTests
         using var cancellation = new CancellationTokenSource();
         cancellation.Cancel();
 
-        Assert.ThrowsAsync<OperationCanceledException>(
+        Assert.ThrowsAsync(
+            Is.InstanceOf<OperationCanceledException>(),
             async () => await unit.RollbackTransactionAsync(cancellation.Token));
 
         Assert.DoesNotThrowAsync(() => unit.BeginTransactionAsync());
@@ -162,6 +149,16 @@ public sealed class UnitOfWorkTests
     }
 
     [Test]
+    public async Task Dispose_WhenNoTransactionIsActive_ShouldBeIdempotent()
+    {
+        await using var fixture = TransactionContextFixture.Create();
+        var unit = new UnitOfWork<TransactionTestDbContext>(fixture.Context);
+
+        Assert.DoesNotThrow(() => unit.Dispose());
+        Assert.DoesNotThrow(() => unit.Dispose());
+    }
+
+    [Test]
     public async Task DisposeAsync_ShouldReleaseActiveTransaction()
     {
         await using var fixture = TransactionContextFixture.Create();
@@ -175,66 +172,17 @@ public sealed class UnitOfWorkTests
     }
 
     [Test]
-    public async Task Dispose_WhenNoTransactionIsActive_ShouldBeIdempotent()
+    public async Task SaveChangesAsync_ShouldDelegateToContext()
     {
         await using var fixture = TransactionContextFixture.Create();
         var unit = new UnitOfWork<TransactionTestDbContext>(fixture.Context);
 
-        Assert.DoesNotThrow(() => unit.Dispose());
-        Assert.DoesNotThrow(() => unit.Dispose());
-    }
+        var entity = new TransactionEntity();
+        fixture.Context.Entities.Add(entity);
 
-    private sealed class TransactionTestDbContext(
-        IOptions<KukulcanDatabaseOptions> options,
-        ITenantContext tenantContext,
-        IClock clock,
-        IDomainEventDispatcher dispatcher,
-        Microsoft.Data.Sqlite.SqliteConnection connection)
-        : KukulcanDbContextBase(options, tenantContext, clock, dispatcher)
-    {
-        protected override void ConfigureProvider(DbContextOptionsBuilder optionsBuilder)
-            => optionsBuilder.UseSqlite(connection);
-    }
+        int result = await unit.SaveChangesAsync();
 
-    private sealed class TransactionContextFixture : IAsyncDisposable
-    {
-        private readonly Microsoft.Data.Sqlite.SqliteConnection _connection;
-
-        private TransactionContextFixture(
-            Microsoft.Data.Sqlite.SqliteConnection connection,
-            TransactionTestDbContext context)
-        {
-            _connection = connection;
-            Context = context;
-        }
-
-        public TransactionTestDbContext Context { get; }
-
-        public static TransactionContextFixture Create()
-        {
-            var connection = new Microsoft.Data.Sqlite.SqliteConnection("Data Source=:memory:");
-            connection.Open();
-
-            var options = Options.Create(new KukulcanDatabaseOptions
-            {
-                Provider = DatabaseProvider.SqlServer,
-                ConnectionString = "ignored"
-            });
-
-            var context = new TransactionTestDbContext(
-                options,
-                new TestTenantContext(Guid.NewGuid()),
-                new TestClock(DateTimeOffset.UtcNow),
-                Mock.Of<IDomainEventDispatcher>(),
-                connection);
-
-            return new TransactionContextFixture(connection, context);
-        }
-
-        public async ValueTask DisposeAsync()
-        {
-            await Context.DisposeAsync();
-            await _connection.DisposeAsync();
-        }
+        Assert.That(result, Is.EqualTo(1));
+        Assert.That(await fixture.Context.Entities.CountAsync(), Is.EqualTo(1));
     }
 }
