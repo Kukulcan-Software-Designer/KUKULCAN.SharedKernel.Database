@@ -1,0 +1,40 @@
+name: Code Coverage
+
+on:
+  push:
+    branches:
+      - main
+      - 'TEST/ADDCobertura'
+  workflow_dispatch:
+
+jobs:
+  coverage:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 10
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Restore
+        run: dotnet restore Tests/KUKULCAN.SharedKernel.Database.Tests/KUKULCAN.SharedKernel.Database.Tests.csproj
+
+      - name: Test with coverage
+        run: >-
+          dotnet test
+          Tests/KUKULCAN.SharedKernel.Database.Tests/KUKULCAN.SharedKernel.Database.Tests.csproj
+          --configuration Release
+          --settings Tests/KUKULCAN.SharedKernel.Database.Tests/coverage.runsettings
+          --logger "console;verbosity=normal"
+          --collect:"XPlat Code Coverage"
+
+      - name: Upload Cobertura report
+        uses: actions/upload-artifact@v4
+        with:
+          name: kukulcan-sharedkernel-database-coverage
+          path: Tests/KUKULCAN.SharedKernel.Database.Tests/TestResults/**/coverage.cobertura.xml
+          if-no-files-found: error
