@@ -84,7 +84,7 @@ public sealed class PostgreSqlDatabaseIntegrationTests
         => await _context.DisposeAsync();
 
     [Test]
-    public async Task Provider_ShouldConnectAndPersistData()
+    public async Task Provider_ShouldUsePostgreSqlAndPersistData()
     {
         var entity = new IntegrationEntity
         {
@@ -101,6 +101,8 @@ public sealed class PostgreSqlDatabaseIntegrationTests
 
         using (Assert.EnterMultipleScope())
         {
+            Assert.That(_context.Database.ProviderName, Is.EqualTo("Npgsql.EntityFrameworkCore.PostgreSQL"));
+            Assert.That(_context.Database.IsNpgsql(), Is.True);
             Assert.That(affected, Is.EqualTo(1));
             Assert.That(persisted.Name, Is.EqualTo("PostgreSQL integration"));
             Assert.That(persisted.TenantId, Is.EqualTo(_tenantId));
@@ -122,6 +124,49 @@ public sealed class PostgreSqlDatabaseIntegrationTests
 
         Assert.That(visible, Has.Count.EqualTo(1));
         Assert.That(visible[0].Name, Is.EqualTo("Current tenant"));
+    }
+
+    [Test]
+    public async Task TenantModelCache_ShouldKeepTenantModelsIndependentAcrossContexts()
+    {
+        Guid firstTenant = Guid.NewGuid();
+        Guid secondTenant = Guid.NewGuid();
+
+        await using IntegrationDbContext firstContext =
+            await IntegrationTestDatabase.CreateContextAsync(firstTenant);
+        await using IntegrationDbContext secondContext =
+            await IntegrationTestDatabase.CreateContextAsync(secondTenant);
+
+        firstContext.Entities.Add(new IntegrationEntity
+        {
+            TenantId = firstTenant,
+            Name = "First tenant"
+        });
+
+        secondContext.Entities.Add(new IntegrationEntity
+        {
+            TenantId = secondTenant,
+            Name = "Second tenant"
+        });
+
+        await firstContext.SaveChangesAsync();
+        await secondContext.SaveChangesAsync();
+
+        List<string> firstVisible = await firstContext.Entities
+            .OrderBy(x => x.Name)
+            .Select(x => x.Name)
+            .ToListAsync();
+
+        List<string> secondVisible = await secondContext.Entities
+            .OrderBy(x => x.Name)
+            .Select(x => x.Name)
+            .ToListAsync();
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(firstVisible, Is.EqualTo(new[] { "First tenant" }));
+            Assert.That(secondVisible, Is.EqualTo(new[] { "Second tenant" }));
+        }
     }
 
     [Test]
@@ -232,8 +277,6 @@ public sealed class PostgreSqlDatabaseIntegrationTests
 
     internal sealed class IntegrationDbContext : KukulcanDbContextBase
     {
-        private readonly string _connectionString;
-
         public IntegrationDbContext(
             IOptions<KukulcanDatabaseOptions> options,
             ITenantContext tenantContext,
@@ -241,13 +284,9 @@ public sealed class PostgreSqlDatabaseIntegrationTests
             IDomainEventDispatcher dispatcher)
             : base(options, tenantContext, clock, dispatcher)
         {
-            _connectionString = options.Value.ConnectionString;
         }
 
         internal DbSet<IntegrationEntity> Entities => Set<IntegrationEntity>();
-
-        protected override void ConfigureProvider(DbContextOptionsBuilder optionsBuilder)
-            => optionsBuilder.UseNpgsql(_connectionString);
     }
 
     internal sealed class IntegrationEntity : IAuditable, ISoftDelete
