@@ -116,6 +116,16 @@ The test project intentionally references both provider packages in order to exe
 
 The resulting **97.36% branch coverage is therefore intentional and documented**, rather than an indication of an untested supported behavior. The `NotInstalled` behavior itself is tested directly, including the missing-inner-exception scenario.
 
+## Integration Testing
+
+Integration tests are maintained separately from the unit-test and coverage projects in `Tests/KUKULCAN.SharedKernel.Database.Integration`.
+
+The first integration provider is **PostgreSQL**. The integration suite uses a real PostgreSQL instance to validate provider connectivity, persistence, tenant isolation, soft-delete interception, audit timestamps and database transactions through `UnitOfWork<TContext>`.
+
+The integration suite deliberately has **no Coverlet dependency and no code-coverage threshold**. Its purpose is to prove that the persistence infrastructure works against a real database engine, not to maximize a coverage percentage. Unit tests remain responsible for deterministic code-path and branch coverage.
+
+GitHub Actions provisions PostgreSQL 16 as a service container and runs the integration suite independently from the unit-test and coverage workflows. Local execution can use the default PostgreSQL connection string or override it through `KUKULCAN_DATABASE_INTEGRATION_CONNECTION_STRING`.
+
 ## License
 
 See the repository `LICENSE` file for the applicable GPL terms.

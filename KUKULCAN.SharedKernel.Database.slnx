@@ -59,6 +59,7 @@
     <File Path=".github/workflows/delete-merged-branches.yml" />
     <File Path=".github\workflows\ci.yml" />
     <File Path=".github\workflows\coverage.yml" />
+    <File Path=".github\workflows\integration-tests.yml" />
     <File Path=".github\workflows\unit-tests.yml" />
   </Folder>
 
@@ -71,6 +72,7 @@
   </Folder>
 
   <Folder Name="/Tests/">
+    <Project Path="Tests/KUKULCAN.SharedKernel.Database.Integration/KUKULCAN.SharedKernel.Database.Integration.csproj" />
     <Project Path="Tests/KUKULCAN.SharedKernel.Database.Tests/KUKULCAN.SharedKernel.Database.Tests.csproj" />
   </Folder>
 

@@ -1,0 +1,51 @@
+name: Database Integration Tests
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  postgresql-integration-tests:
+    name: PostgreSQL integration tests
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: kukulcan_sharedkernel_database_integration
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d kukulcan_sharedkernel_database_integration"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      KUKULCAN_DATABASE_INTEGRATION_CONNECTION_STRING: Host=localhost;Port=5432;Database=kukulcan_sharedkernel_database_integration;Username=postgres;Password=postgres
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Restore integration tests
+        run: dotnet restore Tests/KUKULCAN.SharedKernel.Database.Integration/KUKULCAN.SharedKernel.Database.Integration.csproj
+
+      - name: Build integration tests
+        run: dotnet build Tests/KUKULCAN.SharedKernel.Database.Integration/KUKULCAN.SharedKernel.Database.Integration.csproj --no-restore --configuration Release
+
+      - name: Run PostgreSQL integration tests
+        run: dotnet test Tests/KUKULCAN.SharedKernel.Database.Integration/KUKULCAN.SharedKernel.Database.Integration.csproj --no-build --configuration Release --logger "console;verbosity=normal"

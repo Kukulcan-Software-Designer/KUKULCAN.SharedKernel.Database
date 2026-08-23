@@ -1,0 +1,9 @@
+global using KUKULCAN.SharedKernel.Abstractions;
+global using KUKULCAN.SharedKernel.Abstractions.Capabilities;
+global using KUKULCAN.SharedKernel.DomainEvents.Abstractions;
+global using KUKULCAN.SharedKernel.Database.Abstractions;
+global using KUKULCAN.SharedKernel.Database.Configuration;
+global using KUKULCAN.SharedKernel.Database.UnitOfWork;
+global using Microsoft.EntityFrameworkCore;
+global using Microsoft.Extensions.Options;
+global using Moq;
