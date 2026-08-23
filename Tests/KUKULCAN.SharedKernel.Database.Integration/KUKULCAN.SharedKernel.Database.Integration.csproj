@@ -22,5 +22,6 @@
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.*" />
     <PackageReference Include="Moq" Version="4.*" />
     <PackageReference Include="Testcontainers.PostgreSql" Version="4.*" />
+    <PackageReference Include="coverlet.collector" Version="6.*" />
   </ItemGroup>
 </Project>
