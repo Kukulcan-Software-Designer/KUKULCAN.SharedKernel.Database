@@ -3,6 +3,7 @@ using KUKULCAN.SharedKernel.Abstractions;
 using KUKULCAN.SharedKernel.Database.Abstractions;
 using KUKULCAN.SharedKernel.Database.Configuration;
 using KUKULCAN.SharedKernel.Database.Extensions;
+using KUKULCAN.SharedKernel.Database.Interceptors;
 using KUKULCAN.SharedKernel.DomainEvents.Abstractions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -245,7 +246,7 @@ public sealed class PostgreSqlDatabaseIntegrationTests
     [Test]
     public async Task AddKukulcanDbContext_ShouldRegisterContextAndUnitOfWorkAgainstRealPostgreSql()
     {
-        var logger = new CapturingLogger<Interceptors.SlowQueryInterceptor>();
+        var logger = new CapturingLogger<SlowQueryInterceptor>();
         using ServiceProvider provider = BuildServiceProvider(
             commandTimeoutSeconds: 30,
             retryEnabled: true,
@@ -268,22 +269,28 @@ public sealed class PostgreSqlDatabaseIntegrationTests
     [Test]
     public async Task SlowQueryInterceptor_ShouldLogRealPostgreSqlCommandAboveThreshold()
     {
-        int previousThreshold = Interceptors.SlowQueryInterceptor.SlowQueryThresholdMs;
-        Interceptors.SlowQueryInterceptor.SlowQueryThresholdMs = 0;
+        int previousThreshold = SlowQueryInterceptor.SlowQueryThresholdMs;
+        SlowQueryInterceptor.SlowQueryThresholdMs = 0;
 
         try
         {
-            var logger = new CapturingLogger<Interceptors.SlowQueryInterceptor>();
+            var logger = new CapturingLogger<SlowQueryInterceptor>();
             using ServiceProvider provider = BuildServiceProvider(30, false, logger);
+            SlowQueryInterceptor registeredInterceptor = provider.GetRequiredService<SlowQueryInterceptor>();
             await using IntegrationDbContext context = provider.GetRequiredService<IntegrationDbContext>();
 
-            await context.Database.ExecuteSqlRawAsync("SELECT pg_sleep(0.01);");
+            using (Assert.EnterMultipleScope())
+            {
+                Assert.That(context.SlowQueryInterceptor, Is.SameAs(registeredInterceptor));
+            }
+
+            await context.Database.ExecuteSqlRawAsync("SELECT pg_sleep(0.1);");
 
             Assert.That(logger.WarningMessages, Has.Some.Contains("[SlowQuery]"));
         }
         finally
         {
-            Interceptors.SlowQueryInterceptor.SlowQueryThresholdMs = previousThreshold;
+            SlowQueryInterceptor.SlowQueryThresholdMs = previousThreshold;
         }
     }
 
@@ -398,7 +405,7 @@ public sealed class PostgreSqlDatabaseIntegrationTests
     private static ServiceProvider BuildServiceProvider(
         int commandTimeoutSeconds,
         bool retryEnabled,
-        ILogger<Interceptors.SlowQueryInterceptor> logger)
+        ILogger<SlowQueryInterceptor> logger)
     {
         var configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>
@@ -435,13 +442,17 @@ public sealed class PostgreSqlDatabaseIntegrationTests
 
     internal sealed class IntegrationDbContext : KukulcanDbContextBase
     {
+        internal SlowQueryInterceptor? SlowQueryInterceptor { get; }
+
         public IntegrationDbContext(
             IOptions<KukulcanDatabaseOptions> options,
             ITenantContext tenantContext,
             IClock clock,
-            IDomainEventDispatcher dispatcher)
-            : base(options, tenantContext, clock, dispatcher)
+            IDomainEventDispatcher dispatcher,
+            SlowQueryInterceptor? slowQueryInterceptor = null)
+            : base(options, tenantContext, clock, dispatcher, slowQueryInterceptor)
         {
+            SlowQueryInterceptor = slowQueryInterceptor;
         }
 
         internal DbSet<IntegrationEntity> Entities => Set<IntegrationEntity>();
