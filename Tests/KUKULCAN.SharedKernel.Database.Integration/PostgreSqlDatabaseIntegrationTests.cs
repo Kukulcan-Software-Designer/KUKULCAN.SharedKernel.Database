@@ -75,7 +75,7 @@ public sealed class PostgreSqlDatabaseIntegrationTests
     }
 
     [Test]
-    public async Task SoftDelete_ShouldPersistLogicalDeleteAndHideTheRow()
+    public async Task SoftDeleteInterceptor_ShouldConvertDeleteIntoLogicalDelete()
     {
         var entity = new IntegrationEntity
         {
@@ -86,7 +86,7 @@ public sealed class PostgreSqlDatabaseIntegrationTests
         _context.Entities.Add(entity);
         await _context.SaveChangesAsync();
 
-        entity.IsDeleted = true;
+        _context.Entities.Remove(entity);
         await _context.SaveChangesAsync();
 
         Assert.That(await _context.Entities.AnyAsync(x => x.Id == entity.Id), Is.False);
@@ -95,7 +95,11 @@ public sealed class PostgreSqlDatabaseIntegrationTests
             .IgnoreQueryFilters()
             .SingleAsync(x => x.Id == entity.Id);
 
-        Assert.That(deleted.IsDeleted, Is.True);
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(deleted.IsDeleted, Is.True);
+            Assert.That(deleted.DeletedOn, Is.EqualTo(FixedNow));
+        }
     }
 
     [Test]
