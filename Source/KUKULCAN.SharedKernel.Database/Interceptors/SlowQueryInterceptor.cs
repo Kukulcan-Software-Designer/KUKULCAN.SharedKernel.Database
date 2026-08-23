@@ -32,7 +32,7 @@ namespace KUKULCAN.SharedKernel.Database.Interceptors;
 /// </example>
 /// <param name="logger">Logger used to report slow database commands.</param>
 /// <param name="options">Database options controlling sensitive-data logging.</param>
-public sealed class SlowQueryInterceptor(Logger<SlowQueryInterceptor> logger, IOptions<KukulcanDatabaseOptions> options) : DbCommandInterceptor
+public sealed class SlowQueryInterceptor(ILogger<SlowQueryInterceptor> logger, IOptions<KukulcanDatabaseOptions> options) : DbCommandInterceptor
 {
     /// <summary>
     /// Commands taking longer than this value (milliseconds) are logged as warnings.
@@ -40,7 +40,6 @@ public sealed class SlowQueryInterceptor(Logger<SlowQueryInterceptor> logger, IO
     /// </summary>
     public static int SlowQueryThresholdMs { get; set; } = 500;
 
-    private readonly ILogger<SlowQueryInterceptor> _logger = logger;
     private readonly KukulcanDatabaseOptions _options = options.Value;
 
     /// <inheritdoc/>
@@ -69,7 +68,7 @@ public sealed class SlowQueryInterceptor(Logger<SlowQueryInterceptor> logger, IO
             ? command.CommandText
             : "[SQL hidden — EnableSensitiveDataLogging is false]";
 
-        _logger.LogWarning(
+        logger.LogWarning(
             "[SlowQuery] {ElapsedMs}ms exceeded threshold ({ThresholdMs}ms). SQL: {Sql}",
             (int)duration.TotalMilliseconds,
             SlowQueryThresholdMs,
