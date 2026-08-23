@@ -1,3 +1,5 @@
+using NUnit.Framework;
+
 namespace KUKULCAN.SharedKernel.Database.Integration;
 
 [TestFixture]
