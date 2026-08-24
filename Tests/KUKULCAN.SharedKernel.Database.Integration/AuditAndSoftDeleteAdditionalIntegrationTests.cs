@@ -75,6 +75,41 @@ public sealed class AuditAndSoftDeleteAdditionalIntegrationTests
     }
 
     [Test]
+    public async Task SoftDeleteInterceptor_ShouldApplyAuditMetadataWhenEntityIsDeleted()
+    {
+        Guid tenantId = Guid.NewGuid();
+        await using PostgreSqlDatabaseIntegrationTests.IntegrationDbContext context =
+            await IntegrationTestDatabase.CreateContextAsync(tenantId);
+
+        var entity = new PostgreSqlDatabaseIntegrationTests.IntegrationEntity
+        {
+            TenantId = tenantId,
+            Name = "Audited soft delete"
+        };
+
+        context.Entities.Add(entity);
+        await context.SaveChangesAsync();
+        DateTimeOffset createdOn = entity.CreatedOn;
+
+        context.Entities.Remove(entity);
+        int affected = await context.SaveChangesAsync();
+        context.ChangeTracker.Clear();
+
+        PostgreSqlDatabaseIntegrationTests.IntegrationEntity persisted = await context.Entities
+            .IgnoreQueryFilters()
+            .SingleAsync(x => x.Id == entity.Id);
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(affected, Is.EqualTo(1));
+            Assert.That(persisted.IsDeleted, Is.True);
+            Assert.That(persisted.CreatedOn, Is.EqualTo(createdOn));
+            Assert.That(persisted.ModifiedOn, Is.EqualTo(FixedNow));
+            Assert.That(persisted.DeletedOn, Is.EqualTo(FixedNow));
+        }
+    }
+
+    [Test]
     public async Task SoftDeleteInterceptor_ShouldConvertMultipleDeletesWithoutPhysicalDeletion()
     {
         Guid tenantId = Guid.NewGuid();
