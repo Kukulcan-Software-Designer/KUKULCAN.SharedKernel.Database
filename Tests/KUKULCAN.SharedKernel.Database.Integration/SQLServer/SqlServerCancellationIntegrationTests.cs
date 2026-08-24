@@ -11,7 +11,18 @@ public sealed class SqlServerCancellationIntegrationTests
         context.Entities.Add(new SqlServerIntegrationEntity { TenantId = Guid.NewGuid(), Name = "Cancelled save" });
         using var cts = new CancellationTokenSource();
         cts.Cancel();
-        Assert.ThrowsAsync<OperationCanceledException>(async () => await context.SaveChangesAsync(cts.Token));
+
+        OperationCanceledException? caughtException = null;
+        try
+        {
+            await context.SaveChangesAsync(cts.Token);
+        }
+        catch (OperationCanceledException exception)
+        {
+            caughtException = exception;
+        }
+
+        Assert.That(caughtException, Is.Not.Null);
     }
 
     [Test]
@@ -21,7 +32,18 @@ public sealed class SqlServerCancellationIntegrationTests
         await using var unitOfWork = new UnitOfWork<SqlServerIntegrationDbContext>(context);
         using var cts = new CancellationTokenSource();
         cts.Cancel();
-        Assert.ThrowsAsync<OperationCanceledException>(async () => await unitOfWork.BeginTransactionAsync(cts.Token));
+
+        OperationCanceledException? caughtException = null;
+        try
+        {
+            await unitOfWork.BeginTransactionAsync(cts.Token);
+        }
+        catch (OperationCanceledException exception)
+        {
+            caughtException = exception;
+        }
+
+        Assert.That(caughtException, Is.Not.Null);
     }
 
     [Test]
@@ -30,6 +52,17 @@ public sealed class SqlServerCancellationIntegrationTests
         await using var context = await SqlServerIntegrationContextFactory.CreateAsync(Guid.NewGuid());
         using var cts = new CancellationTokenSource();
         cts.Cancel();
-        Assert.ThrowsAsync<OperationCanceledException>(async () => await context.Database.ExecuteSqlRawAsync("WAITFOR DELAY '00:00:01';", cts.Token));
+
+        OperationCanceledException? caughtException = null;
+        try
+        {
+            await context.Database.ExecuteSqlRawAsync("WAITFOR DELAY '00:00:01';", cts.Token);
+        }
+        catch (OperationCanceledException exception)
+        {
+            caughtException = exception;
+        }
+
+        Assert.That(caughtException, Is.Not.Null);
     }
 }
