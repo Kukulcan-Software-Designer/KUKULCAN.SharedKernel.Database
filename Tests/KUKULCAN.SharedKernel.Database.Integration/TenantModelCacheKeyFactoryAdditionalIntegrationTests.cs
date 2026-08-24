@@ -61,7 +61,8 @@ public sealed class TenantModelCacheKeyFactoryAdditionalIntegrationTests
     [Test]
     public void TenantModelCacheKeyFactory_ShouldRejectNullContext()
     {
-        var factory = new TenantModelCacheKeyFactory();
+        using var context = new PlainDbContext();
+        IModelCacheKeyFactory factory = context.GetService<IModelCacheKeyFactory>();
 
         Assert.Throws<ArgumentNullException>(() => factory.Create(null!, designTime: false));
     }
@@ -69,9 +70,9 @@ public sealed class TenantModelCacheKeyFactoryAdditionalIntegrationTests
     [Test]
     public void TenantModelCacheKeyFactory_ShouldIgnoreTenantForNonKukulcanContext()
     {
-        var factory = new TenantModelCacheKeyFactory();
         using var firstContext = new PlainDbContext();
         using var secondContext = new PlainDbContext();
+        IModelCacheKeyFactory factory = firstContext.GetService<IModelCacheKeyFactory>();
 
         object firstKey = factory.Create(firstContext, designTime: false);
         object secondKey = factory.Create(secondContext, designTime: false);
@@ -82,8 +83,8 @@ public sealed class TenantModelCacheKeyFactoryAdditionalIntegrationTests
     [Test]
     public void TenantModelCacheKeyFactory_ShouldKeepNonKukulcanDesignTimeKeysDistinct()
     {
-        var factory = new TenantModelCacheKeyFactory();
         using var context = new PlainDbContext();
+        IModelCacheKeyFactory factory = context.GetService<IModelCacheKeyFactory>();
 
         object runtimeKey = factory.Create(context, designTime: false);
         object designTimeKey = factory.Create(context, designTime: true);
