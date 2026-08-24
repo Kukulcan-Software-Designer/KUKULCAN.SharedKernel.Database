@@ -42,11 +42,12 @@ public sealed class SqlServerSlowQueryAndTenantIntegrationTests
                 [$"{KukulcanDatabaseOptions.SectionKey}:EnableSensitiveDataLogging"] = "true"
             }).Build();
             var services = new ServiceCollection();
+            services.AddLogging();
             services.AddSingleton<IConfiguration>(configuration);
             services.AddSingleton<ITenantContext>(new SqlServerTenantContext(Guid.NewGuid()));
             services.AddSingleton<IClock>(new FixedClock(SqlServerIntegrationConstants.FixedNow));
             services.AddSingleton<IDomainEventDispatcher>(Mock.Of<IDomainEventDispatcher>());
-            services.AddSingleton<SlowQueryInterceptor>(new SlowQueryInterceptor(logger, Options.Create(new KukulcanDatabaseOptions { Provider = DatabaseProvider.SqlServer, ConnectionString = SqlServerIntegrationDatabase.ConnectionString })));
+            services.AddSingleton<ILogger<SlowQueryInterceptor>>(logger);
             services.AddKukulcanDbContext<SqlServerIntegrationDbContext>(configuration);
             using var provider = services.BuildServiceProvider();
             await using var context = provider.GetRequiredService<SqlServerIntegrationDbContext>();
