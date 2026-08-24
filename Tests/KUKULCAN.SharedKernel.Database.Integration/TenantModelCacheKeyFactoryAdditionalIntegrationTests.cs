@@ -92,5 +92,12 @@ public sealed class TenantModelCacheKeyFactoryAdditionalIntegrationTests
         Assert.That(runtimeKey, Is.Not.EqualTo(designTimeKey));
     }
 
-    private sealed class PlainDbContext : DbContext;
+    private sealed class PlainDbContext : DbContext
+    {
+        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+        {
+            optionsBuilder.UseNpgsql(
+                "Host=localhost;Port=5432;Database=unused;Username=unused;Password=unused;");
+        }
+    }
 }
