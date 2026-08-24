@@ -18,24 +18,17 @@
     KUKULCAN.SharedKernel.Database
     Database infrastructure library for Kukulcán Software Designer applications.
 
-    Provee:
-      - KukulcanDbContextBase		→ base for all module DbContexts
-      - AddKukulcanDbContext<T>()	→ DI extension that logs DbContext + IUnitOfWork + SlowQueryInterceptor
-      - UnitOfWork<TContext>		→ IUnitOfWork implementation
-      - 5 interceptores EF Core		→ AuditSaveChanges, SoftDelete, DomainEventDispatch,
-										ImmutableEntity, SlowQuery
-      - ModelBuilderExtensions		→ ApplySoftDeleteFilter, ApplyTenantFilter
-      - KukulcanDatabaseOptions		→ multi-vendor configuration
-      - DatabaseProvider			→ enum: SqlServer, PostgreSql
+    Provides:
+      - KukulcanDbContextBase        → base for all module DbContexts
+      - AddKukulcanDbContext<T>()     → DI extension that registers DbContext + IUnitOfWork + SlowQueryInterceptor
+      - UnitOfWork<TContext>          → IUnitOfWork implementation
+      - 5 EF Core interceptors         → AuditSaveChanges, SoftDelete, DomainEventDispatch,
+                                         ImmutableEntity, SlowQuery
+      - ModelBuilderExtensions        → ApplySoftDeleteFilter, ApplyTenantFilter
+      - KukulcanDatabaseOptions       → multi-vendor configuration
+      - DatabaseProvider              → enum: SqlServer, PostgreSql
 
-    Format: .slnx (XML, .NET 9+ / Visual Studio 2022 17.12+)
-
-    Solution dependency tree:
-      KUKULCAN.Kernel.Abstractions
-              ↑
-      KUKULCAN.Kernel.Domain
-              ↑
-      KUKULCAN.Kernel.Database     ← main project of this solution
+    Format: .slnx (XML, .NET 10 / Visual Studio 2022+)
   -->
   <Folder Name="/Solution Items/">
     <File Path=".editorconfig" />
@@ -73,8 +66,8 @@
   </Folder>
 
   <Folder Name="/Tests/">
-    <Project Path="Tests/KUKULCAN.SharedKernel.Database.Integration/KUKULCAN.SharedKernel.Database.Integration.csproj" />
+    <Project Path="Tests/KUKULCAN.SharedKernel.Database.PostgreSQL.Integration/KUKULCAN.SharedKernel.Database.PostgreSQL.Integration.csproj" />
+    <Project Path="Tests/KUKULCAN.SharedKernel.Database.SQLServer.Integration/KUKULCAN.SharedKernel.Database.SQLServer.Integration.csproj" />
     <Project Path="Tests/KUKULCAN.SharedKernel.Database.Tests/KUKULCAN.SharedKernel.Database.Tests.csproj" />
   </Folder>
-
 </Solution>
