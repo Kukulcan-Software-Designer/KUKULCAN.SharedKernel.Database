@@ -458,6 +458,8 @@ public sealed class PostgreSqlDatabaseIntegrationTests
         internal DbSet<IntegrationEntity> Entities => Set<IntegrationEntity>();
         internal DbSet<ImmutableIntegrationEntity> ImmutableEntities => Set<ImmutableIntegrationEntity>();
         internal DbSet<DomainEventEntity> DomainEventEntities => Set<DomainEventEntity>();
+        internal DbSet<MissingCoverageIntegrationTests.StringTenantIntegrationEntity> StringTenantEntities => Set<MissingCoverageIntegrationTests.StringTenantIntegrationEntity>();
+        internal DbSet<MissingCoverageIntegrationTests.OwnedTenantIntegrationEntity> OwnedTenantEntities => Set<MissingCoverageIntegrationTests.OwnedTenantIntegrationEntity>();
     }
 
     internal sealed class IntegrationEntity : IAuditable, ISoftDelete
