@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using NUnit.Framework;
 
@@ -56,4 +57,39 @@ public sealed class TenantModelCacheKeyFactoryAdditionalIntegrationTests
 
         Assert.That(runtimeKey, Is.Not.EqualTo(designTimeKey));
     }
+
+    [Test]
+    public void TenantModelCacheKeyFactory_ShouldRejectNullContext()
+    {
+        var factory = new TenantModelCacheKeyFactory();
+
+        Assert.Throws<ArgumentNullException>(() => factory.Create(null!, designTime: false));
+    }
+
+    [Test]
+    public void TenantModelCacheKeyFactory_ShouldIgnoreTenantForNonKukulcanContext()
+    {
+        var factory = new TenantModelCacheKeyFactory();
+        using var firstContext = new PlainDbContext();
+        using var secondContext = new PlainDbContext();
+
+        object firstKey = factory.Create(firstContext, designTime: false);
+        object secondKey = factory.Create(secondContext, designTime: false);
+
+        Assert.That(firstKey, Is.EqualTo(secondKey));
+    }
+
+    [Test]
+    public void TenantModelCacheKeyFactory_ShouldKeepNonKukulcanDesignTimeKeysDistinct()
+    {
+        var factory = new TenantModelCacheKeyFactory();
+        using var context = new PlainDbContext();
+
+        object runtimeKey = factory.Create(context, designTime: false);
+        object designTimeKey = factory.Create(context, designTime: true);
+
+        Assert.That(runtimeKey, Is.Not.EqualTo(designTimeKey));
+    }
+
+    private sealed class PlainDbContext : DbContext;
 }
