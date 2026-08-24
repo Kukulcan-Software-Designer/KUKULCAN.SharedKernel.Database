@@ -26,7 +26,7 @@ public sealed class SqlServerProviderAndConfigurationIntegrationTests
         {
             [$"{KukulcanDatabaseOptions.SectionKey}:Provider"] = nameof(DatabaseProvider.SqlServer)
         }).Build();
-        Assert.Throws<ArgumentException>(() => new ServiceCollection().AddKukulcanDbContext<SqlServerIntegrationDbContext>(configuration));
+        Assert.Throws<InvalidOperationException>(() => new ServiceCollection().AddKukulcanDbContext<SqlServerIntegrationDbContext>(configuration));
     }
 
     [Test]
@@ -37,7 +37,7 @@ public sealed class SqlServerProviderAndConfigurationIntegrationTests
             [$"{KukulcanDatabaseOptions.SectionKey}:Provider"] = nameof(DatabaseProvider.SqlServer),
             [$"{KukulcanDatabaseOptions.SectionKey}:ConnectionString"] = "   "
         }).Build();
-        Assert.Throws<ArgumentException>(() => new ServiceCollection().AddKukulcanDbContext<SqlServerIntegrationDbContext>(configuration));
+        Assert.Throws<InvalidOperationException>(() => new ServiceCollection().AddKukulcanDbContext<SqlServerIntegrationDbContext>(configuration));
     }
 
     [Test]
@@ -107,6 +107,7 @@ public sealed class SqlServerProviderAndConfigurationIntegrationTests
             [$"{KukulcanDatabaseOptions.SectionKey}:Pool:Enabled"] = "false",
         }).Build();
         var services = new ServiceCollection();
+        services.AddLogging();
         services.AddSingleton<IConfiguration>(configuration);
         services.AddSingleton<ITenantContext>(new SqlServerTenantContext(Guid.NewGuid()));
         services.AddSingleton<IClock>(new FixedClock(SqlServerIntegrationConstants.FixedNow));
