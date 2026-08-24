@@ -34,7 +34,12 @@ Do not add provider packages to the core library unless the architecture is inte
 
 ## Testing
 
-Tests should verify real EF Core behavior, including change tracking, interceptors, filters, transactions and configuration. Do not add artificial tests solely to increase coverage.
+Tests should verify real EF Core behavior, including change tracking, interceptors, filters, transactions and configuration. The repository keeps provider-backed integration tests in separate projects:
+
+- `KUKULCAN.SharedKernel.Database.PostgreSQL.Integration` — PostgreSQL integration validation using Testcontainers.
+- `KUKULCAN.SharedKernel.Database.SQLServer.Integration` — Microsoft SQL Server integration validation using Testcontainers.
+
+Use `KUKULCAN.SharedKernel.Database.Tests` for deterministic logic and branch coverage. Do not add artificial tests solely to increase coverage.
 
 ## Pull Requests
 

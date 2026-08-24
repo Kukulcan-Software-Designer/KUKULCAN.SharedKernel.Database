@@ -4,7 +4,12 @@ All notable changes to `KUKULCAN.SharedKernel.Database` are documented here. The
 
 ## [Unreleased]
 
-No unreleased changes are currently documented.
+### Testing
+
+- Split provider-backed integration validation into two independent test projects:
+  - `KUKULCAN.SharedKernel.Database.PostgreSQL.Integration` for PostgreSQL.
+  - `KUKULCAN.SharedKernel.Database.SQLServer.Integration` for Microsoft SQL Server.
+- Updated the solution, CI workflows and testing documentation to execute and describe both provider-specific integration suites independently.
 
 ## [1.0.0]
 

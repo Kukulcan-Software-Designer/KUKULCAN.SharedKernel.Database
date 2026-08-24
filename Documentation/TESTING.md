@@ -44,13 +44,11 @@ Typical examples include:
 - interceptor synchronous and asynchronous entry points;
 - EF Core model metadata and model-builder behavior.
 
-The unit-test project references the provider assemblies required to exercise supported provider-selection and reflection paths.
-
 ### PostgreSQL Integration Tests
 
 `KUKULCAN.SharedKernel.Database.PostgreSQL.Integration` uses **PostgreSQL as the reference database management system (DBMS)** for relational persistence validation.
 
-The integration layer validates behavior that depends on a real relational provider, including:
+It validates:
 
 - PostgreSQL connectivity and persistence;
 - tenant isolation against real database rows;
@@ -65,7 +63,7 @@ The project uses `Testcontainers.PostgreSql` and owns the PostgreSQL container l
 
 ### SQL Server Integration Tests
 
-`KUKULCAN.SharedKernel.Database.SQLServer.Integration` validates the corresponding Microsoft SQL Server provider path against a real SQL Server instance.
+`KUKULCAN.SharedKernel.Database.SQLServer.Integration` validates the Microsoft SQL Server provider path against a real SQL Server instance.
 
 It covers:
 
@@ -81,7 +79,7 @@ The project uses `Testcontainers.MsSql` and owns the SQL Server container lifecy
 
 ## Recommended Test Layers
 
-``` mermaid
+```mermaid
 flowchart TD
     U["Unit tests"] --> P1["PostgreSQL integration"]
     U --> P2["SQL Server integration"]
@@ -125,18 +123,4 @@ The remaining defensive provider-resolution branches are documented in `COVERAGE
 
 ## Obsolete API Policy
 
-Tests should use the current EF Core metadata APIs.
-
-For example:
-
-```csharp
-GetDeclaredQueryFilters()
-```
-
-should be preferred over obsolete:
-
-```csharp
-GetQueryFilter()
-```
-
-This keeps the test suite aligned with EF Core 10.
+Tests should use the current EF Core metadata APIs. For EF Core 10, `GetDeclaredQueryFilters()` is preferred over obsolete `GetQueryFilter()`.
