@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using NUnit.Framework;
 
 namespace KUKULCAN.SharedKernel.Database.Integration;
@@ -18,7 +18,7 @@ public sealed class TenantModelCacheKeyFactoryAdditionalIntegrationTests
         await using PostgreSqlDatabaseIntegrationTests.IntegrationDbContext secondContext =
             await IntegrationTestDatabase.CreateContextAsync(secondTenantId);
 
-        var factory = new TenantModelCacheKeyFactory();
+        IModelCacheKeyFactory factory = firstContext.GetService<IModelCacheKeyFactory>();
         object firstKey = factory.Create(firstContext, designTime: false);
         object secondKey = factory.Create(secondContext, designTime: false);
 
@@ -35,7 +35,7 @@ public sealed class TenantModelCacheKeyFactoryAdditionalIntegrationTests
         await using PostgreSqlDatabaseIntegrationTests.IntegrationDbContext secondContext =
             await IntegrationTestDatabase.CreateContextAsync(tenantId);
 
-        var factory = new TenantModelCacheKeyFactory();
+        IModelCacheKeyFactory factory = firstContext.GetService<IModelCacheKeyFactory>();
         object firstKey = factory.Create(firstContext, designTime: false);
         object secondKey = factory.Create(secondContext, designTime: false);
 
@@ -50,7 +50,7 @@ public sealed class TenantModelCacheKeyFactoryAdditionalIntegrationTests
         await using PostgreSqlDatabaseIntegrationTests.IntegrationDbContext context =
             await IntegrationTestDatabase.CreateContextAsync(tenantId);
 
-        var factory = new TenantModelCacheKeyFactory();
+        IModelCacheKeyFactory factory = context.GetService<IModelCacheKeyFactory>();
         object runtimeKey = factory.Create(context, designTime: false);
         object designTimeKey = factory.Create(context, designTime: true);
 
