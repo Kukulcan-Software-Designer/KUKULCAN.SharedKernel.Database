@@ -44,12 +44,36 @@ public sealed class SqlServerUnitOfWorkIntegrationTests
     {
         await using var unit = new UnitOfWork<SqlServerIntegrationDbContext>(_context);
         await unit.BeginTransactionAsync();
-        _context.Entities.Add(new SqlServerIntegrationEntity { TenantId = _tenantId, Name = "Duplicate" });
-        await _context.SaveChangesAsync();
-        _context.Entities.Add(new SqlServerIntegrationEntity { TenantId = _tenantId, Name = "Duplicate" });
-        Assert.ThrowsAsync<Exception>(async () => await unit.CommitTransactionAsync());
+        var first = new SqlServerIntegrationEntity { TenantId = _tenantId, Name = "Constraint violation" };
+        _context.Entities.Add(first);
+        await unit.SaveChangesAsync();
+
+        _context.Entities.Add(new SqlServerIntegrationEntity
+        {
+            Id = first.Id,
+            TenantId = _tenantId,
+            Name = "Constraint violation"
+        });
+
+        OperationCanceledException? cancellation = null;
+        Exception? caughtException = null;
+        try
+        {
+            await unit.CommitTransactionAsync();
+        }
+        catch (OperationCanceledException exception)
+        {
+            cancellation = exception;
+        }
+        catch (Exception exception)
+        {
+            caughtException = exception;
+        }
+
+        Assert.That(cancellation, Is.Null);
+        Assert.That(caughtException, Is.Not.Null);
         _context.ChangeTracker.Clear();
-        Assert.That(await _context.Entities.CountAsync(x => x.Name == "Duplicate"), Is.EqualTo(1));
+        Assert.That(await _context.Entities.CountAsync(x => x.Name == "Constraint violation"), Is.EqualTo(0));
     }
 
     [Test]
