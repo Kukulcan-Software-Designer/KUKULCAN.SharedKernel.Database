@@ -36,6 +36,63 @@ public sealed class ServiceCollectionRegistrationAdditionalIntegrationTests
     }
 
     [Test]
+    public void AddKukulcanDbContext_ShouldRejectWhitespaceConnectionString()
+    {
+        IConfiguration configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                [$"{KukulcanDatabaseOptions.SectionKey}:Provider"] = nameof(DatabaseProvider.PostgresSql),
+                [$"{KukulcanDatabaseOptions.SectionKey}:ConnectionString"] = "   "
+            })
+            .Build();
+
+        var services = new ServiceCollection();
+
+        InvalidOperationException exception = Assert.Throws<InvalidOperationException>(
+            () => services.AddKukulcanDbContext<PostgreSqlDatabaseIntegrationTests.IntegrationDbContext>(configuration))!;
+
+        Assert.That(exception.Message, Does.Contain("ConnectionString"));
+    }
+
+    [Test]
+    public void AddKukulcanDbContext_ShouldPreserveDefaultNestedOptionValues()
+    {
+        IConfiguration configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                [$"{KukulcanDatabaseOptions.SectionKey}:Provider"] = nameof(DatabaseProvider.PostgresSql),
+                [$"{KukulcanDatabaseOptions.SectionKey}:ConnectionString"] = IntegrationTestDatabase.ConnectionString
+            })
+            .Build();
+
+        var services = new ServiceCollection();
+        services.AddKukulcanDbContext<PostgreSqlDatabaseIntegrationTests.IntegrationDbContext>(configuration);
+
+        using ServiceProvider provider = services.BuildServiceProvider();
+        KukulcanDatabaseOptions options = provider
+            .GetRequiredService<IOptions<KukulcanDatabaseOptions>>()
+            .Value;
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(options.CommandTimeoutSeconds, Is.EqualTo(30));
+            Assert.That(options.EnableSensitiveDataLogging, Is.False);
+            Assert.That(options.EnableDetailedErrors, Is.False);
+            Assert.That(options.Retry, Is.Not.Null);
+            Assert.That(options.Retry.Enabled, Is.True);
+            Assert.That(options.Retry.MaxRetryCount, Is.EqualTo(3));
+            Assert.That(options.Retry.MaxRetryDelaySeconds, Is.EqualTo(30));
+            Assert.That(options.Pool, Is.Not.Null);
+            Assert.That(options.Pool.Enabled, Is.True);
+            Assert.That(options.Pool.MinSize, Is.EqualTo(5));
+            Assert.That(options.Pool.MaxSize, Is.EqualTo(100));
+            Assert.That(options.Migration, Is.Not.Null);
+            Assert.That(options.Migration.AutoMigrateOnStartup, Is.False);
+            Assert.That(options.Migration.SeedDataOnStartup, Is.True);
+        }
+    }
+
+    [Test]
     public void AddKukulcanDbContext_ShouldBindDatabaseOptionsFromConfiguration()
     {
         IConfiguration configuration = CreateConfiguration(17, retryEnabled: true, poolEnabled: false);
