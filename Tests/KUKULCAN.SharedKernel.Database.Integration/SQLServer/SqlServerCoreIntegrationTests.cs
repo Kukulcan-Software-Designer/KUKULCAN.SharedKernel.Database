@@ -170,7 +170,7 @@ public sealed class SqlServerCoreIntegrationTests
         first.AddDomainEventForTest(firstEvent);
         second.AddDomainEventForTest(secondEvent);
         context.DomainEventEntities.AddRange(first, second);
-        await context.SaveChangesAsync();
+        context.SaveChanges();
         dispatcher.Verify(x => x.DispatchAsync(firstEvent, It.IsAny<CancellationToken>()), Times.Once);
         dispatcher.Verify(x => x.DispatchAsync(secondEvent, It.IsAny<CancellationToken>()), Times.Once);
     }
@@ -249,6 +249,7 @@ public sealed class SqlServerCoreIntegrationTests
         services.AddSingleton<ITenantContext>(new SqlServerTenantContext(Guid.NewGuid()));
         services.AddSingleton<IClock>(new FixedClock(SqlServerIntegrationConstants.FixedNow));
         services.AddSingleton<IDomainEventDispatcher>(Mock.Of<IDomainEventDispatcher>());
+        services.AddLogging();
         services.AddKukulcanDbContext<SqlServerIntegrationDbContext>(configuration);
         return services.BuildServiceProvider();
     }
