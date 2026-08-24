@@ -56,13 +56,13 @@ Provides common provider configuration, model-configuration discovery, global fi
 
 ### Persistence Interceptors
 
-| Component | Responsibility |
-|---|---|
-| `AuditSaveChangesInterceptor` | Sets `CreatedOn` for added auditable entities and `ModifiedOn` for modified entities. |
-| `SoftDeleteInterceptor` | Converts deletes of `ISoftDelete` entities into logical deletes and records `DeletedOn`. |
-| `DomainEventDispatchInterceptor` | Dispatches pending domain events after a successful save and clears them. |
-| `ImmutableEntityInterceptor` | Rejects updates and deletes of `IImmutable` entities. |
-| `SlowQueryInterceptor` | Logs commands exceeding `SlowQueryThresholdMs`. |
+| Component                        | Responsibility                                                                           |
+|----------------------------------|------------------------------------------------------------------------------------------|
+| `AuditSaveChangesInterceptor`    | Sets `CreatedOn` for added auditable entities and `ModifiedOn` for modified entities.    |
+| `SoftDeleteInterceptor`          | Converts deletes of `ISoftDelete` entities into logical deletes and records `DeletedOn`. |
+| `DomainEventDispatchInterceptor` | Dispatches pending domain events after a successful save and clears them.                |
+| `ImmutableEntityInterceptor`     | Rejects updates and deletes of `IImmutable` entities.                                    |
+| `SlowQueryInterceptor`           | Logs commands exceeding `SlowQueryThresholdMs`.                                          |
 
 ### Unit of Work
 
@@ -100,9 +100,11 @@ The registration helper binds options, registers the context, registers `IUnitOf
 
 Nullable reference types are enabled, warnings are treated as errors and XML documentation generation is enabled. Public APIs are documented and persistence behavior is covered by behavior-focused tests.
 
-The current test suite achieves **100% line coverage (221/221 lines)** and **97.36% branch coverage (74/76 branches)** for the database library.
+The **current PostgreSQL-backed test validation** reports **100% line coverage (221/221 lines)** and **97.36% branch coverage (74/76 branches)** for the database production assembly. PostgreSQL is the reference database management system (DBMS) used by the integration test suite for persistence-level validation, while the unit-test suite provides the deterministic code-path and branch coverage.
 
-The two uncovered branches are intentional defensive branches in `KukulcanDbContextBase.ConfigureSqlServer` and `KukulcanDbContextBase.ConfigurePostgresSql`. They belong to the null-coalescing type-resolution expressions that handle the case where the corresponding EF Core provider assembly is not installed:
+The integration suite has a different purpose and is intentionally not used as the coverage threshold. It validates real PostgreSQL behavior such as connectivity, persistence, tenant isolation, interception and transactions. Its coverage percentage can therefore differ from the unit-test report without indicating a quality problem.
+
+The two uncovered branches in the unit-test report are intentional defensive branches in `KukulcanDbContextBase.ConfigureSqlServer` and `KukulcanDbContextBase.ConfigurePostgresSql`. They are the failure sides of the null-coalescing type-resolution expressions that handle the case where the corresponding EF Core provider assembly is not installed:
 
 ```csharp
 Type.GetType("...Microsoft.EntityFrameworkCore.SqlServer")
@@ -112,17 +114,21 @@ Type.GetType("...Npgsql.EntityFrameworkCore.PostgreSQL")
     ?? throw NotInstalled("Npgsql.EntityFrameworkCore.PostgreSQL");
 ```
 
-The test project intentionally references both provider packages in order to exercise the real SQL Server and PostgreSQL configuration paths. Consequently, those assemblies are available during test execution and the runtime type resolution succeeds. Forcing the assemblies to appear unavailable would require manipulating assembly loading or introducing production-only test seams solely to satisfy a coverage metric. That would make the tests less deterministic and less representative of the supported runtime configuration.
+The test project references both provider packages so that the supported SQL Server and PostgreSQL configuration paths can be exercised using the real provider assemblies. Under that supported test environment, the provider assemblies are present and `Type.GetType(...)` resolves successfully. The two `null` branches therefore cannot be reached naturally.
 
-The resulting **97.36% branch coverage is therefore intentional and documented**, rather than an indication of an untested supported behavior. The `NotInstalled` behavior itself is tested directly, including the missing-inner-exception scenario.
+Forcing those branches solely to obtain a numerical 100% branch-coverage value would require manipulating assembly loading, adding production-only seams or otherwise creating an artificial runtime configuration. That would make the tests less deterministic and less representative of the supported application configuration.
+
+The provider error contract is still covered through the unsupported-provider test, the missing-compatible-reflection-method path and direct tests of the `NotInstalled` helper, including its null-inner-exception form.
+
+The resulting **97.36% branch coverage is therefore an intentional and reviewed coverage boundary, not an untested supported behavior**. The project deliberately does not add artificial tests merely to raise the coverage percentage.
 
 ## Integration Testing
 
 Integration tests are maintained separately from the unit-test and coverage projects in `Tests/KUKULCAN.SharedKernel.Database.Integration`.
 
-The first integration provider is **PostgreSQL**. The integration suite uses a real PostgreSQL instance to validate provider connectivity, persistence, tenant isolation, soft-delete interception, audit timestamps and database transactions through `UnitOfWork<TContext>`.
+The integration test database is **PostgreSQL**. The suite uses a real PostgreSQL instance to validate provider connectivity, persistence, tenant isolation, soft-delete interception, audit timestamps and database transactions through `UnitOfWork<TContext>`.
 
-The integration suite deliberately has **no Coverlet dependency and no code-coverage threshold**. Its purpose is to prove that the persistence infrastructure works against a real database engine, not to maximize a coverage percentage. Unit tests remain responsible for deterministic code-path and branch coverage.
+The integration suite deliberately has **no Coverlet dependency and no code-coverage threshold**. Its purpose is to prove that the persistence infrastructure works against the PostgreSQL DBMS, not to maximize a coverage percentage. Unit tests remain responsible for deterministic code-path and branch coverage.
 
 GitHub Actions provisions PostgreSQL 16 as a service container and runs the integration suite independently from the unit-test and coverage workflows. Local execution can use the default PostgreSQL connection string or override it through `KUKULCAN_DATABASE_INTEGRATION_CONNECTION_STRING`.
 

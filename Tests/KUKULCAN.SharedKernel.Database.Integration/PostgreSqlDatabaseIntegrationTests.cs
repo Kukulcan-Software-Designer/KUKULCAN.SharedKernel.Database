@@ -485,23 +485,32 @@ public sealed class PostgreSqlDatabaseIntegrationTests
         public int Id { get; set; }
         public Guid TenantId { get; set; }
         public string Name { get; set; } = string.Empty;
-
-        [NotMapped]
         public IReadOnlyCollection<IDomainEvent> DomainEvents => _domainEvents;
 
-        public void ClearDomainEvents() => _domainEvents.Clear();
+        public void AddDomainEventForTest(IDomainEvent domainEvent)
+            => _domainEvents.Add(domainEvent);
 
-        public void AddDomainEventForTest(IDomainEvent domainEvent) => _domainEvents.Add(domainEvent);
+        public void ClearDomainEvents()
+            => _domainEvents.Clear();
     }
 
     internal sealed record TestDomainEvent(DateTimeOffset OccurredOn) : IDomainEvent;
+
+    internal sealed class ConfiguredIntegrationEntity
+    {
+        public int Id { get; set; }
+        public string Name { get; set; } = string.Empty;
+    }
 
     internal sealed class CapturingLogger<T> : ILogger<T>
     {
         public List<string> WarningMessages { get; } = [];
 
-        public IDisposable BeginScope<TState>(TState state) where TState : notnull => NullScope.Instance;
-        public bool IsEnabled(LogLevel logLevel) => true;
+        public IDisposable BeginScope<TState>(TState state) where TState : notnull
+            => NullScope.Instance;
+
+        public bool IsEnabled(LogLevel logLevel)
+            => true;
 
         public void Log<TState>(
             LogLevel logLevel,
@@ -510,14 +519,24 @@ public sealed class PostgreSqlDatabaseIntegrationTests
             Exception? exception,
             Func<TState, Exception?, string> formatter)
         {
-            if (logLevel >= LogLevel.Warning)
+            if (logLevel == LogLevel.Warning)
                 WarningMessages.Add(formatter(state, exception));
         }
 
         private sealed class NullScope : IDisposable
         {
-            public static readonly NullScope Instance = new();
-            public void Dispose() { }
+            internal static readonly NullScope Instance = new();
+
+            public void Dispose()
+            {
+            }
         }
     }
+}
+
+[Owned]
+internal sealed class OwnedIntegrationEntity
+{
+    public Guid Id { get; set; }
+    public Guid TenantId { get; set; }
 }

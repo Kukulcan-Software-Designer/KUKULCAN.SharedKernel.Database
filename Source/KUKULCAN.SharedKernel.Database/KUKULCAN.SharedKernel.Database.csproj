@@ -11,7 +11,11 @@
         <SolutionDir>$(MSBuildThisFileDirectory)</SolutionDir>
         <BaseOutputPath>$(SolutionDir)Bin\$(MSBuildProjectName)\</BaseOutputPath>
         <GenerateDocumentationFile>true</GenerateDocumentationFile>
-   </PropertyGroup>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <InternalsVisibleTo Include="KUKULCAN.SharedKernel.Database.Integration" />
+    </ItemGroup>
 
     <!-- SharedKernel references — no circular deps -->
 

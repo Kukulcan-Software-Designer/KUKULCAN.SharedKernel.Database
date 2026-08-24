@@ -79,23 +79,16 @@ public abstract class KukulcanDbContextBase(
     /// <inheritdoc/>
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
-        // EF Core caches the model by DbContext type. Tenant filters are tenant-specific,
-        // therefore the tenant must participate in the model cache key even when the
-        // consuming context has already configured its database provider.
         optionsBuilder.ReplaceService<IModelCacheKeyFactory, TenantModelCacheKeyFactory>();
 
-        // The slow-query interceptor is supplied through constructor injection rather
-        // than through AddDbContext's options callback. This is required because module
-        // DbContexts intentionally do not need to expose DbContextOptions in their
-        // constructors; OnConfiguring therefore remains the authoritative composition
-        // point for all interceptors.
         if (_slowQueryInterceptor is not null)
             optionsBuilder.AddInterceptors(_slowQueryInterceptor);
 
-        // Register all four interceptors owned directly by this base class.
+        // Soft-delete must run before audit so that a logical delete is converted
+        // to Modified state before AuditSaveChangesInterceptor stamps ModifiedOn.
         optionsBuilder.AddInterceptors(
-            new AuditSaveChangesInterceptor(_clock),
             new SoftDeleteInterceptor(_clock),
+            new AuditSaveChangesInterceptor(_clock),
             new DomainEventDispatchInterceptor(_domainEventDispatcher),
             new ImmutableEntityInterceptor());
 
