@@ -13,6 +13,7 @@ This release establishes `KUKULCAN.SharedKernel.Database` as shared EF Core pers
 - Audit, soft delete, tenant isolation, domain-event dispatch and immutable-entity enforcement are centralized.
 - `IUnitOfWork` and `UnitOfWork<TContext>` provide explicit transaction management.
 - `SlowQueryInterceptor` provides configurable slow-command diagnostics.
+- Provider-backed integration validation is split into dedicated PostgreSQL and Microsoft SQL Server test projects, allowing each provider suite to run independently through Testcontainers and CI.
 
 ### Known Limitations
 
