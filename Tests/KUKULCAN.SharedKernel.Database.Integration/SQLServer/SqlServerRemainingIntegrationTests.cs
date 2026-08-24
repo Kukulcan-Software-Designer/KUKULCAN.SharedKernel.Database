@@ -14,7 +14,7 @@ public sealed class SqlServerRemainingIntegrationTests
     {
         await using var context = await SqlServerIntegrationContextFactory.CreateAsync(Guid.NewGuid());
         var entityType = context.Model.FindEntityType(typeof(SqlServerIntegrationEntity));
-        Assert.That(entityType?.GetQueryFilter(), Is.Not.Null);
+        Assert.That(entityType?.GetDeclaredQueryFilters(), Is.Not.Empty);
     }
 
     [Test]
@@ -22,7 +22,7 @@ public sealed class SqlServerRemainingIntegrationTests
     {
         await using var context = await SqlServerIntegrationContextFactory.CreateAsync(Guid.NewGuid());
         var entityType = context.Model.FindEntityType(typeof(SqlServerIntegrationEntity));
-        Assert.That(entityType?.GetQueryFilter(), Is.Not.Null);
+        Assert.That(entityType?.GetDeclaredQueryFilters(), Is.Not.Empty);
     }
 
     [Test]
