@@ -91,6 +91,30 @@ public sealed class TenantModelCacheKeyFactoryAdditionalIntegrationTests
         Assert.That(runtimeKey, Is.Not.EqualTo(designTimeKey));
     }
 
+    [Test]
+    public async Task TenantModelCache_ShouldBuildDifferentModelsForDifferentTenantsAndReuseModelForSameTenant()
+    {
+        Guid firstTenantId = Guid.NewGuid();
+        Guid secondTenantId = Guid.NewGuid();
+
+        await using PostgreSqlDatabaseIntegrationTests.IntegrationDbContext firstContext =
+            await IntegrationTestDatabase.CreateContextAsync(firstTenantId);
+        await using PostgreSqlDatabaseIntegrationTests.IntegrationDbContext secondContext =
+            await IntegrationTestDatabase.CreateContextAsync(secondTenantId);
+        await using PostgreSqlDatabaseIntegrationTests.IntegrationDbContext firstContextAgain =
+            await IntegrationTestDatabase.CreateContextAsync(firstTenantId);
+
+        _ = firstContext.Model;
+        _ = secondContext.Model;
+        _ = firstContextAgain.Model;
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(firstContext.Model, Is.Not.SameAs(secondContext.Model));
+            Assert.That(firstContext.Model, Is.SameAs(firstContextAgain.Model));
+        }
+    }
+
     private sealed class PlainDbContext : DbContext
     {
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
