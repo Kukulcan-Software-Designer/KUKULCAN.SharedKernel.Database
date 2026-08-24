@@ -1,3 +1,4 @@
+using KUKULCAN.SharedKernel.Database.Extensions;
 using Microsoft.EntityFrameworkCore.Metadata;
 using NUnit.Framework;
 
@@ -13,8 +14,8 @@ public sealed class MissingCoverageIntegrationTests
             await IntegrationTestDatabase.CreateContextAsync(tenantId);
 
         await context.Database.EnsureCreatedAsync();
-        IEntityType? entityType = context.Model.FindEntityType(typeof(ConfiguredIntegrationEntity));
-        IProperty? nameProperty = entityType?.FindProperty(nameof(ConfiguredIntegrationEntity.Name));
+        IEntityType? entityType = context.Model.FindEntityType(typeof(PostgreSqlDatabaseIntegrationTests.ConfiguredIntegrationEntity));
+        IProperty? nameProperty = entityType?.FindProperty(nameof(PostgreSqlDatabaseIntegrationTests.ConfiguredIntegrationEntity.Name));
 
         using (Assert.EnterMultipleScope())
         {
