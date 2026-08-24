@@ -1,8 +1,9 @@
 using KUKULCAN.SharedKernel.Database.Configuration;
 using KUKULCAN.SharedKernel.Database.Interceptors;
+using KUKULCAN.SharedKernel.DomainEvents.Abstractions;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Moq;
 using NUnit.Framework;
 
 namespace KUKULCAN.SharedKernel.Database.Integration;
@@ -35,7 +36,7 @@ public sealed class SlowQueryInterceptorAdditionalIntegrationTests
                 options,
                 new PostgreSqlDatabaseIntegrationTests.IntegrationTenantContext(tenantId),
                 new PostgreSqlDatabaseIntegrationTests.FixedClock(PostgreSqlDatabaseIntegrationTests.FixedNow),
-                new TestDomainEventDispatcher(),
+                Mock.Of<IDomainEventDispatcher>(),
                 interceptor);
 
             await context.Database.EnsureCreatedAsync();
@@ -87,7 +88,7 @@ public sealed class SlowQueryInterceptorAdditionalIntegrationTests
                 options,
                 new PostgreSqlDatabaseIntegrationTests.IntegrationTenantContext(tenantId),
                 new PostgreSqlDatabaseIntegrationTests.FixedClock(PostgreSqlDatabaseIntegrationTests.FixedNow),
-                new TestDomainEventDispatcher(),
+                Mock.Of<IDomainEventDispatcher>(),
                 interceptor);
 
             await context.Database.EnsureCreatedAsync();
@@ -139,7 +140,7 @@ public sealed class SlowQueryInterceptorAdditionalIntegrationTests
                 options,
                 new PostgreSqlDatabaseIntegrationTests.IntegrationTenantContext(tenantId),
                 new PostgreSqlDatabaseIntegrationTests.FixedClock(PostgreSqlDatabaseIntegrationTests.FixedNow),
-                new TestDomainEventDispatcher(),
+                Mock.Of<IDomainEventDispatcher>(),
                 interceptor);
 
             await context.Database.EnsureCreatedAsync();
@@ -151,13 +152,5 @@ public sealed class SlowQueryInterceptorAdditionalIntegrationTests
         {
             SlowQueryInterceptor.SlowQueryThresholdMs = previousThreshold;
         }
-    }
-
-    private sealed class TestDomainEventDispatcher : KUKULCAN.SharedKernel.DomainEvents.Abstractions.IDomainEventDispatcher
-    {
-        public Task DispatchAsync(
-            KUKULCAN.SharedKernel.DomainEvents.Abstractions.IDomainEvent domainEvent,
-            CancellationToken cancellationToken = default)
-            => Task.CompletedTask;
     }
 }
