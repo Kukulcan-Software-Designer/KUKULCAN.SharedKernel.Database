@@ -7,18 +7,21 @@ Test assemblies are excluded from the report.
 
 Coverage is evaluated primarily from the **unit-test coverage report** because
 unit tests are responsible for deterministic code-path and branch coverage.
-The integration suite has a different purpose: it verifies persistence behavior
-against a real database provider and is not used to define the branch-coverage
+The integration suite uses **PostgreSQL as the reference database management
+system (DBMS)** and has a different purpose: it verifies persistence behavior
+against a real PostgreSQL provider and is not used to define the branch-coverage
 threshold.
 
 ## Current Coverage Baseline
 
-The current unit-test coverage report is:
+The current coverage baseline is the result of the validated test strategy
+using PostgreSQL for database-backed integration validation:
 
 | Metric | Result |
 |---|---:|
 | Line coverage | **100% (221/221)** |
 | Branch coverage | **97.36% (74/76)** |
+| Reference DBMS | **PostgreSQL** |
 
 All executable production lines are covered. All classes and methods in the
 production assembly have executable line coverage, including:
@@ -71,7 +74,8 @@ including both forms of its exception construction.
 The decision is therefore deliberate:
 
 > **100% line coverage and 97.36% branch coverage are the accepted and reviewed
-> coverage boundary for this module. The remaining two branches are defensive
+> coverage boundary for this module, with PostgreSQL as the reference DBMS for
+> database-backed validation. The remaining two branches are defensive
 > provider-resolution branches whose natural execution would require an
 > unsupported test environment.**
 
@@ -95,8 +99,8 @@ Unit tests cover deterministic logic without requiring PostgreSQL, including:
 
 ### Integration tests
 
-Integration tests validate behavior that depends on a real relational provider,
-including:
+Integration tests use **PostgreSQL** as the reference DBMS and validate behavior
+that depends on a real relational provider, including:
 
 - PostgreSQL connectivity and persistence;
 - tenant isolation against real database rows;
@@ -108,7 +112,7 @@ including:
 - transaction, cancellation and rollback behavior.
 
 The integration suite is intentionally not used as a coverage threshold. A
-real database test can execute production code while still leaving defensive
+real PostgreSQL test can execute production code while still leaving defensive
 reflection branches unobservable under the supported runtime configuration.
 
 ## Local execution
@@ -126,6 +130,9 @@ dotnet test \
 
 The generated Cobertura report is written below `TestResults/` for the test run.
 
+For PostgreSQL-backed integration validation, run the dedicated integration
+project with its configured PostgreSQL connection string.
+
 ## Audit Rule
 
 Coverage is considered complete only after the generated report has been
@@ -140,7 +147,8 @@ The audit must verify, at minimum:
 - soft-delete, audit, immutable-entity and domain-event interceptors;
 - slow-query interceptor synchronous and asynchronous paths;
 - unit-of-work transaction success, failure and cancellation paths;
-- public option/configuration behavior.
+- public option/configuration behavior;
+- PostgreSQL-backed integration behavior for persistence-critical paths.
 
 Interface-only contracts, global usings and build targets are not expected to
 contribute executable production coverage.
