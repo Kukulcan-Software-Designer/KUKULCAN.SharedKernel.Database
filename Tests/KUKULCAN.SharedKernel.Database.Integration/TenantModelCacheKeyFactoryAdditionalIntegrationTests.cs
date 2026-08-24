@@ -1,6 +1,13 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.Extensions.Options;
+using Moq;
 using NUnit.Framework;
+using KUKULCAN.SharedKernel.Database.Configuration;
+using KUKULCAN.SharedKernel.Database.Integration;
+using KUKULCAN.SharedKernel.Database.Abstractions;
+using KUKULCAN.SharedKernel.Abstractions;
+using KUKULCAN.SharedKernel.DomainEvents.Abstractions;
 
 namespace KUKULCAN.SharedKernel.Database.Integration;
 
@@ -97,12 +104,36 @@ public sealed class TenantModelCacheKeyFactoryAdditionalIntegrationTests
         Guid firstTenantId = Guid.NewGuid();
         Guid secondTenantId = Guid.NewGuid();
 
-        await using PostgreSqlDatabaseIntegrationTests.IntegrationDbContext firstContext =
-            await IntegrationTestDatabase.CreateContextAsync(firstTenantId);
-        await using PostgreSqlDatabaseIntegrationTests.IntegrationDbContext secondContext =
-            await IntegrationTestDatabase.CreateContextAsync(secondTenantId);
-        await using PostgreSqlDatabaseIntegrationTests.IntegrationDbContext firstContextAgain =
-            await IntegrationTestDatabase.CreateContextAsync(firstTenantId);
+        var options = Options.Create(new KukulcanDatabaseOptions
+        {
+            Provider = DatabaseProvider.PostgresSql,
+            ConnectionString = IntegrationTestDatabase.ConnectionString,
+            Retry = new KukulcanDatabaseOptions.RetryOptions { Enabled = false },
+            Pool = new KukulcanDatabaseOptions.PoolOptions { Enabled = false }
+        });
+
+        var clock = new PostgreSqlDatabaseIntegrationTests.FixedClock(PostgreSqlDatabaseIntegrationTests.FixedNow);
+        var dispatcher = Mock.Of<IDomainEventDispatcher>();
+
+        await using var firstContext = new PostgreSqlDatabaseIntegrationTests.IntegrationDbContext(
+            options,
+            new PostgreSqlDatabaseIntegrationTests.IntegrationTenantContext(firstTenantId),
+            clock,
+            dispatcher);
+
+        await using var secondContext = new PostgreSqlDatabaseIntegrationTests.IntegrationDbContext(
+            options,
+            new PostgreSqlDatabaseIntegrationTests.IntegrationTenantContext(secondTenantId),
+            clock,
+            dispatcher);
+
+        await using var firstContextAgain = new PostgreSqlDatabaseIntegrationTests.IntegrationDbContext(
+            options,
+            new PostgreSqlDatabaseIntegrationTests.IntegrationTenantContext(firstTenantId),
+            clock,
+            dispatcher);
+
+        await firstContext.Database.EnsureCreatedAsync();
 
         _ = firstContext.Model;
         _ = secondContext.Model;
