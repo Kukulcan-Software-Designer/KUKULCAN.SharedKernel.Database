@@ -29,6 +29,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Remove="SQLServer\SqlServerDatabaseIntegrationTests.cs" />
     <Folder Include="PostgreSQL\" />
     <Folder Include="SQLServer\" />
   </ItemGroup>
