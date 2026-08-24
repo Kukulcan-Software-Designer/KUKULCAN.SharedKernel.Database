@@ -1,7 +1,4 @@
 using KUKULCAN.SharedKernel.Database.UnitOfWork;
-using KUKULCAN.SharedKernel.DomainEvents.Abstractions;
-using Microsoft.Extensions.Options;
-using Moq;
 using NUnit.Framework;
 
 namespace KUKULCAN.SharedKernel.Database.Integration;
