@@ -61,8 +61,7 @@ public sealed class TenantModelCacheKeyFactoryAdditionalIntegrationTests
     [Test]
     public void TenantModelCacheKeyFactory_ShouldRejectNullContext()
     {
-        using var context = new PlainDbContext();
-        IModelCacheKeyFactory factory = context.GetService<IModelCacheKeyFactory>();
+        IModelCacheKeyFactory factory = new TenantModelCacheKeyFactory();
 
         Assert.Throws<ArgumentNullException>(() => factory.Create(null!, designTime: false));
     }
