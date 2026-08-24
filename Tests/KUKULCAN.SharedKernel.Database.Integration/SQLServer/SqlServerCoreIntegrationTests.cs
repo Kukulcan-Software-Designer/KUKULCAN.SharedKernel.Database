@@ -166,7 +166,7 @@ public sealed class SqlServerCoreIntegrationTests
         var first = new SqlServerDomainEventEntity { TenantId = _tenantId, Name = "First" };
         var second = new SqlServerDomainEventEntity { TenantId = _tenantId, Name = "Second" };
         var firstEvent = new SqlServerTestDomainEvent(SqlServerIntegrationConstants.FixedNow);
-        var secondEvent = new SqlServerTestDomainEvent(SqlServerIntegrationConstants.FixedNow);
+        var secondEvent = new SqlServerTestDomainEvent(SqlServerIntegrationConstants.FixedNow.AddSeconds(1));
         first.AddDomainEventForTest(firstEvent);
         second.AddDomainEventForTest(secondEvent);
         context.DomainEventEntities.AddRange(first, second);
