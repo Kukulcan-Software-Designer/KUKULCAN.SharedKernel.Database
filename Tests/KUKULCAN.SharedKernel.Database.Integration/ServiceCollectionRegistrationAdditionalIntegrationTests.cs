@@ -62,6 +62,7 @@ public sealed class ServiceCollectionRegistrationAdditionalIntegrationTests
     {
         IConfiguration configuration = CreateConfiguration(30, retryEnabled: false, poolEnabled: false);
         var services = new ServiceCollection();
+        services.AddLogging();
         services.AddSingleton<ITenantContext>(new PostgreSqlDatabaseIntegrationTests.IntegrationTenantContext(Guid.NewGuid()));
         services.AddSingleton<IClock>(new PostgreSqlDatabaseIntegrationTests.FixedClock(PostgreSqlDatabaseIntegrationTests.FixedNow));
         services.AddSingleton<IDomainEventDispatcher>(Mock.Of<IDomainEventDispatcher>());
