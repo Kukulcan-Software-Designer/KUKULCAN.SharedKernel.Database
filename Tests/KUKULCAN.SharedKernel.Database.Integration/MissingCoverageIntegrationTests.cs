@@ -1,9 +1,12 @@
 using KUKULCAN.SharedKernel.Database.Extensions;
 using KUKULCAN.SharedKernel.Database.Interceptors;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using NUnit.Framework;
 
 namespace KUKULCAN.SharedKernel.Database.Integration;
@@ -145,8 +148,7 @@ public sealed class MissingCoverageIntegrationTests
 
             context.Database.ExecuteSqlRaw("SELECT 1;");
 
-            Assert.That(logger.WarningMessages, Does.Not.Contain(
-                Does.Contain("[SlowQuery]")));
+            Assert.That(logger.WarningMessages, Has.None.Contains("[SlowQuery]"));
         }
         finally
         {
@@ -365,7 +367,14 @@ public sealed class MissingCoverageIntegrationTests
         public OwnedTenantAddress? Address { get; set; }
     }
 
-    [Owned]
+    public sealed class OwnedTenantIntegrationEntityConfiguration : IEntityTypeConfiguration<OwnedTenantIntegrationEntity>
+    {
+        public void Configure(EntityTypeBuilder<OwnedTenantIntegrationEntity> builder)
+        {
+            builder.OwnsOne(x => x.Address);
+        }
+    }
+
     public sealed class OwnedTenantAddress
     {
         public Guid TenantId { get; set; }
