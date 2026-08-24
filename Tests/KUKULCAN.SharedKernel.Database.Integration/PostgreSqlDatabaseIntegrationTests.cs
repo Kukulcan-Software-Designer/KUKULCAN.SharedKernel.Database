@@ -478,7 +478,7 @@ public sealed class PostgreSqlDatabaseIntegrationTests
         public string Name { get; set; } = string.Empty;
     }
 
-    internal sealed class DomainEventEntity : IHasDomainEvents, ITenantEntity
+    internal sealed class DomainEventEntity : IHasDomainEvents
     {
         private readonly List<IDomainEvent> _domainEvents = [];
 
