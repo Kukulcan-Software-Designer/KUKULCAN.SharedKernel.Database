@@ -17,11 +17,11 @@ threshold.
 The current coverage baseline is the result of the validated test strategy
 using PostgreSQL for database-backed integration validation:
 
-| Metric | Result |
-|---|---:|
-| Line coverage | **100% (221/221)** |
-| Branch coverage | **97.36% (74/76)** |
-| Reference DBMS | **PostgreSQL** |
+| Metric           |            Result  |
+|------------------|-------------------:|
+| Line coverage    | **100% (221/221)** |
+| Branch coverage  | **97.36% (74/76)** |
+| Reference DBMS   |     **PostgreSQL** |
 
 All executable production lines are covered. All classes and methods in the
 production assembly have executable line coverage, including:

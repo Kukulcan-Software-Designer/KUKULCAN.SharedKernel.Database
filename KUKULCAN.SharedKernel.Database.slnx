@@ -4,6 +4,7 @@
     <File Path="Documentation\ARCHITECTURE_DECISIONS.md" />
     <File Path="Documentation\AUDITING.md" />
     <File Path="Documentation\CONFIGURATION.md" />
+    <File Path="Documentation\COVERAGE.md" />
     <File Path="Documentation\DOMAIN_EVENTS.md" />
     <File Path="Documentation\IMMUTABILITY.md" />
     <File Path="Documentation\PERSISTENCE_PIPELINE.md" />

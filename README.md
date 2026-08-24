@@ -56,13 +56,13 @@ Provides common provider configuration, model-configuration discovery, global fi
 
 ### Persistence Interceptors
 
-| Component | Responsibility |
-|---|---|
-| `AuditSaveChangesInterceptor` | Sets `CreatedOn` for added auditable entities and `ModifiedOn` for modified entities. |
-| `SoftDeleteInterceptor` | Converts deletes of `ISoftDelete` entities into logical deletes and records `DeletedOn`. |
-| `DomainEventDispatchInterceptor` | Dispatches pending domain events after a successful save and clears them. |
-| `ImmutableEntityInterceptor` | Rejects updates and deletes of `IImmutable` entities. |
-| `SlowQueryInterceptor` | Logs commands exceeding `SlowQueryThresholdMs`. |
+| Component                        | Responsibility                                                                           |
+|----------------------------------|------------------------------------------------------------------------------------------|
+| `AuditSaveChangesInterceptor`    | Sets `CreatedOn` for added auditable entities and `ModifiedOn` for modified entities.    |
+| `SoftDeleteInterceptor`          | Converts deletes of `ISoftDelete` entities into logical deletes and records `DeletedOn`. |
+| `DomainEventDispatchInterceptor` | Dispatches pending domain events after a successful save and clears them.                |
+| `ImmutableEntityInterceptor`     | Rejects updates and deletes of `IImmutable` entities.                                    |
+| `SlowQueryInterceptor`           | Logs commands exceeding `SlowQueryThresholdMs`.                                          |
 
 ### Unit of Work
 
