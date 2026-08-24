@@ -4,7 +4,7 @@
 
 `KUKULCAN.SharedKernel.Database` is the shared persistence and Entity Framework Core infrastructure module used by KUKULCAN applications and bounded contexts. It builds on `KUKULCAN.SharedKernel` and centralizes database cross-cutting concerns without introducing business-domain rules into the shared domain model.
 
-The library targets **.NET 10** and **EF Core 10**. Provider packages are deliberately supplied by consuming applications or infrastructure projects.
+The library targets **.NET 10** and **EF Core 10**. Concrete provider packages are deliberately supplied by consuming infrastructure or host projects rather than by the production database library itself.
 
 ## Responsibilities
 
@@ -44,41 +44,58 @@ KUKULCAN.SharedKernel.Database/
 │   ├── Extensions/
 │   ├── Interceptors/
 │   ├── UnitOfWork/
-│   └── KukulcanDbContextBase.cs
-└── SourceClient/
+│   ├── KukulcanDbContextBase.cs
+│   └── TenantModelCacheKeyFactory.cs
+├── SourceClient/
+│   └── KUKULCAN.SharedKernel.Database.SourceClient/
+├── Tests/
+│   ├── KUKULCAN.SharedKernel.Database.Tests/
+│   └── KUKULCAN.SharedKernel.Database.Integration/
+└── Documentation/
 ```
+
+The `SourceClient` project is a console client used to exercise the database infrastructure from a consuming application perspective. The two test projects deliberately separate deterministic unit tests from provider-backed integration tests.
 
 ## Core Components
 
 ### `KukulcanDbContextBase`
 
-Provides common provider configuration, model-configuration discovery, global filters and persistence interceptors for derived module contexts.
+Provides common provider configuration, model-configuration discovery, global filters, tenant-aware model caching and persistence interceptor registration for derived module contexts.
 
 ### Persistence Interceptors
 
-| Component                        | Responsibility                                                                           |
-|----------------------------------|------------------------------------------------------------------------------------------|
-| `AuditSaveChangesInterceptor`    | Sets `CreatedOn` for added auditable entities and `ModifiedOn` for modified entities.    |
-| `SoftDeleteInterceptor`          | Converts deletes of `ISoftDelete` entities into logical deletes and records `DeletedOn`. |
-| `DomainEventDispatchInterceptor` | Dispatches pending domain events after a successful save and clears them.                |
-| `ImmutableEntityInterceptor`     | Rejects updates and deletes of `IImmutable` entities.                                    |
-| `SlowQueryInterceptor`           | Logs commands exceeding `SlowQueryThresholdMs`.                                          |
+| Component | Responsibility |
+|---|---|
+| `AuditSaveChangesInterceptor` | Sets `CreatedOn` for added auditable entities and `ModifiedOn` for modified entities. |
+| `SoftDeleteInterceptor` | Converts deletes of `ISoftDelete` entities into logical deletes and records `DeletedOn`. |
+| `DomainEventDispatchInterceptor` | Dispatches pending domain events after a successful save and clears them. |
+| `ImmutableEntityInterceptor` | Rejects updates and deletes of `IImmutable` entities. |
+| `SlowQueryInterceptor` | Logs commands exceeding the configured slow-query threshold. |
 
 ### Unit of Work
 
 `IUnitOfWork` exposes asynchronous saving and explicit transaction lifecycle operations. Repository abstractions are intentionally outside this package.
 
-## Tenant Isolation
+## Tenant Isolation and Model Caching
 
-`ITenantContext` supplies the current `Guid` tenant identifier. `ApplyTenantFilter` applies a global filter to entity types that expose a `Guid TenantId` property. Tenant awareness remains a persistence concern and is not added to SharedKernel merely for EF Core support.
+`ITenantContext` supplies the current `Guid` tenant identifier. `ApplyTenantFilter` applies a global filter to entity types that expose a `Guid TenantId` property.
+
+`TenantModelCacheKeyFactory` includes the current tenant identifier and EF Core design-time state in the model cache key for `KukulcanDbContextBase` contexts. This prevents tenant-specific EF Core models from being incorrectly shared while preserving normal model-cache reuse for the same tenant and design-time state.
+
+Tenant awareness remains a persistence concern and is not added to SharedKernel merely for EF Core support.
 
 ## Providers
 
-The core package does not reference provider packages. Consumers add the provider they need, such as `Microsoft.EntityFrameworkCore.SqlServer` or `Npgsql.EntityFrameworkCore.PostgreSQL`. The current `DatabaseProvider` enum supports `SqlServer` and `PostgresSql`.
+The production database package does not reference concrete provider packages. Consumers add the provider they need, such as:
+
+- `Microsoft.EntityFrameworkCore.SqlServer`
+- `Npgsql.EntityFrameworkCore.PostgreSQL`
+
+The current `DatabaseProvider` enum supports `SqlServer` and `PostgresSql`. Provider configuration is resolved dynamically in `KukulcanDbContextBase` so the production package remains provider-neutral at package level.
 
 ## Configuration
 
-Options are bound from `Kukulcan:Database`. Sensitive-data logging is disabled by default and should remain disabled in production.
+Options are bound from `Kukulcan:Database`. The configuration model includes provider selection, connection string, command timeout, retry policy, pool options, migration/seed options and EF Core diagnostic flags. Sensitive-data logging is disabled by default and should remain disabled in production.
 
 ## Registration
 
@@ -86,7 +103,7 @@ Options are bound from `Kukulcan:Database`. Sensitive-data logging is disabled b
 services.AddKukulcanDbContext<MyModuleDbContext>(configuration);
 ```
 
-The registration helper binds options, registers the context, registers `IUnitOfWork` and registers the slow-query interceptor.
+The registration helper binds `KukulcanDatabaseOptions`, validates the required connection string, registers the derived context, registers `IUnitOfWork` as a scoped service and registers `SlowQueryInterceptor` as a singleton.
 
 ## Requirements
 
@@ -94,17 +111,22 @@ The registration helper binds options, registers the context, registers `IUnitOf
 - `KUKULCAN.SharedKernel` 1.0.0 or compatible
 - EF Core 10
 - Microsoft.Extensions Options, DI, Logging and Configuration abstractions 10
-- A database provider package supplied by the consuming project when required
+- A concrete EF Core provider package supplied by the consuming project when required
 
 ## Quality and Test Coverage
 
 Nullable reference types are enabled, warnings are treated as errors and XML documentation generation is enabled. Public APIs are documented and persistence behavior is covered by behavior-focused tests.
 
-The **current PostgreSQL-backed test validation** reports **100% line coverage (221/221 lines)** and **97.36% branch coverage (74/76 branches)** for the database production assembly. PostgreSQL is the reference database management system (DBMS) used by the integration test suite for persistence-level validation, while the unit-test suite provides the deterministic code-path and branch coverage.
+The **current unit-test coverage baseline** for the production assembly is **100% line coverage (221/221 lines)** and **97.36% branch coverage (74/76 branches)**. **PostgreSQL is the reference database management system (DBMS) used by the integration test suite** for persistence-level validation; PostgreSQL is not the reason the unit-test line and branch percentages are 100% and 97.36% respectively.
 
-The integration suite has a different purpose and is intentionally not used as the coverage threshold. It validates real PostgreSQL behavior such as connectivity, persistence, tenant isolation, interception and transactions. Its coverage percentage can therefore differ from the unit-test report without indicating a quality problem.
+The two test layers have different responsibilities:
 
-The two uncovered branches in the unit-test report are intentional defensive branches in `KukulcanDbContextBase.ConfigureSqlServer` and `KukulcanDbContextBase.ConfigurePostgresSql`. They are the failure sides of the null-coalescing type-resolution expressions that handle the case where the corresponding EF Core provider assembly is not installed:
+- `KUKULCAN.SharedKernel.Database.Tests` provides deterministic unit coverage of guard clauses, provider-selection logic, reflection/configuration paths, unit-of-work contracts and synchronous/asynchronous interceptor behavior.
+- `KUKULCAN.SharedKernel.Database.Integration` validates persistence behavior against a real PostgreSQL database, including connectivity, tenant isolation, model-cache isolation, interception and transaction behavior.
+
+The integration suite is not the accepted coverage threshold. Its purpose is functional verification against the PostgreSQL DBMS, while the unit-test report defines the deterministic code-path and branch coverage baseline.
+
+The two uncovered unit-test branches are intentional defensive branches in `KukulcanDbContextBase.ConfigureSqlServer` and `KukulcanDbContextBase.ConfigurePostgresSql`. They are the failure sides of the null-coalescing provider type-resolution expressions used when a required EF Core provider assembly cannot be resolved:
 
 ```csharp
 Type.GetType("...Microsoft.EntityFrameworkCore.SqlServer")
@@ -114,23 +136,19 @@ Type.GetType("...Npgsql.EntityFrameworkCore.PostgreSQL")
     ?? throw NotInstalled("Npgsql.EntityFrameworkCore.PostgreSQL");
 ```
 
-The test project references both provider packages so that the supported SQL Server and PostgreSQL configuration paths can be exercised using the real provider assemblies. Under that supported test environment, the provider assemblies are present and `Type.GetType(...)` resolves successfully. The two `null` branches therefore cannot be reached naturally.
+The unit-test project references both provider packages, so the supported test environment contains the assemblies and those defensive `null` branches cannot be reached naturally. Forcing assembly absence solely to obtain a numerical 100% branch-coverage result would require an artificial runtime condition and would reduce the representativeness of the test suite.
 
-Forcing those branches solely to obtain a numerical 100% branch-coverage value would require manipulating assembly loading, adding production-only seams or otherwise creating an artificial runtime configuration. That would make the tests less deterministic and less representative of the supported application configuration.
-
-The provider error contract is still covered through the unsupported-provider test, the missing-compatible-reflection-method path and direct tests of the `NotInstalled` helper, including its null-inner-exception form.
-
-The resulting **97.36% branch coverage is therefore an intentional and reviewed coverage boundary, not an untested supported behavior**. The project deliberately does not add artificial tests merely to raise the coverage percentage.
+The resulting **97.36% branch coverage is therefore an intentional and reviewed boundary, not an unsupported production behavior left untested**.
 
 ## Integration Testing
 
-Integration tests are maintained separately from the unit-test and coverage projects in `Tests/KUKULCAN.SharedKernel.Database.Integration`.
+Integration tests are maintained separately in `Tests/KUKULCAN.SharedKernel.Database.Integration`.
 
-The integration test database is **PostgreSQL**. The suite uses a real PostgreSQL instance to validate provider connectivity, persistence, tenant isolation, soft-delete interception, audit timestamps and database transactions through `UnitOfWork<TContext>`.
+The integration test database is **PostgreSQL**. The suite uses a real PostgreSQL instance to validate provider connectivity, persistence, tenant isolation, model-cache isolation, soft-delete interception, audit timestamps, domain-event dispatch, immutable-entity enforcement, slow-query diagnostics and database transactions through `UnitOfWork<TContext>`.
 
-The integration suite deliberately has **no Coverlet dependency and no code-coverage threshold**. Its purpose is to prove that the persistence infrastructure works against the PostgreSQL DBMS, not to maximize a coverage percentage. Unit tests remain responsible for deterministic code-path and branch coverage.
+The integration project references `Npgsql.EntityFrameworkCore.PostgreSQL`, `Testcontainers.PostgreSql` and `coverlet.collector`. Coverage collection is available for integration runs, but **integration coverage is not used as the project's acceptance threshold**.
 
-GitHub Actions provisions PostgreSQL 16 as a service container and runs the integration suite independently from the unit-test and coverage workflows. Local execution can use the default PostgreSQL connection string or override it through `KUKULCAN_DATABASE_INTEGRATION_CONNECTION_STRING`.
+GitHub Actions provisions PostgreSQL 16 as a service container for the dedicated integration workflow. Local execution can use the configured PostgreSQL integration connection string or override it through `KUKULCAN_DATABASE_INTEGRATION_CONNECTION_STRING`.
 
 ## License
 
