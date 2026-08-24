@@ -100,7 +100,7 @@ The registration helper binds options, registers the context, registers `IUnitOf
 
 Nullable reference types are enabled, warnings are treated as errors and XML documentation generation is enabled. Public APIs are documented and persistence behavior is covered by behavior-focused tests.
 
-The **unit-test coverage report** achieves **100% line coverage (221/221 lines)** and **97.36% branch coverage (74/76 branches)** for the database production assembly.
+The **current PostgreSQL-backed test validation** reports **100% line coverage (221/221 lines)** and **97.36% branch coverage (74/76 branches)** for the database production assembly. PostgreSQL is the reference database management system (DBMS) used by the integration test suite for persistence-level validation, while the unit-test suite provides the deterministic code-path and branch coverage.
 
 The integration suite has a different purpose and is intentionally not used as the coverage threshold. It validates real PostgreSQL behavior such as connectivity, persistence, tenant isolation, interception and transactions. Its coverage percentage can therefore differ from the unit-test report without indicating a quality problem.
 
@@ -126,9 +126,9 @@ The resulting **97.36% branch coverage is therefore an intentional and reviewed 
 
 Integration tests are maintained separately from the unit-test and coverage projects in `Tests/KUKULCAN.SharedKernel.Database.Integration`.
 
-The first integration provider is **PostgreSQL**. The integration suite uses a real PostgreSQL instance to validate provider connectivity, persistence, tenant isolation, soft-delete interception, audit timestamps and database transactions through `UnitOfWork<TContext>`.
+The integration test database is **PostgreSQL**. The suite uses a real PostgreSQL instance to validate provider connectivity, persistence, tenant isolation, soft-delete interception, audit timestamps and database transactions through `UnitOfWork<TContext>`.
 
-The integration suite deliberately has **no Coverlet dependency and no code-coverage threshold**. Its purpose is to prove that the persistence infrastructure works against a real database engine, not to maximize a coverage percentage. Unit tests remain responsible for deterministic code-path and branch coverage.
+The integration suite deliberately has **no Coverlet dependency and no code-coverage threshold**. Its purpose is to prove that the persistence infrastructure works against the PostgreSQL DBMS, not to maximize a coverage percentage. Unit tests remain responsible for deterministic code-path and branch coverage.
 
 GitHub Actions provisions PostgreSQL 16 as a service container and runs the integration suite independently from the unit-test and coverage workflows. Local execution can use the default PostgreSQL connection string or override it through `KUKULCAN_DATABASE_INTEGRATION_CONNECTION_STRING`.
 
