@@ -44,16 +44,11 @@ public sealed class SqlServerUnitOfWorkIntegrationTests
     {
         await using var unit = new UnitOfWork<SqlServerIntegrationDbContext>(_context);
         await unit.BeginTransactionAsync();
-        var first = new SqlServerIntegrationEntity { TenantId = _tenantId, Name = "Constraint violation" };
-        _context.Entities.Add(first);
+        var entity = new SqlServerIntegrationEntity { TenantId = _tenantId, Name = "Constraint violation" };
+        _context.Entities.Add(entity);
         await unit.SaveChangesAsync();
 
-        _context.Entities.Add(new SqlServerIntegrationEntity
-        {
-            Id = first.Id,
-            TenantId = _tenantId,
-            Name = "Constraint violation"
-        });
+        entity.Name = null!;
 
         OperationCanceledException? cancellation = null;
         Exception? caughtException = null;
