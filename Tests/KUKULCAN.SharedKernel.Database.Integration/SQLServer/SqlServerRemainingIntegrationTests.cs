@@ -122,13 +122,14 @@ public sealed class SqlServerRemainingIntegrationTests
     }
 
     [Test]
-    public async Task TenantModelCache_ShouldBuildDistinctModelsAndReuseModelPerTenant()
+    public async Task TenantModelCache_ShouldBuildDistinctKeysForTenantsAndReuseKeyForSameTenant()
     {
         Guid tenant = Guid.NewGuid();
         await using var first = await SqlServerIntegrationContextFactory.CreateAsync(tenant);
         await using var second = await SqlServerIntegrationContextFactory.CreateAsync(tenant);
         await using var other = await SqlServerIntegrationContextFactory.CreateAsync(Guid.NewGuid());
-        Assert.That(first.Model, Is.SameAs(second.Model));
-        Assert.That(first.Model, Is.Not.SameAs(other.Model));
+        var factory = new TenantModelCacheKeyFactory();
+        Assert.That(factory.Create(first, false), Is.EqualTo(factory.Create(second, false)));
+        Assert.That(factory.Create(first, false), Is.Not.EqualTo(factory.Create(other, false)));
     }
 }
