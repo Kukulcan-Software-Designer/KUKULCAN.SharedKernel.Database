@@ -88,6 +88,53 @@ public sealed class DomainEventDispatchAdditionalIntegrationTests
         Assert.That(entity.DomainEvents, Is.Empty);
     }
 
+    [Test]
+    public void DomainEventDispatchInterceptor_ShouldDispatchAllEventsFromMultipleAggregatesAgainstRealPostgreSqlSynchronously()
+    {
+        Guid tenantId = Guid.NewGuid();
+        var dispatcher = new Mock<IDomainEventDispatcher>();
+
+        using var context = new PostgreSqlDatabaseIntegrationTests.IntegrationDbContext(
+            CreateOptions(),
+            new PostgreSqlDatabaseIntegrationTests.IntegrationTenantContext(tenantId),
+            new PostgreSqlDatabaseIntegrationTests.FixedClock(PostgreSqlDatabaseIntegrationTests.FixedNow),
+            dispatcher.Object);
+
+        context.Database.EnsureCreated();
+
+        var firstEntity = new PostgreSqlDatabaseIntegrationTests.DomainEventEntity
+        {
+            TenantId = tenantId,
+            Name = "First synchronous event source"
+        };
+        var secondEntity = new PostgreSqlDatabaseIntegrationTests.DomainEventEntity
+        {
+            TenantId = tenantId,
+            Name = "Second synchronous event source"
+        };
+
+        var firstEvent = new PostgreSqlDatabaseIntegrationTests.TestDomainEvent(PostgreSqlDatabaseIntegrationTests.FixedNow);
+        var secondEvent = new PostgreSqlDatabaseIntegrationTests.TestDomainEvent(PostgreSqlDatabaseIntegrationTests.FixedNow.AddSeconds(1));
+        var thirdEvent = new PostgreSqlDatabaseIntegrationTests.TestDomainEvent(PostgreSqlDatabaseIntegrationTests.FixedNow.AddSeconds(2));
+
+        firstEntity.AddDomainEventForTest(firstEvent);
+        firstEntity.AddDomainEventForTest(secondEvent);
+        secondEntity.AddDomainEventForTest(thirdEvent);
+
+        context.DomainEventEntities.AddRange(firstEntity, secondEntity);
+        context.SaveChanges();
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(firstEntity.DomainEvents, Is.Empty);
+            Assert.That(secondEntity.DomainEvents, Is.Empty);
+            dispatcher.Verify(x => x.DispatchAsync(firstEvent, It.Is<CancellationToken>(token => token == CancellationToken.None)), Times.Once);
+            dispatcher.Verify(x => x.DispatchAsync(secondEvent, It.Is<CancellationToken>(token => token == CancellationToken.None)), Times.Once);
+            dispatcher.Verify(x => x.DispatchAsync(thirdEvent, It.Is<CancellationToken>(token => token == CancellationToken.None)), Times.Once);
+            dispatcher.Verify(x => x.DispatchAsync(It.IsAny<IDomainEvent>(), It.IsAny<CancellationToken>()), Times.Exactly(3));
+        }
+    }
+
     private static IOptions<KukulcanDatabaseOptions> CreateOptions()
         => Options.Create(new KukulcanDatabaseOptions
         {
