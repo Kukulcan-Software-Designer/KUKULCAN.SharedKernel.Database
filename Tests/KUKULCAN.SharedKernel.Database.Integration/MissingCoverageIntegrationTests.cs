@@ -16,22 +16,22 @@ namespace KUKULCAN.SharedKernel.Database.Integration;
 public sealed class MissingCoverageIntegrationTests
 {
     [Test]
-    public async Task AuditInterceptor_ShouldApplyAuditMetadataOnAsyncSaveChanges()
+    public void AuditInterceptor_ShouldApplyAuditMetadataOnSynchronousSaveChanges()
     {
         Guid tenantId = Guid.NewGuid();
-        await using PostgreSqlDatabaseIntegrationTests.IntegrationDbContext context =
-            await IntegrationTestDatabase.CreateContextAsync(tenantId);
+        using PostgreSqlDatabaseIntegrationTests.IntegrationDbContext context =
+            IntegrationTestDatabase.CreateContextAsync(tenantId).GetAwaiter().GetResult();
 
         var entity = new PostgreSqlDatabaseIntegrationTests.IntegrationEntity
         {
             TenantId = tenantId,
-            Name = "Async audit"
+            Name = "Synchronous audit"
         };
 
         context.Entities.Add(entity);
-        await context.SaveChangesAsync();
-        entity.Name = "Async audit updated";
-        await context.SaveChangesAsync();
+        context.SaveChanges();
+        entity.Name = "Synchronous audit updated";
+        context.SaveChanges();
 
         using (Assert.EnterMultipleScope())
         {
@@ -41,33 +41,33 @@ public sealed class MissingCoverageIntegrationTests
     }
 
     [Test]
-    public async Task SoftDeleteInterceptor_ShouldApplyLogicalDeleteOnAsyncSaveChanges()
+    public void SoftDeleteInterceptor_ShouldApplyLogicalDeleteOnSynchronousSaveChanges()
     {
         Guid tenantId = Guid.NewGuid();
-        await using PostgreSqlDatabaseIntegrationTests.IntegrationDbContext context =
-            await IntegrationTestDatabase.CreateContextAsync(tenantId);
+        using PostgreSqlDatabaseIntegrationTests.IntegrationDbContext context =
+            IntegrationTestDatabase.CreateContextAsync(tenantId).GetAwaiter().GetResult();
 
         var entity = new PostgreSqlDatabaseIntegrationTests.IntegrationEntity
         {
             TenantId = tenantId,
-            Name = "Async soft delete"
+            Name = "Synchronous soft delete"
         };
 
         context.Entities.Add(entity);
-        await context.SaveChangesAsync();
+        context.SaveChanges();
         context.Entities.Remove(entity);
-        int affected = await context.SaveChangesAsync();
+        int affected = context.SaveChanges();
 
-        PostgreSqlDatabaseIntegrationTests.IntegrationEntity persisted = await context.Entities
+        PostgreSqlDatabaseIntegrationTests.IntegrationEntity persisted = context.Entities
             .IgnoreQueryFilters()
-            .SingleAsync(x => x.Id == entity.Id);
+            .Single(x => x.Id == entity.Id);
 
         using (Assert.EnterMultipleScope())
         {
             Assert.That(affected, Is.EqualTo(1));
             Assert.That(persisted.IsDeleted, Is.True);
             Assert.That(persisted.DeletedOn, Is.EqualTo(PostgreSqlDatabaseIntegrationTests.FixedNow));
-            Assert.That(await context.Entities.AnyAsync(x => x.Id == entity.Id), Is.False);
+            Assert.That(context.Entities.Any(x => x.Id == entity.Id), Is.False);
         }
     }
 
