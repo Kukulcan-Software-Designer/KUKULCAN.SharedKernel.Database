@@ -8,9 +8,9 @@ public sealed class KukulcanDbContextPoolOptionsBehaviorTests
 {
     private static readonly object[][] Cases =
     [
-        [DatabaseProvider.SqlServer, "Server=localhost;Database=KukulcanTests;", "Pooling=true", "Min Pool Size=7", "Max Pool Size=31"],
-        [DatabaseProvider.PostgresSql, "Host=localhost;Database=KukulcanTests;Username=test;Password=test;", "Pooling=true", "Minimum Pool Size=7", "Maximum Pool Size=31"],
-        [DatabaseProvider.MySql, "Server=localhost;Database=KukulcanTests;User Id=test;Password=test;", "Pooling=true", "MinimumPoolSize=7", "MaximumPoolSize=31"]
+        [DatabaseProvider.SqlServer, "Server=localhost;Database=KukulcanTests;", "pooling=true", "min pool size=7", "max pool size=31"],
+        [DatabaseProvider.PostgresSql, "Host=localhost;Database=KukulcanTests;Username=test;Password=test;", "pooling=true", "minimum pool size=7", "maximum pool size=31"],
+        [DatabaseProvider.MySql, "Server=localhost;Database=KukulcanTests;User Id=test;Password=test;", "pooling=true", "minpoolsize=7", "maxpoolsize=31"]
     ];
 
     [TestCaseSource(nameof(Cases))]
@@ -28,7 +28,7 @@ public sealed class KukulcanDbContextPoolOptionsBehaviorTests
             MaxSize = 31
         });
 
-        string connectionString = context.Database.GetDbConnection().ConnectionString;
+        string connectionString = context.Database.GetDbConnection().ConnectionString.ToLowerInvariant();
 
         using (Assert.EnterMultipleScope())
         {
@@ -55,7 +55,7 @@ public sealed class KukulcanDbContextPoolOptionsBehaviorTests
             MaxSize = 31
         });
 
-        string connectionString = context.Database.GetDbConnection().ConnectionString;
+        string connectionString = context.Database.GetDbConnection().ConnectionString.ToLowerInvariant();
 
         using (Assert.EnterMultipleScope())
         {
