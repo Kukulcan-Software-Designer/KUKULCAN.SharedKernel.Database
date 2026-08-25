@@ -1,4 +1,3 @@
-using KUKULCAN.SharedKernel.Database.Integration;
 using KUKULCAN.SharedKernel.Database.Interceptors;
 using Microsoft.Extensions.Logging;
 using NUnit.Framework;
