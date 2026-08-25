@@ -27,4 +27,4 @@ The database is created and destroyed automatically by Testcontainers. No local 
 
 ## Provider
 
-The tests use `Pomelo.EntityFrameworkCore.MySql` against MySQL 8.4.
+The tests use the official `MySql.EntityFrameworkCore` Connector/NET provider version `10.0.9` against MySQL 8.4.
