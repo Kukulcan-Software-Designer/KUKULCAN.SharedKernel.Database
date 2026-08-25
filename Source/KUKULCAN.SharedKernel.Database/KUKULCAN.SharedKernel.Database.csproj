@@ -14,7 +14,9 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <InternalsVisibleTo Include="KUKULCAN.SharedKernel.Database.Integration" />
+        <InternalsVisibleTo Include="KUKULCAN.SharedKernel.Database.Tests" />
+        <InternalsVisibleTo Include="KUKULCAN.SharedKernel.Database.PostgreSQL.Integration" />
+        <InternalsVisibleTo Include="KUKULCAN.SharedKernel.Database.SQLServer.Integration" />
     </ItemGroup>
 
     <!-- SharedKernel references — no circular deps -->
