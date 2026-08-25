@@ -78,7 +78,6 @@ public sealed class MySqlRemainingIntegrationTests
     public void TenantModelCacheKeyFactory_ShouldKeepNonKukulcanDesignTimeKeysDistinct()
     {
         using var context = new DbContext(new DbContextOptionsBuilder<DbContext>().Options);
-        var factory = new TenantModelCacheKeyFactory();
-        Assert.That(factory.Create(context, false), Is.Not.EqualTo(factory.Create(context, true)));
+        Assert.That(MySqlTenantModelCacheKeyHelper.Create(context, false), Is.Not.EqualTo(MySqlTenantModelCacheKeyHelper.Create(context, true)));
     }
 }
