@@ -3,6 +3,7 @@ name: Reference Client
 on:
   push:
     branches:
+      - main
       - 'CLIENT/**'
   pull_request:
     branches:
