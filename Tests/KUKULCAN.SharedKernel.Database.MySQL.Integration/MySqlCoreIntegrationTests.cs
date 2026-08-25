@@ -1,3 +1,5 @@
+using MySql.EntityFrameworkCore.Extensions;
+
 namespace KUKULCAN.SharedKernel.Database.Integration.MySQL;
 
 [TestFixture]
