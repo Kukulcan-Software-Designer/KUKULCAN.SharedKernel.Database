@@ -136,7 +136,7 @@ public sealed class DomainEventsAndScalarMissingCoverageIntegrationTests
         try
         {
             var logger = new SqlServerCapturingLogger<SlowQueryInterceptor>();
-            var interceptor = new SlowQueryInterceptor(logger);
+            var interceptor = new SlowQueryInterceptor(logger, Options.Create(new KukulcanDatabaseOptions()));
             await using var context = await SqlServerIntegrationContextFactory.CreateAsync(_tenantId, slowQueryInterceptor: interceptor);
             await context.Database.OpenConnectionAsync();
             await using var command = context.Database.GetDbConnection().CreateCommand();
@@ -159,7 +159,7 @@ public sealed class DomainEventsAndScalarMissingCoverageIntegrationTests
         try
         {
             var logger = new SqlServerCapturingLogger<SlowQueryInterceptor>();
-            var interceptor = new SlowQueryInterceptor(logger);
+            var interceptor = new SlowQueryInterceptor(logger, Options.Create(new KukulcanDatabaseOptions()));
             await using var context = await SqlServerIntegrationContextFactory.CreateAsync(_tenantId, slowQueryInterceptor: interceptor);
             await context.Database.OpenConnectionAsync();
             await using var command = context.Database.GetDbConnection().CreateCommand();
