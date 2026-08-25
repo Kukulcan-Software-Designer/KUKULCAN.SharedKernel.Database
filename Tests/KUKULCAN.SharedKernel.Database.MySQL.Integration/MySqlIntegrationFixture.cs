@@ -61,14 +61,23 @@ internal static class MySqlTenantModelCacheKeyHelper
         .GetType("KUKULCAN.SharedKernel.Database.TenantModelCacheKeyFactory", throwOnError: true)!;
 
     private static readonly ConstructorInfo Constructor = FactoryType
-        .GetConstructor(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, [], null, [], null)!;
+        .GetConstructor(
+            BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic,
+            binder: null,
+            types: Type.EmptyTypes,
+            modifiers: null)!;
 
     private static readonly MethodInfo CreateMethod = FactoryType
-        .GetMethod(nameof(IModelCacheKeyFactory.Create), BindingFlags.Instance | BindingFlags.Public, [typeof(DbContext), typeof(bool)])!;
+        .GetMethod(
+            "Create",
+            BindingFlags.Instance | BindingFlags.Public,
+            binder: null,
+            types: [typeof(DbContext), typeof(bool)],
+            modifiers: null)!;
 
     public static object Create(DbContext context, bool designTime)
     {
-        object factory = Constructor.Invoke([]);
+        object factory = Constructor.Invoke(null);
         return CreateMethod.Invoke(factory, [context, designTime])!;
     }
 }
