@@ -26,7 +26,7 @@
                                          ImmutableEntity, SlowQuery
       - ModelBuilderExtensions        → ApplySoftDeleteFilter, ApplyTenantFilter
       - KukulcanDatabaseOptions       → multi-vendor configuration
-      - DatabaseProvider              → enum: SqlServer, PostgreSql
+      - DatabaseProvider              → enum: SqlServer, PostgresSql, MySql
 
     Format: .slnx (XML, .NET 10 / Visual Studio 2022+)
   -->
@@ -66,6 +66,7 @@
   </Folder>
 
   <Folder Name="/Tests/">
+    <Project Path="Tests/KUKULCAN.SharedKernel.Database.MySQL.Integration/KUKULCAN.SharedKernel.Database.MySQL.Integration.csproj" />
     <Project Path="Tests/KUKULCAN.SharedKernel.Database.PostgreSQL.Integration/KUKULCAN.SharedKernel.Database.PostgreSQL.Integration.csproj" />
     <Project Path="Tests/KUKULCAN.SharedKernel.Database.SQLServer.Integration/KUKULCAN.SharedKernel.Database.SQLServer.Integration.csproj" />
     <Project Path="Tests/KUKULCAN.SharedKernel.Database.Tests/KUKULCAN.SharedKernel.Database.Tests.csproj" />
