@@ -1,8 +1,4 @@
-using KUKULCAN.SharedKernel.Database.Configuration;
-using KUKULCAN.SharedKernel.Database.Extensions;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
+using KUKULCAN.SharedKernel.Database.TestInfrastructure.internals;
 
 namespace KUKULCAN.SharedKernel.Database.Tests;
 
@@ -30,11 +26,9 @@ public sealed class KukulcanDbContextDependencyInjectionTests
             .Build();
 
         var services = new ServiceCollection();
-        services.AddSingleton<TestTenantContext>();
-        services.AddSingleton<ITenantContext>(sp => sp.GetRequiredService<TestTenantContext>());
-        services.AddSingleton<TestClock>();
-        services.AddSingleton<IClock>(sp => sp.GetRequiredService<TestClock>());
-        services.AddSingleton<IDomainEventDispatcher, TestDomainEventDispatcher>();
+        services.AddSingleton<ITenantContext>(_ => new TestTenantContext(Guid.NewGuid()));
+        services.AddSingleton<IClock>(_ => new TestClock(DateTimeOffset.UtcNow));
+        services.AddSingleton<IDomainEventDispatcher>(_ => Mock.Of<IDomainEventDispatcher>());
         services.AddKukulcanDbContext<DependencyInjectionTestDbContext>(configuration);
 
         using var serviceProvider = services.BuildServiceProvider();
@@ -44,9 +38,8 @@ public sealed class KukulcanDbContextDependencyInjectionTests
         {
             Assert.That(context.Database.ProviderName, Is.EqualTo(expectedProvider));
             Assert.That(context.Database.GetCommandTimeout(), Is.EqualTo(37));
+            Assert.That(context.Database.CreateExecutionStrategy().RetriesOnFailure, Is.True);
         }
-
-        Assert.That(context.Database.CreateExecutionStrategy().RetriesOnFailure, Is.True);
     }
 
     private sealed class DependencyInjectionTestDbContext(
@@ -56,20 +49,4 @@ public sealed class KukulcanDbContextDependencyInjectionTests
         IDomainEventDispatcher dispatcher,
         SlowQueryInterceptor slowQueryInterceptor)
         : KukulcanDbContextBase(options, tenantContext, clock, dispatcher, slowQueryInterceptor);
-
-    private sealed class TestTenantContext(Guid tenantId) : ITenantContext
-    {
-        public Guid TenantId { get; } = tenantId;
-    }
-
-    private sealed class TestClock : IClock
-    {
-        public DateTimeOffset UtcNow => DateTimeOffset.UtcNow;
-    }
-
-    private sealed class TestDomainEventDispatcher : IDomainEventDispatcher
-    {
-        public Task DispatchAsync(IDomainEvent domainEvent, CancellationToken cancellationToken = default)
-            => Task.CompletedTask;
-    }
 }
