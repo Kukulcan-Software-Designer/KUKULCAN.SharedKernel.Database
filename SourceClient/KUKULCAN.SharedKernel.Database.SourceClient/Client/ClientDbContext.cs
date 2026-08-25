@@ -6,6 +6,11 @@ using Microsoft.Extensions.Options;
 
 namespace KUKULCAN.SharedKernel.Database.Client.Client;
 
+/// <summary>
+/// Concrete DbContext used exclusively by the reference client.
+/// The model deliberately avoids provider-specific schema features so the same model
+/// can run unchanged on SQL Server, PostgreSQL and MySQL.
+/// </summary>
 public sealed class ClientDbContext(
     IOptions<KukulcanDatabaseOptions> options,
     Abstractions.ITenantContext tenantContext,
@@ -27,9 +32,10 @@ public sealed class ClientDbContext(
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        modelBuilder.HasDefaultSchema("demo");
         base.OnModelCreating(modelBuilder);
 
+        // Do not use HasDefaultSchema: MySQL has no independent schema namespace
+        // equivalent to SQL Server/PostgreSQL. Table names are therefore kept neutral.
         modelBuilder.Entity<ClientProduct>(e =>
         {
             e.ToTable("Products");
