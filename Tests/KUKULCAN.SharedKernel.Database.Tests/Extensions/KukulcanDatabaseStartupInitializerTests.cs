@@ -1,4 +1,5 @@
 using Microsoft.Data.Sqlite;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 namespace KUKULCAN.SharedKernel.Database.Tests.Extensions;
@@ -224,7 +225,7 @@ public sealed class KukulcanDatabaseStartupInitializerTests
         }
     }
 
-    [DbContext(typeof(StartupTestDbContext))]
+    [Microsoft.EntityFrameworkCore.Infrastructure.DbContext(typeof(StartupTestDbContext))]
     [Migration("202608250001_StartupTest")]
     private sealed class StartupTestMigration : Migration
     {
