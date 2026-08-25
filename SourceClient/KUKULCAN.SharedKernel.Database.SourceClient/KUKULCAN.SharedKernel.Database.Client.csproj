@@ -6,6 +6,7 @@
     <LangVersion>latestmajor</LangVersion>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <IsPackable>false</IsPackable>
     <RootNamespace>KUKULCAN.SharedKernel.Database.Client</RootNamespace>
     <AssemblyName>KUKULCAN.SharedKernel.Database.Client</AssemblyName>
   </PropertyGroup>
