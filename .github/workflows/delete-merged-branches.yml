@@ -4,22 +4,30 @@ on:
   pull_request:
     types: [closed]
 
+permissions:
+  contents: write
+
 jobs:
   delete-branch:
     if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
 
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
       - name: Determine branch name
         id: vars
-        run: echo "branch=${GITHUB_HEAD_REF}" >> $GITHUB_OUTPUT
+        run: echo "branch=${GITHUB_HEAD_REF}" >> "$GITHUB_OUTPUT"
 
       - name: Delete branch if allowed
         if: |
           steps.vars.outputs.branch != 'main' &&
           steps.vars.outputs.branch != 'develop'
+        env:
+          BRANCH_NAME: ${{ steps.vars.outputs.branch }}
         run: |
-          echo "Deleting branch: ${GITHUB_HEAD_REF}"
-          git config --global user.email "actions@github.com"
-          git config --global user.name "GitHub Actions"
-          git push origin --delete "${GITHUB_HEAD_REF}"
+          echo "Deleting branch: ${BRANCH_NAME}"
+          git push origin --delete "${BRANCH_NAME}"
