@@ -19,9 +19,6 @@
         <InternalsVisibleTo Include="KUKULCAN.SharedKernel.Database.SQLServer.Integration" />
     </ItemGroup>
 
-    <!-- SharedKernel references — no circular deps -->
-
-    <!-- EF Core core only — providers added per-module or per-host -->
     <ItemGroup>
         <PackageReference Include="KUKULCAN.SharedKernel" Version="1.0.0" />
         <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.*" />
@@ -31,6 +28,7 @@
         <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.*" />
         <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="10.*" />
         <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="10.0.9" />
+        <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="10.*" />
     </ItemGroup>
     <ItemGroup>
       <None Remove="KUKULCAN.SharedKernel.Database.csproj~" />
@@ -42,7 +40,7 @@
 
         SQL Server  : Microsoft.EntityFrameworkCore.SqlServer
         PostgreSQL  : Npgsql.EntityFrameworkCore.PostgreSQL
-        MySQL       : Pomelo.EntityFrameworkCore.MySql
+        MySQL       : MySql.EntityFrameworkCore
     -->
 
 </Project>
