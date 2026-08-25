@@ -1,4 +1,5 @@
 using KUKULCAN.SharedKernel.Database.Tests.TestInfrastructure.internals;
+using Microsoft.Extensions.Hosting;
 
 namespace KUKULCAN.SharedKernel.Database.Tests.Extensions;
 
