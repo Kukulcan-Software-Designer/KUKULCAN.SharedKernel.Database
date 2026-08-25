@@ -8,7 +8,7 @@ namespace KUKULCAN.SharedKernel.Database.MySQL.Integration;
 public sealed class MySqlRealRetryIntegrationTests
 {
     [Test]
-    public async Task ExecutionStrategy_ShouldRetryAfterRealMySqlConnectionTermination()
+    public async Task ExecutionStrategy_ShouldRetryAfterRealMySqlLockWaitTimeout()
     {
         Guid tenantId = Guid.NewGuid();
         var options = Options.Create(new KukulcanDatabaseOptions
@@ -25,9 +25,52 @@ public sealed class MySqlRealRetryIntegrationTests
             Pool = new KukulcanDatabaseOptions.PoolOptions { Enabled = false }
         });
 
-        await using var setupContext = await MySqlIntegrationContextFactory.CreateAsync(tenantId);
-        await setupContext.Database.CloseConnectionAsync();
-        await setupContext.DisposeAsync();
+        await using var setupContext = new MySqlIntegrationDbContext(
+            options,
+            new MySqlTenantContext(tenantId),
+            new FixedClock(MySqlIntegrationConstants.FixedNow),
+            Mock.Of<IDomainEventDispatcher>());
+
+        await setupContext.Database.EnsureCreatedAsync();
+
+        await using (DbConnection setupConnection = setupContext.Database.GetDbConnection())
+        {
+            await setupConnection.OpenAsync();
+
+            await using DbCommand setupCommand = setupConnection.CreateCommand();
+            setupCommand.CommandText = """
+                CREATE TABLE IF NOT EXISTS KukulcanRetryCoverageRows
+                (
+                    Id INT NOT NULL PRIMARY KEY,
+                    Name VARCHAR(100) NOT NULL
+                );
+                DELETE FROM KukulcanRetryCoverageRows;
+                INSERT INTO KukulcanRetryCoverageRows (Id, Name) VALUES (1, 'Locked row');
+                """;
+            await setupCommand.ExecuteNonQueryAsync();
+        }
+
+        await using var blockerConnection = new MySqlIntegrationDbContext(
+            options,
+            new MySqlTenantContext(tenantId),
+            new FixedClock(MySqlIntegrationConstants.FixedNow),
+            Mock.Of<IDomainEventDispatcher>());
+
+        await blockerConnection.Database.OpenConnectionAsync();
+        await using DbTransaction blockerTransaction = await blockerConnection.Database.BeginTransactionAsync();
+
+        await using (DbCommand lockCommand = blockerConnection.Database.GetDbConnection().CreateCommand())
+        {
+            lockCommand.Transaction = blockerTransaction;
+            lockCommand.CommandText = "UPDATE KukulcanRetryCoverageRows SET Name = Name WHERE Id = 1;";
+            await lockCommand.ExecuteNonQueryAsync();
+        }
+
+        Task releaseBlockerTask = Task.Run(async () =>
+        {
+            await Task.Delay(TimeSpan.FromSeconds(2));
+            await blockerTransaction.RollbackAsync();
+        });
 
         int attempts = 0;
         await using var executionContext = new MySqlIntegrationDbContext(
@@ -35,7 +78,6 @@ public sealed class MySqlRealRetryIntegrationTests
             new MySqlTenantContext(tenantId),
             new FixedClock(MySqlIntegrationConstants.FixedNow),
             Mock.Of<IDomainEventDispatcher>());
-        await executionContext.Database.EnsureCreatedAsync();
 
         IExecutionStrategy strategy = executionContext.Database.CreateExecutionStrategy();
 
@@ -52,39 +94,27 @@ public sealed class MySqlRealRetryIntegrationTests
             await victimContext.Database.OpenConnectionAsync();
             DbConnection victimConnection = victimContext.Database.GetDbConnection();
 
-            if (attempt == 1)
+            await using (DbCommand timeoutCommand = victimConnection.CreateCommand())
             {
-                await using DbCommand threadCommand = victimConnection.CreateCommand();
-                threadCommand.CommandText = "SELECT CONNECTION_ID();";
-                long threadId = Convert.ToInt64(await threadCommand.ExecuteScalarAsync());
-
-                await using var killerContext = new MySqlIntegrationDbContext(
-                    options,
-                    new MySqlTenantContext(tenantId),
-                    new FixedClock(MySqlIntegrationConstants.FixedNow),
-                    Mock.Of<IDomainEventDispatcher>());
-                await killerContext.Database.OpenConnectionAsync();
-
-                await using DbCommand killCommand = killerContext.Database.GetDbConnection().CreateCommand();
-                killCommand.CommandText = $"KILL CONNECTION {threadId};";
-                await killCommand.ExecuteNonQueryAsync();
-
-                await using DbCommand longRunningCommand = victimConnection.CreateCommand();
-                longRunningCommand.CommandText = "SELECT SLEEP(10);";
-                await longRunningCommand.ExecuteScalarAsync();
-
-                Assert.Fail("The terminated MySQL connection unexpectedly completed its command.");
+                timeoutCommand.CommandText = "SET SESSION innodb_lock_wait_timeout = 1;";
+                await timeoutCommand.ExecuteNonQueryAsync();
             }
 
-            await using DbCommand verificationCommand = victimConnection.CreateCommand();
-            verificationCommand.CommandText = "SELECT 42;";
-            return Convert.ToInt32(await verificationCommand.ExecuteScalarAsync());
+            await using DbCommand updateCommand = victimConnection.CreateCommand();
+            updateCommand.CommandText = "UPDATE KukulcanRetryCoverageRows SET Name = CONCAT(Name, ' updated') WHERE Id = 1;";
+
+            int affected = Convert.ToInt32(await updateCommand.ExecuteNonQueryAsync());
+
+            return affected;
         });
+
+        await releaseBlockerTask;
 
         using (Assert.EnterMultipleScope())
         {
+            Assert.That(strategy.RetriesOnFailure, Is.True);
             Assert.That(attempts, Is.EqualTo(2));
-            Assert.That(result, Is.EqualTo(42));
+            Assert.That(result, Is.EqualTo(1));
         }
     }
 }
