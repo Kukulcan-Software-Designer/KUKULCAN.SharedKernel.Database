@@ -1,3 +1,4 @@
+using System.Reflection;
 using KUKULCAN.SharedKernel.Database.Tests.TestInfrastructure.internals;
 
 namespace KUKULCAN.SharedKernel.Database.Tests;
@@ -61,6 +62,61 @@ public sealed class KukulcanDbContextProviderConfigurationTests
             Assert.That(context.Database.CreateExecutionStrategy().GetType().Name,
                 Is.EqualTo("NpgsqlRetryingExecutionStrategy"));
         }
+    }
+
+    [Test]
+    public void ConfigureProvider_WithMySql_ShouldConfigureMySql()
+    {
+        using var context = new ProviderTestDbContext(
+            Options.Create(new KukulcanDatabaseOptions
+            {
+                Provider = DatabaseProvider.MySql,
+                ConnectionString = "Server=localhost;Database=KukulcanTests;User Id=test;Password=test;",
+                CommandTimeoutSeconds = 45,
+                Retry = new KukulcanDatabaseOptions.RetryOptions
+                {
+                    Enabled = true,
+                    MaxRetryCount = 7,
+                    MaxRetryDelaySeconds = 12
+                }
+            }),
+            new TestTenantContext(Guid.NewGuid()),
+            new TestClock(DateTimeOffset.UtcNow),
+            Mock.Of<IDomainEventDispatcher>());
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(context.Database.ProviderName, Is.EqualTo("MySql.EntityFrameworkCore"));
+            Assert.That(context.Database.GetCommandTimeout(), Is.EqualTo(45));
+        }
+    }
+
+    [Test]
+    public void ConfigureProvider_WithMySql_WhenProviderThrows_ShouldWrapFailure()
+    {
+        MethodInfo method = typeof(KukulcanDbContextBase).GetMethod(
+            "ConfigureMySql", BindingFlags.Static | BindingFlags.NonPublic)!;
+
+        TargetInvocationException exception = Assert.Throws<TargetInvocationException>(() =>
+            method.Invoke(null,
+                [null, "ignored", 30, 0, TimeSpan.FromSeconds(5)]))!;
+
+        Assert.That(exception.InnerException, Is.TypeOf<NotSupportedException>());
+        Assert.That(exception.InnerException!.Message, Does.Contain("Failed to configure provider"));
+    }
+
+    [Test]
+    public void LoadProviderExtensionType_WhenExpectedTypeIsMissing_ShouldRejectProvider()
+    {
+        MethodInfo method = typeof(KukulcanDbContextBase).GetMethod(
+            "LoadProviderExtensionType", BindingFlags.Static | BindingFlags.NonPublic)!;
+
+        TargetInvocationException exception = Assert.Throws<TargetInvocationException>(() =>
+            method.Invoke(null,
+                ["KUKULCAN.SharedKernel.Database.Tests.TypeThatDoesNotExist", "Microsoft.EntityFrameworkCore.SqlServer"]))!;
+
+        Assert.That(exception.InnerException, Is.TypeOf<NotSupportedException>());
+        Assert.That(exception.InnerException!.Message, Does.Contain("does not expose the expected provider extension type"));
     }
 
     [Test]

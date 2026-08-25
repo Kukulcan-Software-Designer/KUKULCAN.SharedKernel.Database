@@ -36,8 +36,22 @@ jobs:
       - name: Build PostgreSQL integration tests
         run: dotnet build Tests/KUKULCAN.SharedKernel.Database.PostgreSQL.Integration/KUKULCAN.SharedKernel.Database.PostgreSQL.Integration.csproj --no-restore --configuration Release
 
-      - name: Run PostgreSQL integration tests
-        run: dotnet test Tests/KUKULCAN.SharedKernel.Database.PostgreSQL.Integration/KUKULCAN.SharedKernel.Database.PostgreSQL.Integration.csproj --no-build --configuration Release --logger "console;verbosity=normal"
+      - name: Run PostgreSQL integration tests with coverage
+        run: >-
+          dotnet test
+          Tests/KUKULCAN.SharedKernel.Database.PostgreSQL.Integration/KUKULCAN.SharedKernel.Database.PostgreSQL.Integration.csproj
+          --no-build
+          --configuration Release
+          --settings Tests/KUKULCAN.SharedKernel.Database.PostgreSQL.Integration/coverage.runsettings
+          --logger "console;verbosity=normal"
+          --collect:"XPlat Code Coverage"
+
+      - name: Upload PostgreSQL coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: kukulcan-sharedkernel-database-postgresql-coverage
+          path: Tests/KUKULCAN.SharedKernel.Database.PostgreSQL.Integration/TestResults/**/coverage.cobertura.xml
+          if-no-files-found: error
 
   sqlserver-integration-tests:
     name: SQL Server integration tests
@@ -62,8 +76,22 @@ jobs:
       - name: Build SQL Server integration tests
         run: dotnet build Tests/KUKULCAN.SharedKernel.Database.SQLServer.Integration/KUKULCAN.SharedKernel.Database.SQLServer.Integration.csproj --no-restore --configuration Release
 
-      - name: Run SQL Server integration tests
-        run: dotnet test Tests/KUKULCAN.SharedKernel.Database.SQLServer.Integration/KUKULCAN.SharedKernel.Database.SQLServer.Integration.csproj --no-build --configuration Release --logger "console;verbosity=normal"
+      - name: Run SQL Server integration tests with coverage
+        run: >-
+          dotnet test
+          Tests/KUKULCAN.SharedKernel.Database.SQLServer.Integration/KUKULCAN.SharedKernel.Database.SQLServer.Integration.csproj
+          --no-build
+          --configuration Release
+          --settings Tests/KUKULCAN.SharedKernel.Database.SQLServer.Integration/coverage.runsettings
+          --logger "console;verbosity=normal"
+          --collect:"XPlat Code Coverage"
+
+      - name: Upload SQL Server coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: kukulcan-sharedkernel-database-sqlserver-coverage
+          path: Tests/KUKULCAN.SharedKernel.Database.SQLServer.Integration/TestResults/**/coverage.cobertura.xml
+          if-no-files-found: error
 
   mysql-integration-tests:
     name: MySQL integration tests
@@ -88,5 +116,19 @@ jobs:
       - name: Build MySQL integration tests
         run: dotnet build Tests/KUKULCAN.SharedKernel.Database.MySQL.Integration/KUKULCAN.SharedKernel.Database.MySQL.Integration.csproj --no-restore --configuration Release
 
-      - name: Run MySQL integration tests
-        run: dotnet test Tests/KUKULCAN.SharedKernel.Database.MySQL.Integration/KUKULCAN.SharedKernel.Database.MySQL.Integration.csproj --no-build --configuration Release --logger "console;verbosity=normal"
+      - name: Run MySQL integration tests with coverage
+        run: >-
+          dotnet test
+          Tests/KUKULCAN.SharedKernel.Database.MySQL.Integration/KUKULCAN.SharedKernel.Database.MySQL.Integration.csproj
+          --no-build
+          --configuration Release
+          --settings Tests/KUKULCAN.SharedKernel.Database.MySQL.Integration/coverage.runsettings
+          --logger "console;verbosity=normal"
+          --collect:"XPlat Code Coverage"
+
+      - name: Upload MySQL coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: kukulcan-sharedkernel-database-mysql-coverage
+          path: Tests/KUKULCAN.SharedKernel.Database.MySQL.Integration/TestResults/**/coverage.cobertura.xml
+          if-no-files-found: error
