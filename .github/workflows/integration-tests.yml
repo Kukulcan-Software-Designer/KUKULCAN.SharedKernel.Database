@@ -9,28 +9,14 @@ on:
       - main
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   postgresql-integration-tests:
     name: PostgreSQL integration tests
     runs-on: ubuntu-latest
-
-    services:
-      postgres:
-        image: postgres:16
-        env:
-          POSTGRES_DB: kukulcan_sharedkernel_database_integration
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd "pg_isready -U postgres -d kukulcan_sharedkernel_database_integration"
-          --health-interval 5s
-          --health-timeout 5s
-          --health-retries 10
-
-    env:
-      KUKULCAN_DATABASE_INTEGRATION_CONNECTION_STRING: Host=localhost;Port=5432;Database=kukulcan_sharedkernel_database_integration;Username=postgres;Password=postgres
+    timeout-minutes: 20
 
     steps:
       - name: Checkout repository
@@ -41,11 +27,40 @@ jobs:
         with:
           dotnet-version: '10.0.x'
 
-      - name: Restore integration tests
-        run: dotnet restore Tests/KUKULCAN.SharedKernel.Database.Integration/KUKULCAN.SharedKernel.Database.Integration.csproj
+      - name: Verify Docker runtime
+        run: docker info
 
-      - name: Build integration tests
-        run: dotnet build Tests/KUKULCAN.SharedKernel.Database.Integration/KUKULCAN.SharedKernel.Database.Integration.csproj --no-restore --configuration Release
+      - name: Restore PostgreSQL integration tests
+        run: dotnet restore Tests/KUKULCAN.SharedKernel.Database.PostgreSQL.Integration/KUKULCAN.SharedKernel.Database.PostgreSQL.Integration.csproj
+
+      - name: Build PostgreSQL integration tests
+        run: dotnet build Tests/KUKULCAN.SharedKernel.Database.PostgreSQL.Integration/KUKULCAN.SharedKernel.Database.PostgreSQL.Integration.csproj --no-restore --configuration Release
 
       - name: Run PostgreSQL integration tests
-        run: dotnet test Tests/KUKULCAN.SharedKernel.Database.Integration/KUKULCAN.SharedKernel.Database.Integration.csproj --no-build --configuration Release --logger "console;verbosity=normal"
+        run: dotnet test Tests/KUKULCAN.SharedKernel.Database.PostgreSQL.Integration/KUKULCAN.SharedKernel.Database.PostgreSQL.Integration.csproj --no-build --configuration Release --logger "console;verbosity=normal"
+
+  sqlserver-integration-tests:
+    name: SQL Server integration tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Verify Docker runtime
+        run: docker info
+
+      - name: Restore SQL Server integration tests
+        run: dotnet restore Tests/KUKULCAN.SharedKernel.Database.SQLServer.Integration/KUKULCAN.SharedKernel.Database.SQLServer.Integration.csproj
+
+      - name: Build SQL Server integration tests
+        run: dotnet build Tests/KUKULCAN.SharedKernel.Database.SQLServer.Integration/KUKULCAN.SharedKernel.Database.SQLServer.Integration.csproj --no-restore --configuration Release
+
+      - name: Run SQL Server integration tests
+        run: dotnet test Tests/KUKULCAN.SharedKernel.Database.SQLServer.Integration/KUKULCAN.SharedKernel.Database.SQLServer.Integration.csproj --no-build --configuration Release --logger "console;verbosity=normal"

@@ -50,11 +50,12 @@ KUKULCAN.SharedKernel.Database/
 │   └── KUKULCAN.SharedKernel.Database.SourceClient/
 ├── Tests/
 │   ├── KUKULCAN.SharedKernel.Database.Tests/
-│   └── KUKULCAN.SharedKernel.Database.Integration/
+│   ├── KUKULCAN.SharedKernel.Database.PostgreSQL.Integration/
+│   └── KUKULCAN.SharedKernel.Database.SQLServer.Integration/
 └── Documentation/
 ```
 
-The `SourceClient` project is a console client used to exercise the database infrastructure from a consuming application perspective. The two test projects deliberately separate deterministic unit tests from provider-backed integration tests.
+The `SourceClient` project is a console client used to exercise the database infrastructure from a consuming application perspective. The test projects deliberately separate deterministic unit tests from provider-specific integration tests.
 
 ## Core Components
 
@@ -119,22 +120,15 @@ Nullable reference types are enabled, warnings are treated as errors and XML doc
 
 The **current unit-test coverage baseline** for the production assembly is **100% line coverage (221/221 lines)** and **97.36% branch coverage (74/76 branches)**. **PostgreSQL is the reference database management system (DBMS) used by the integration test suite** for persistence-level validation; PostgreSQL is not the reason the unit-test line and branch percentages are 100% and 97.36% respectively.
 
-The two test layers have different responsibilities:
+The test layers have different responsibilities:
 
 - `KUKULCAN.SharedKernel.Database.Tests` provides deterministic unit coverage of guard clauses, provider-selection logic, reflection/configuration paths, unit-of-work contracts and synchronous/asynchronous interceptor behavior.
-- `KUKULCAN.SharedKernel.Database.Integration` validates persistence behavior against a real PostgreSQL database, including connectivity, tenant isolation, model-cache isolation, interception and transaction behavior.
+- `KUKULCAN.SharedKernel.Database.PostgreSQL.Integration` validates persistence behavior against a real PostgreSQL database.
+- `KUKULCAN.SharedKernel.Database.SQLServer.Integration` validates provider-specific persistence behavior against Microsoft SQL Server.
 
-The integration suite is not the accepted coverage threshold. Its purpose is functional verification against the PostgreSQL DBMS, while the unit-test report defines the deterministic code-path and branch coverage baseline.
+The integration suites are not the accepted coverage threshold. Their purpose is functional verification against real DBMS engines, while the unit-test report defines the deterministic code-path and branch coverage baseline.
 
-The two uncovered unit-test branches are intentional defensive branches in `KukulcanDbContextBase.ConfigureSqlServer` and `KukulcanDbContextBase.ConfigurePostgresSql`. They are the failure sides of the null-coalescing provider type-resolution expressions used when a required EF Core provider assembly cannot be resolved:
-
-```csharp
-Type.GetType("...Microsoft.EntityFrameworkCore.SqlServer")
-    ?? throw NotInstalled("Microsoft.EntityFrameworkCore.SqlServer");
-
-Type.GetType("...Npgsql.EntityFrameworkCore.PostgreSQL")
-    ?? throw NotInstalled("Npgsql.EntityFrameworkCore.PostgreSQL");
-```
+The two uncovered unit-test branches are intentional defensive branches in `KukulcanDbContextBase.ConfigureSqlServer` and `KukulcanDbContextBase.ConfigurePostgresSql`. They are the failure sides of the null-coalescing provider type-resolution expressions used when a required EF Core provider assembly cannot be resolved.
 
 The unit-test project references both provider packages, so the supported test environment contains the assemblies and those defensive `null` branches cannot be reached naturally. Forcing assembly absence solely to obtain a numerical 100% branch-coverage result would require an artificial runtime condition and would reduce the representativeness of the test suite.
 
@@ -142,13 +136,25 @@ The resulting **97.36% branch coverage is therefore an intentional and reviewed 
 
 ## Integration Testing
 
-Integration tests are maintained separately in `Tests/KUKULCAN.SharedKernel.Database.Integration`.
+Provider-backed integration validation is split into two independent test projects:
 
-The integration test database is **PostgreSQL**. The suite uses a real PostgreSQL instance to validate provider connectivity, persistence, tenant isolation, model-cache isolation, soft-delete interception, audit timestamps, domain-event dispatch, immutable-entity enforcement, slow-query diagnostics and database transactions through `UnitOfWork<TContext>`.
+### `KUKULCAN.SharedKernel.Database.PostgreSQL.Integration`
 
-The integration project references `Npgsql.EntityFrameworkCore.PostgreSQL`, `Testcontainers.PostgreSql` and `coverlet.collector`. Coverage collection is available for integration runs, but **integration coverage is not used as the project's acceptance threshold**.
+Uses PostgreSQL and Testcontainers to validate:
 
-GitHub Actions provisions PostgreSQL 16 as a service container for the dedicated integration workflow. Local execution can use the configured PostgreSQL integration connection string or override it through `KUKULCAN_DATABASE_INTEGRATION_CONNECTION_STRING`.
+- PostgreSQL connectivity and persistence;
+- tenant isolation and tenant-aware model caching;
+- audit and soft-delete persistence;
+- domain-event dispatch;
+- immutable-entity enforcement;
+- slow-query diagnostics;
+- transaction, cancellation and rollback behavior.
+
+### `KUKULCAN.SharedKernel.Database.SQLServer.Integration`
+
+Uses Microsoft SQL Server and Testcontainers to validate the corresponding SQL Server provider path and real persistence behavior, including provider configuration, tenant isolation, interceptors, cancellation, slow-query diagnostics and `UnitOfWork<TContext>` transaction behavior.
+
+Both projects own their database container lifecycle through their provider-specific fixtures. They do not require a separately provisioned database service in CI.
 
 ## License
 

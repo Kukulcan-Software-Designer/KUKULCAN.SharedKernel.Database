@@ -36,5 +36,8 @@ jobs:
       - name: Run unit tests
         run: dotnet test Tests/KUKULCAN.SharedKernel.Database.Tests/KUKULCAN.SharedKernel.Database.Tests.csproj --no-build --configuration Release --logger "console;verbosity=normal"
 
-      - name: Run PostgreSQL and SQL Server integration tests
-        run: dotnet test Tests/KUKULCAN.SharedKernel.Database.Integration/KUKULCAN.SharedKernel.Database.Integration.csproj --no-build --configuration Release --logger "console;verbosity=normal"
+      - name: Run PostgreSQL integration tests
+        run: dotnet test Tests/KUKULCAN.SharedKernel.Database.PostgreSQL.Integration/KUKULCAN.SharedKernel.Database.PostgreSQL.Integration.csproj --no-build --configuration Release --logger "console;verbosity=normal"
+
+      - name: Run SQL Server integration tests
+        run: dotnet test Tests/KUKULCAN.SharedKernel.Database.SQLServer.Integration/KUKULCAN.SharedKernel.Database.SQLServer.Integration.csproj --no-build --configuration Release --logger "console;verbosity=normal"

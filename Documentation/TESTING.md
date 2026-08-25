@@ -18,14 +18,16 @@ The most valuable tests exercise:
 
 ## Test Projects
 
-The repository separates deterministic unit tests from real PostgreSQL persistence validation:
+The repository separates deterministic unit tests from provider-specific integration validation:
 
 ```text
 Tests/
 ├── KUKULCAN.SharedKernel.Database.Tests/
 │   └── Unit tests and production coverage collection
-└── KUKULCAN.SharedKernel.Database.Integration/
-    └── PostgreSQL-backed integration tests
+├── KUKULCAN.SharedKernel.Database.PostgreSQL.Integration/
+│   └── PostgreSQL-backed integration tests
+└── KUKULCAN.SharedKernel.Database.SQLServer.Integration/
+    └── Microsoft SQL Server-backed integration tests
 ```
 
 ### Unit Tests
@@ -42,13 +44,11 @@ Typical examples include:
 - interceptor synchronous and asynchronous entry points;
 - EF Core model metadata and model-builder behavior.
 
-The unit-test project references the EF Core InMemory and SQLite providers, as well as SQL Server and PostgreSQL provider packages where provider-specific configuration paths need to be exercised with the real extension assemblies.
+### PostgreSQL Integration Tests
 
-### Integration Tests
+`KUKULCAN.SharedKernel.Database.PostgreSQL.Integration` uses **PostgreSQL as the reference database management system (DBMS)** for relational persistence validation.
 
-`KUKULCAN.SharedKernel.Database.Integration` uses **PostgreSQL as the reference database management system (DBMS)**.
-
-The integration layer validates behavior that depends on a real relational provider, including:
+It validates:
 
 - PostgreSQL connectivity and persistence;
 - tenant isolation against real database rows;
@@ -59,15 +59,34 @@ The integration layer validates behavior that depends on a real relational provi
 - slow-query diagnostics against real database commands;
 - transaction, cancellation and rollback behavior.
 
-The integration project uses `Testcontainers.PostgreSql` for isolated PostgreSQL test infrastructure and can collect coverage data through `coverlet.collector`. Integration coverage is diagnostic only; the accepted deterministic coverage baseline is defined by the unit-test project.
+The project uses `Testcontainers.PostgreSql` and owns the PostgreSQL container lifecycle inside its test fixture.
+
+### SQL Server Integration Tests
+
+`KUKULCAN.SharedKernel.Database.SQLServer.Integration` validates the Microsoft SQL Server provider path against a real SQL Server instance.
+
+It covers:
+
+- SQL Server provider configuration and real persistence;
+- tenant isolation and tenant-aware model caching;
+- audit, soft-delete, domain-event and immutable-entity interception;
+- synchronous and asynchronous persistence paths;
+- slow-query diagnostics;
+- cancellation behavior;
+- transaction lifecycle, rollback and `UnitOfWork<TContext>` behavior.
+
+The project uses `Testcontainers.MsSql` and owns the SQL Server container lifecycle inside its test fixture.
 
 ## Recommended Test Layers
 
-``` mermaid
+```mermaid
 flowchart TD
-    U["Unit tests"] --> I["Infrastructure integration tests"]
-    I --> EF["EF Core model / ChangeTracker"]
-    EF --> DB["PostgreSQL provider"]
+    U["Unit tests"] --> P1["PostgreSQL integration"]
+    U --> P2["SQL Server integration"]
+    P1 --> EF["EF Core model / ChangeTracker"]
+    P2 --> EF
+    EF --> DB1["PostgreSQL"]
+    EF --> DB2["SQL Server"]
 ```
 
 ## EF Core Tests
@@ -89,9 +108,9 @@ SQLite in-memory is useful for relational behavior that can be validated without
 
 ## Provider Tests
 
-Provider-specific behavior should be tested in provider-aware test environments when the provider packages are actually consumed.
+Provider-specific behavior should be tested in provider-aware environments when the provider packages are actually consumed.
 
-For this repository, **PostgreSQL is the reference DBMS for integration testing**. The shared library should not pretend that provider-specific behavior is completely equivalent across engines.
+For this repository, **PostgreSQL and Microsoft SQL Server are both covered by dedicated provider-specific integration projects**. The shared library should not pretend that provider-specific behavior is completely equivalent across engines.
 
 ## Coverage Policy
 
@@ -104,18 +123,4 @@ The remaining defensive provider-resolution branches are documented in `COVERAGE
 
 ## Obsolete API Policy
 
-Tests should use the current EF Core metadata APIs.
-
-For example:
-
-```csharp
-GetDeclaredQueryFilters()
-```
-
-should be preferred over obsolete:
-
-```csharp
-GetQueryFilter()
-```
-
-This keeps the test suite aligned with EF Core 10.
+Tests should use the current EF Core metadata APIs. For EF Core 10, `GetDeclaredQueryFilters()` is preferred over obsolete `GetQueryFilter()`.
