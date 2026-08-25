@@ -1,4 +1,3 @@
-using KUKULCAN.SharedKernel.Database.Integration;
 using NUnit.Framework;
 
 namespace KUKULCAN.SharedKernel.Database.PostgreSQL.Integration;
@@ -40,7 +39,7 @@ public sealed class PostgreSqlMissingTransactionAndDomainEventCoverageIntegratio
         Guid tenantId = Guid.NewGuid();
         var dispatcher = new Mock<IDomainEventDispatcher>();
         const string name = "Commit with event";
-        var domainEvent = new PostgreSqlDatabaseIntegrationTests.TestDomainEvent(PostgreSqlDatabaseIntegrationTests.FixedNow);
+        var domainEvent = new PostgreSqlDatabaseIntegrationTests.TestDomainEvent(PostGreSqlDatabaseIntegrationTests.FixedNow);
 
         var options = Options.Create(new KukulcanDatabaseOptions
         {
