@@ -1,5 +1,6 @@
 using System.Data.Common;
 using Microsoft.EntityFrameworkCore.Storage;
+using NUnit.Framework;
 
 namespace KUKULCAN.SharedKernel.Database.PostgreSQL.Integration;
 
