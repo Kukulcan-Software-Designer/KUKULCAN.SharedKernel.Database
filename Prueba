@@ -1,497 +1,233 @@
   Determinando los proyectos que se van a restaurar...
   Todos los proyectos están actualizados para la restauración.
   KUKULCAN.SharedKernel.Database -> /home/juan.pardogarcia/Proyectos/NETCore/KUKULCAN.SharedKernel.Database/Source/KUKULCAN.SharedKernel.Database/Bin/KUKULCAN.SharedKernel.Database/Release/net10.0/KUKULCAN.SharedKernel.Database.dll
-  KUKULCAN.SharedKernel.Database.Tests -> /home/juan.pardogarcia/Proyectos/NETCore/KUKULCAN.SharedKernel.Database/Tests/KUKULCAN.SharedKernel.Database.Tests/bin/Release/net10.0/KUKULCAN.SharedKernel.Database.Tests.dll
-Serie de pruebas para /home/juan.pardogarcia/Proyectos/NETCore/KUKULCAN.SharedKernel.Database/Tests/KUKULCAN.SharedKernel.Database.Tests/bin/Release/net10.0/KUKULCAN.SharedKernel.Database.Tests.dll (.NETCoreApp,Version=v10.0)
+  KUKULCAN.SharedKernel.Database.SQLServer.Integration -> /home/juan.pardogarcia/Proyectos/NETCore/KUKULCAN.SharedKernel.Database/Tests/KUKULCAN.SharedKernel.Database.SQLServer.Integration/bin/Release/net10.0/KUKULCAN.SharedKernel.Database.SQLServer.Integration.dll
+Serie de pruebas para /home/juan.pardogarcia/Proyectos/NETCore/KUKULCAN.SharedKernel.Database/Tests/KUKULCAN.SharedKernel.Database.SQLServer.Integration/bin/Release/net10.0/KUKULCAN.SharedKernel.Database.SQLServer.Integration.dll (.NETCoreApp,Version=v10.0)
 1 archivos de prueba en total coincidieron con el patrón especificado.
 NUnit Adapter 5.2.0.0: Test execution started
-Running all tests in /home/juan.pardogarcia/Proyectos/NETCore/KUKULCAN.SharedKernel.Database/Tests/KUKULCAN.SharedKernel.Database.Tests/bin/Release/net10.0/KUKULCAN.SharedKernel.Database.Tests.dll
-   NUnit3TestExecutor discovered 132 of 132 NUnit test cases using Current Discovery mode, Non-Explicit run
-  Correctas ImmutableMarker_ShouldBeImplementable [6 ms]
-  Correctas TenantContext_ShouldExposeTenantId [11 ms]
-  Correctas UnitOfWork_ShouldExposeExpectedContract [7 ms]
-  Correctas EnumValues_ShouldRemainStable [1 ms]
-  Correctas Defaults_ShouldMatchContract [10 ms]
-  Correctas Properties_ShouldBeMutable [< 1 ms]
-  Correctas Audit_WhenEntityIsUnchanged_ShouldLeaveAuditFieldsUntouched [659 ms]
-  Correctas DbContext_WithDefaultLoggingOptions_ShouldNotEnableSensitiveLoggingOrDetailedErrors [42 ms]
-  Correctas DbContext_WithoutSlowQueryInterceptor_ShouldRegisterBaseInterceptors [20 ms]
-  Correctas DomainEvents_SyncSave_WithNoEvents_ShouldNotDispatch [22 ms]
-  Correctas ServiceRegistration_ShouldExposeUnitOfWorkAsScoped [17 ms]
-  Correctas ServiceRegistration_ShouldResolveSlowQueryInterceptorFromDependencyInjection [10 ms]
-  Correctas SlowQueryThreshold_Zero_ShouldTreatNormalCommandAsSlow [169 ms]
-  Correctas SoftDelete_WhenEntityIsNotDeleted_ShouldLeaveStateUntouched [20 ms]
-  Correctas AuditSaveChangesInterceptor_WithNullContext_ShouldBeIgnored [1 ms]
-  Correctas ConfigurePostgresSql_WhenProviderThrows_ShouldWrapFailure [3 ms]
-  Correctas ConfigureSqlServer_WhenProviderThrows_ShouldWrapFailure [1 ms]
-  Correctas ImmutableEntityInterceptor_WithNullContext_ShouldBeIgnored [< 1 ms]
-  Correctas InvokeProviderUseMethod_WhenNoCompatibleMethodExists_ShouldThrow [< 1 ms]
-  Correctas InvokeProviderUseMethod_WithProviderWithoutRetrySupport_ShouldThrow [1 ms]
-  Correctas SlowQueryInterceptor_ReaderExecuted_ShouldLogSlowQuery [217 ms]
-  Correctas SlowQueryInterceptor_ReaderExecutedAsync_ShouldLogSlowQuery [100 ms]
-  Correctas SoftDeleteInterceptor_WithNullContext_ShouldBeIgnored [< 1 ms]
-  Correctas TenantModelCacheKeyFactory_WithNonKukulcanContext_ShouldUseNullTenant [< 1 ms]
-  Con error HostedService_StartAsync_ShouldRunConfiguredInitializer [27 ms]
-  Mensaje de error:
-   System.InvalidOperationException : Cannot resolve scoped service 'KUKULCAN.SharedKernel.Database.Extensions.KukulcanDatabaseStartupInitializer`1[KUKULCAN.SharedKernel.Database.Tests.Extensions.KukulcanDatabaseStartupInitializerTests+StartupTestDbContext]' from root provider.
-  Seguimiento de la pila:
-     at Microsoft.Extensions.DependencyInjection.ServiceLookup.CallSiteValidator.ValidateResolution(ServiceCallSite callSite, IServiceScope scope, IServiceScope rootScope)
-   at Microsoft.Extensions.DependencyInjection.ServiceProvider.OnResolve(ServiceCallSite callSite, IServiceScope scope)
-   at Microsoft.Extensions.DependencyInjection.ServiceProvider.GetService(ServiceIdentifier serviceIdentifier, ServiceProviderEngineScope serviceProviderEngineScope)
-   at Microsoft.Extensions.DependencyInjection.ServiceProvider.GetService(Type serviceType)
-   at Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService(IServiceProvider provider, Type serviceType)
-   at Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService[T](IServiceProvider provider)
-   at KUKULCAN.SharedKernel.Database.Tests.Extensions.KukulcanDatabaseStartupInitializerTests.HostedService_StartAsync_ShouldRunConfiguredInitializer() in /home/juan.pardogarcia/Proyectos/NETCore/KUKULCAN.SharedKernel.Database/Tests/KUKULCAN.SharedKernel.Database.Tests/Extensions/KukulcanDatabaseStartupInitializerTests.cs:line 106
-   at KUKULCAN.SharedKernel.Database.Tests.Extensions.KukulcanDatabaseStartupInitializerTests.HostedService_StartAsync_ShouldRunConfiguredInitializer() in /home/juan.pardogarcia/Proyectos/NETCore/KUKULCAN.SharedKernel.Database/Tests/KUKULCAN.SharedKernel.Database.Tests/Extensions/KukulcanDatabaseStartupInitializerTests.cs:line 111
-   at KUKULCAN.SharedKernel.Database.Tests.Extensions.KukulcanDatabaseStartupInitializerTests.HostedService_StartAsync_ShouldRunConfiguredInitializer() in /home/juan.pardogarcia/Proyectos/NETCore/KUKULCAN.SharedKernel.Database/Tests/KUKULCAN.SharedKernel.Database.Tests/Extensions/KukulcanDatabaseStartupInitializerTests.cs:line 111
-   at NUnit.Framework.Internal.TaskAwaitAdapter.GenericAdapter`1.GetResult()
-   at NUnit.Framework.Internal.AsyncToSyncAdapter.Await[TResult](TestExecutionContext context, Func`1 invoke)
-   at NUnit.Framework.Internal.AsyncToSyncAdapter.Await(TestExecutionContext context, Func`1 invoke)
-   at NUnit.Framework.Internal.Commands.TestMethodCommand.RunTestMethod(TestExecutionContext context)
-   at NUnit.Framework.Internal.Commands.TestMethodCommand.Execute(TestExecutionContext context)
-   at NUnit.Framework.Internal.Execution.SimpleWorkItem.<>c__DisplayClass3_0.<PerformWork>b__0()
-   at NUnit.Framework.Internal.ContextUtils.<>c__DisplayClass1_0`1.<DoIsolated>b__0(Object _)
-   at NUnit.Framework.Internal.ContextUtils.<>c__DisplayClass2_0.<DoIsolated>b__0(Object s)
-   at System.Threading.ExecutionContext.RunInternal(ExecutionContext executionContext, ContextCallback callback, Object state)
---- End of stack trace from previous location ---
-   at System.Threading.ExecutionContext.RunInternal(ExecutionContext executionContext, ContextCallback callback, Object state)
-   at NUnit.Framework.Internal.ContextUtils.DoIsolated(ContextCallback callback, Object state)
-   at NUnit.Framework.Internal.ContextUtils.DoIsolated[T](Func`1 func)
-   at NUnit.Framework.Internal.Execution.SimpleWorkItem.PerformWork()
-1)    at Microsoft.Extensions.DependencyInjection.ServiceLookup.CallSiteValidator.ValidateResolution(ServiceCallSite callSite, IServiceScope scope, IServiceScope rootScope)
-   at Microsoft.Extensions.DependencyInjection.ServiceProvider.OnResolve(ServiceCallSite callSite, IServiceScope scope)
-   at Microsoft.Extensions.DependencyInjection.ServiceProvider.GetService(ServiceIdentifier serviceIdentifier, ServiceProviderEngineScope serviceProviderEngineScope)
-   at Microsoft.Extensions.DependencyInjection.ServiceProvider.GetService(Type serviceType)
-   at Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService(IServiceProvider provider, Type serviceType)
-   at Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService[T](IServiceProvider provider)
-   at KUKULCAN.SharedKernel.Database.Tests.Extensions.KukulcanDatabaseStartupInitializerTests.HostedService_StartAsync_ShouldRunConfiguredInitializer() in /home/juan.pardogarcia/Proyectos/NETCore/KUKULCAN.SharedKernel.Database/Tests/KUKULCAN.SharedKernel.Database.Tests/Extensions/KukulcanDatabaseStartupInitializerTests.cs:line 106
-   at KUKULCAN.SharedKernel.Database.Tests.Extensions.KukulcanDatabaseStartupInitializerTests.HostedService_StartAsync_ShouldRunConfiguredInitializer() in /home/juan.pardogarcia/Proyectos/NETCore/KUKULCAN.SharedKernel.Database/Tests/KUKULCAN.SharedKernel.Database.Tests/Extensions/KukulcanDatabaseStartupInitializerTests.cs:line 111
-   at KUKULCAN.SharedKernel.Database.Tests.Extensions.KukulcanDatabaseStartupInitializerTests.HostedService_StartAsync_ShouldRunConfiguredInitializer() in /home/juan.pardogarcia/Proyectos/NETCore/KUKULCAN.SharedKernel.Database/Tests/KUKULCAN.SharedKernel.Database.Tests/Extensions/KukulcanDatabaseStartupInitializerTests.cs:line 111
-   at NUnit.Framework.Internal.TaskAwaitAdapter.GenericAdapter`1.GetResult()
-   at NUnit.Framework.Internal.AsyncToSyncAdapter.Await[TResult](TestExecutionContext context, Func`1 invoke)
-   at NUnit.Framework.Internal.AsyncToSyncAdapter.Await(TestExecutionContext context, Func`1 invoke)
-   at NUnit.Framework.Internal.Commands.TestMethodCommand.RunTestMethod(TestExecutionContext context)
-   at NUnit.Framework.Internal.Commands.TestMethodCommand.Execute(TestExecutionContext context)
-   at NUnit.Framework.Internal.Execution.SimpleWorkItem.<>c__DisplayClass3_0.<PerformWork>b__0()
-   at NUnit.Framework.Internal.ContextUtils.<>c__DisplayClass1_0`1.<DoIsolated>b__0(Object _)
-   at NUnit.Framework.Internal.ContextUtils.<>c__DisplayClass2_0.<DoIsolated>b__0(Object s)
-   at System.Threading.ExecutionContext.RunInternal(ExecutionContext executionContext, ContextCallback callback, Object state)
---- End of stack trace from previous location ---
-   at System.Threading.ExecutionContext.RunInternal(ExecutionContext executionContext, ContextCallback callback, Object state)
-   at NUnit.Framework.Internal.ContextUtils.DoIsolated(ContextCallback callback, Object state)
-   at NUnit.Framework.Internal.ContextUtils.DoIsolated[T](Func`1 func)
-   at NUnit.Framework.Internal.Execution.SimpleWorkItem.PerformWork()
-
-  Con error HostedService_StopAsync_ShouldCompleteSuccessfully [1 ms]
-  Mensaje de error:
-   System.InvalidOperationException : Cannot resolve scoped service 'KUKULCAN.SharedKernel.Database.Extensions.KukulcanDatabaseStartupInitializer`1[KUKULCAN.SharedKernel.Database.Tests.Extensions.KukulcanDatabaseStartupInitializerTests+StartupTestDbContext]' from root provider.
-  Seguimiento de la pila:
-     at Microsoft.Extensions.DependencyInjection.ServiceLookup.CallSiteValidator.ValidateResolution(ServiceCallSite callSite, IServiceScope scope, IServiceScope rootScope)
-   at Microsoft.Extensions.DependencyInjection.ServiceProvider.OnResolve(ServiceCallSite callSite, IServiceScope scope)
-   at Microsoft.Extensions.DependencyInjection.ServiceProvider.GetService(ServiceIdentifier serviceIdentifier, ServiceProviderEngineScope serviceProviderEngineScope)
-   at Microsoft.Extensions.DependencyInjection.ServiceProvider.GetService(Type serviceType)
-   at Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService(IServiceProvider provider, Type serviceType)
-   at Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService[T](IServiceProvider provider)
-   at KUKULCAN.SharedKernel.Database.Tests.Extensions.KukulcanDatabaseStartupInitializerTests.HostedService_StopAsync_ShouldCompleteSuccessfully() in /home/juan.pardogarcia/Proyectos/NETCore/KUKULCAN.SharedKernel.Database/Tests/KUKULCAN.SharedKernel.Database.Tests/Extensions/KukulcanDatabaseStartupInitializerTests.cs:line 119
-   at KUKULCAN.SharedKernel.Database.Tests.Extensions.KukulcanDatabaseStartupInitializerTests.HostedService_StopAsync_ShouldCompleteSuccessfully() in /home/juan.pardogarcia/Proyectos/NETCore/KUKULCAN.SharedKernel.Database/Tests/KUKULCAN.SharedKernel.Database.Tests/Extensions/KukulcanDatabaseStartupInitializerTests.cs:line 122
-   at KUKULCAN.SharedKernel.Database.Tests.Extensions.KukulcanDatabaseStartupInitializerTests.HostedService_StopAsync_ShouldCompleteSuccessfully() in /home/juan.pardogarcia/Proyectos/NETCore/KUKULCAN.SharedKernel.Database/Tests/KUKULCAN.SharedKernel.Database.Tests/Extensions/KukulcanDatabaseStartupInitializerTests.cs:line 122
-   at NUnit.Framework.Internal.TaskAwaitAdapter.GenericAdapter`1.GetResult()
-   at NUnit.Framework.Internal.AsyncToSyncAdapter.Await[TResult](TestExecutionContext context, Func`1 invoke)
-   at NUnit.Framework.Internal.AsyncToSyncAdapter.Await(TestExecutionContext context, Func`1 invoke)
-   at NUnit.Framework.Internal.Commands.TestMethodCommand.RunTestMethod(TestExecutionContext context)
-   at NUnit.Framework.Internal.Commands.TestMethodCommand.Execute(TestExecutionContext context)
-   at NUnit.Framework.Internal.Execution.SimpleWorkItem.<>c__DisplayClass3_0.<PerformWork>b__0()
-   at NUnit.Framework.Internal.ContextUtils.<>c__DisplayClass1_0`1.<DoIsolated>b__0(Object _)
-   at NUnit.Framework.Internal.ContextUtils.<>c__DisplayClass2_0.<DoIsolated>b__0(Object s)
-   at System.Threading.ExecutionContext.RunInternal(ExecutionContext executionContext, ContextCallback callback, Object state)
---- End of stack trace from previous location ---
-   at System.Threading.ExecutionContext.RunInternal(ExecutionContext executionContext, ContextCallback callback, Object state)
-   at NUnit.Framework.Internal.ContextUtils.DoIsolated(ContextCallback callback, Object state)
-   at NUnit.Framework.Internal.ContextUtils.DoIsolated[T](Func`1 func)
-   at NUnit.Framework.Internal.Execution.SimpleWorkItem.PerformWork()
-1)    at Microsoft.Extensions.DependencyInjection.ServiceLookup.CallSiteValidator.ValidateResolution(ServiceCallSite callSite, IServiceScope scope, IServiceScope rootScope)
-   at Microsoft.Extensions.DependencyInjection.ServiceProvider.OnResolve(ServiceCallSite callSite, IServiceScope scope)
-   at Microsoft.Extensions.DependencyInjection.ServiceProvider.GetService(ServiceIdentifier serviceIdentifier, ServiceProviderEngineScope serviceProviderEngineScope)
-   at Microsoft.Extensions.DependencyInjection.ServiceProvider.GetService(Type serviceType)
-   at Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService(IServiceProvider provider, Type serviceType)
-   at Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService[T](IServiceProvider provider)
-   at KUKULCAN.SharedKernel.Database.Tests.Extensions.KukulcanDatabaseStartupInitializerTests.HostedService_StopAsync_ShouldCompleteSuccessfully() in /home/juan.pardogarcia/Proyectos/NETCore/KUKULCAN.SharedKernel.Database/Tests/KUKULCAN.SharedKernel.Database.Tests/Extensions/KukulcanDatabaseStartupInitializerTests.cs:line 119
-   at KUKULCAN.SharedKernel.Database.Tests.Extensions.KukulcanDatabaseStartupInitializerTests.HostedService_StopAsync_ShouldCompleteSuccessfully() in /home/juan.pardogarcia/Proyectos/NETCore/KUKULCAN.SharedKernel.Database/Tests/KUKULCAN.SharedKernel.Database.Tests/Extensions/KukulcanDatabaseStartupInitializerTests.cs:line 122
-   at KUKULCAN.SharedKernel.Database.Tests.Extensions.KukulcanDatabaseStartupInitializerTests.HostedService_StopAsync_ShouldCompleteSuccessfully() in /home/juan.pardogarcia/Proyectos/NETCore/KUKULCAN.SharedKernel.Database/Tests/KUKULCAN.SharedKernel.Database.Tests/Extensions/KukulcanDatabaseStartupInitializerTests.cs:line 122
-   at NUnit.Framework.Internal.TaskAwaitAdapter.GenericAdapter`1.GetResult()
-   at NUnit.Framework.Internal.AsyncToSyncAdapter.Await[TResult](TestExecutionContext context, Func`1 invoke)
-   at NUnit.Framework.Internal.AsyncToSyncAdapter.Await(TestExecutionContext context, Func`1 invoke)
-   at NUnit.Framework.Internal.Commands.TestMethodCommand.RunTestMethod(TestExecutionContext context)
-   at NUnit.Framework.Internal.Commands.TestMethodCommand.Execute(TestExecutionContext context)
-   at NUnit.Framework.Internal.Execution.SimpleWorkItem.<>c__DisplayClass3_0.<PerformWork>b__0()
-   at NUnit.Framework.Internal.ContextUtils.<>c__DisplayClass1_0`1.<DoIsolated>b__0(Object _)
-   at NUnit.Framework.Internal.ContextUtils.<>c__DisplayClass2_0.<DoIsolated>b__0(Object s)
-   at System.Threading.ExecutionContext.RunInternal(ExecutionContext executionContext, ContextCallback callback, Object state)
---- End of stack trace from previous location ---
-   at System.Threading.ExecutionContext.RunInternal(ExecutionContext executionContext, ContextCallback callback, Object state)
-   at NUnit.Framework.Internal.ContextUtils.DoIsolated(ContextCallback callback, Object state)
-   at NUnit.Framework.Internal.ContextUtils.DoIsolated[T](Func`1 func)
-   at NUnit.Framework.Internal.Execution.SimpleWorkItem.PerformWork()
-
-  Con error InitializeAsync_WithAutoMigrateEnabled_ShouldApplyMigration [1 ms]
-  Mensaje de error:
-   System.InvalidOperationException : Cannot resolve scoped service 'KUKULCAN.SharedKernel.Database.Extensions.KukulcanDatabaseStartupInitializer`1[KUKULCAN.SharedKernel.Database.Tests.Extensions.KukulcanDatabaseStartupInitializerTests+StartupTestDbContext]' from root provider.
-  Seguimiento de la pila:
-     at Microsoft.Extensions.DependencyInjection.ServiceLookup.CallSiteValidator.ValidateResolution(ServiceCallSite callSite, IServiceScope scope, IServiceScope rootScope)
-   at Microsoft.Extensions.DependencyInjection.ServiceProvider.OnResolve(ServiceCallSite callSite, IServiceScope scope)
-   at Microsoft.Extensions.DependencyInjection.ServiceProvider.GetService(ServiceIdentifier serviceIdentifier, ServiceProviderEngineScope serviceProviderEngineScope)
-   at Microsoft.Extensions.DependencyInjection.ServiceProvider.GetService(Type serviceType)
-   at Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService(IServiceProvider provider, Type serviceType)
-   at Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService[T](IServiceProvider provider)
-   at KUKULCAN.SharedKernel.Database.Tests.Extensions.KukulcanDatabaseStartupInitializerTests.InitializeAsync_WithAutoMigrateEnabled_ShouldApplyMigration() in /home/juan.pardogarcia/Proyectos/NETCore/KUKULCAN.SharedKernel.Database/Tests/KUKULCAN.SharedKernel.Database.Tests/Extensions/KukulcanDatabaseStartupInitializerTests.cs:line 23
-   at KUKULCAN.SharedKernel.Database.Tests.Extensions.KukulcanDatabaseStartupInitializerTests.InitializeAsync_WithAutoMigrateEnabled_ShouldApplyMigration() in /home/juan.pardogarcia/Proyectos/NETCore/KUKULCAN.SharedKernel.Database/Tests/KUKULCAN.SharedKernel.Database.Tests/Extensions/KukulcanDatabaseStartupInitializerTests.cs:line 27
-   at KUKULCAN.SharedKernel.Database.Tests.Extensions.KukulcanDatabaseStartupInitializerTests.InitializeAsync_WithAutoMigrateEnabled_ShouldApplyMigration() in /home/juan.pardogarcia/Proyectos/NETCore/KUKULCAN.SharedKernel.Database/Tests/KUKULCAN.SharedKernel.Database.Tests/Extensions/KukulcanDatabaseStartupInitializerTests.cs:line 27
-   at NUnit.Framework.Internal.TaskAwaitAdapter.GenericAdapter`1.GetResult()
-   at NUnit.Framework.Internal.AsyncToSyncAdapter.Await[TResult](TestExecutionContext context, Func`1 invoke)
-   at NUnit.Framework.Internal.AsyncToSyncAdapter.Await(TestExecutionContext context, Func`1 invoke)
-   at NUnit.Framework.Internal.Commands.TestMethodCommand.RunTestMethod(TestExecutionContext context)
-   at NUnit.Framework.Internal.Commands.TestMethodCommand.Execute(TestExecutionContext context)
-   at NUnit.Framework.Internal.Execution.SimpleWorkItem.<>c__DisplayClass3_0.<PerformWork>b__0()
-   at NUnit.Framework.Internal.ContextUtils.<>c__DisplayClass1_0`1.<DoIsolated>b__0(Object _)
-   at NUnit.Framework.Internal.ContextUtils.<>c__DisplayClass2_0.<DoIsolated>b__0(Object s)
-   at System.Threading.ExecutionContext.RunInternal(ExecutionContext executionContext, ContextCallback callback, Object state)
---- End of stack trace from previous location ---
-   at System.Threading.ExecutionContext.RunInternal(ExecutionContext executionContext, ContextCallback callback, Object state)
-   at NUnit.Framework.Internal.ContextUtils.DoIsolated(ContextCallback callback, Object state)
-   at NUnit.Framework.Internal.ContextUtils.DoIsolated[T](Func`1 func)
-   at NUnit.Framework.Internal.Execution.SimpleWorkItem.PerformWork()
-1)    at Microsoft.Extensions.DependencyInjection.ServiceLookup.CallSiteValidator.ValidateResolution(ServiceCallSite callSite, IServiceScope scope, IServiceScope rootScope)
-   at Microsoft.Extensions.DependencyInjection.ServiceProvider.OnResolve(ServiceCallSite callSite, IServiceScope scope)
-   at Microsoft.Extensions.DependencyInjection.ServiceProvider.GetService(ServiceIdentifier serviceIdentifier, ServiceProviderEngineScope serviceProviderEngineScope)
-   at Microsoft.Extensions.DependencyInjection.ServiceProvider.GetService(Type serviceType)
-   at Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService(IServiceProvider provider, Type serviceType)
-   at Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService[T](IServiceProvider provider)
-   at KUKULCAN.SharedKernel.Database.Tests.Extensions.KukulcanDatabaseStartupInitializerTests.InitializeAsync_WithAutoMigrateEnabled_ShouldApplyMigration() in /home/juan.pardogarcia/Proyectos/NETCore/KUKULCAN.SharedKernel.Database/Tests/KUKULCAN.SharedKernel.Database.Tests/Extensions/KukulcanDatabaseStartupInitializerTests.cs:line 23
-   at KUKULCAN.SharedKernel.Database.Tests.Extensions.KukulcanDatabaseStartupInitializerTests.InitializeAsync_WithAutoMigrateEnabled_ShouldApplyMigration() in /home/juan.pardogarcia/Proyectos/NETCore/KUKULCAN.SharedKernel.Database/Tests/KUKULCAN.SharedKernel.Database.Tests/Extensions/KukulcanDatabaseStartupInitializerTests.cs:line 27
-   at KUKULCAN.SharedKernel.Database.Tests.Extensions.KukulcanDatabaseStartupInitializerTests.InitializeAsync_WithAutoMigrateEnabled_ShouldApplyMigration() in /home/juan.pardogarcia/Proyectos/NETCore/KUKULCAN.SharedKernel.Database/Tests/KUKULCAN.SharedKernel.Database.Tests/Extensions/KukulcanDatabaseStartupInitializerTests.cs:line 27
-   at NUnit.Framework.Internal.TaskAwaitAdapter.GenericAdapter`1.GetResult()
-   at NUnit.Framework.Internal.AsyncToSyncAdapter.Await[TResult](TestExecutionContext context, Func`1 invoke)
-   at NUnit.Framework.Internal.AsyncToSyncAdapter.Await(TestExecutionContext context, Func`1 invoke)
-   at NUnit.Framework.Internal.Commands.TestMethodCommand.RunTestMethod(TestExecutionContext context)
-   at NUnit.Framework.Internal.Commands.TestMethodCommand.Execute(TestExecutionContext context)
-   at NUnit.Framework.Internal.Execution.SimpleWorkItem.<>c__DisplayClass3_0.<PerformWork>b__0()
-   at NUnit.Framework.Internal.ContextUtils.<>c__DisplayClass1_0`1.<DoIsolated>b__0(Object _)
-   at NUnit.Framework.Internal.ContextUtils.<>c__DisplayClass2_0.<DoIsolated>b__0(Object s)
-   at System.Threading.ExecutionContext.RunInternal(ExecutionContext executionContext, ContextCallback callback, Object state)
---- End of stack trace from previous location ---
-   at System.Threading.ExecutionContext.RunInternal(ExecutionContext executionContext, ContextCallback callback, Object state)
-   at NUnit.Framework.Internal.ContextUtils.DoIsolated(ContextCallback callback, Object state)
-   at NUnit.Framework.Internal.ContextUtils.DoIsolated[T](Func`1 func)
-   at NUnit.Framework.Internal.Execution.SimpleWorkItem.PerformWork()
-
-  Correctas InitializeAsync_WithBothOptionsDisabled_ShouldNotCreateContextScope [4 ms]
-  Con error InitializeAsync_WithSeedEnabled_ShouldResolveAndInvokeSeeder [1 ms]
-  Mensaje de error:
-   System.InvalidOperationException : Cannot resolve scoped service 'KUKULCAN.SharedKernel.Database.Extensions.KukulcanDatabaseStartupInitializer`1[KUKULCAN.SharedKernel.Database.Tests.Extensions.KukulcanDatabaseStartupInitializerTests+StartupTestDbContext]' from root provider.
-  Seguimiento de la pila:
-     at Microsoft.Extensions.DependencyInjection.ServiceLookup.CallSiteValidator.ValidateResolution(ServiceCallSite callSite, IServiceScope scope, IServiceScope rootScope)
-   at Microsoft.Extensions.DependencyInjection.ServiceProvider.OnResolve(ServiceCallSite callSite, IServiceScope scope)
-   at Microsoft.Extensions.DependencyInjection.ServiceProvider.GetService(ServiceIdentifier serviceIdentifier, ServiceProviderEngineScope serviceProviderEngineScope)
-   at Microsoft.Extensions.DependencyInjection.ServiceProvider.GetService(Type serviceType)
-   at Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService(IServiceProvider provider, Type serviceType)
-   at Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService[T](IServiceProvider provider)
-   at KUKULCAN.SharedKernel.Database.Tests.Extensions.KukulcanDatabaseStartupInitializerTests.InitializeAsync_WithSeedEnabled_ShouldResolveAndInvokeSeeder() in /home/juan.pardogarcia/Proyectos/NETCore/KUKULCAN.SharedKernel.Database/Tests/KUKULCAN.SharedKernel.Database.Tests/Extensions/KukulcanDatabaseStartupInitializerTests.cs:line 44
-   at KUKULCAN.SharedKernel.Database.Tests.Extensions.KukulcanDatabaseStartupInitializerTests.InitializeAsync_WithSeedEnabled_ShouldResolveAndInvokeSeeder() in /home/juan.pardogarcia/Proyectos/NETCore/KUKULCAN.SharedKernel.Database/Tests/KUKULCAN.SharedKernel.Database.Tests/Extensions/KukulcanDatabaseStartupInitializerTests.cs:line 51
-   at KUKULCAN.SharedKernel.Database.Tests.Extensions.KukulcanDatabaseStartupInitializerTests.InitializeAsync_WithSeedEnabled_ShouldResolveAndInvokeSeeder() in /home/juan.pardogarcia/Proyectos/NETCore/KUKULCAN.SharedKernel.Database/Tests/KUKULCAN.SharedKernel.Database.Tests/Extensions/KukulcanDatabaseStartupInitializerTests.cs:line 51
-   at NUnit.Framework.Internal.TaskAwaitAdapter.GenericAdapter`1.GetResult()
-   at NUnit.Framework.Internal.AsyncToSyncAdapter.Await[TResult](TestExecutionContext context, Func`1 invoke)
-   at NUnit.Framework.Internal.AsyncToSyncAdapter.Await(TestExecutionContext context, Func`1 invoke)
-   at NUnit.Framework.Internal.Commands.TestMethodCommand.RunTestMethod(TestExecutionContext context)
-   at NUnit.Framework.Internal.Commands.TestMethodCommand.Execute(TestExecutionContext context)
-   at NUnit.Framework.Internal.Execution.SimpleWorkItem.<>c__DisplayClass3_0.<PerformWork>b__0()
-   at NUnit.Framework.Internal.ContextUtils.<>c__DisplayClass1_0`1.<DoIsolated>b__0(Object _)
-   at NUnit.Framework.Internal.ContextUtils.<>c__DisplayClass2_0.<DoIsolated>b__0(Object s)
-   at System.Threading.ExecutionContext.RunInternal(ExecutionContext executionContext, ContextCallback callback, Object state)
---- End of stack trace from previous location ---
-   at System.Threading.ExecutionContext.RunInternal(ExecutionContext executionContext, ContextCallback callback, Object state)
-   at NUnit.Framework.Internal.ContextUtils.DoIsolated(ContextCallback callback, Object state)
-   at NUnit.Framework.Internal.ContextUtils.DoIsolated[T](Func`1 func)
-   at NUnit.Framework.Internal.Execution.SimpleWorkItem.PerformWork()
-1)    at Microsoft.Extensions.DependencyInjection.ServiceLookup.CallSiteValidator.ValidateResolution(ServiceCallSite callSite, IServiceScope scope, IServiceScope rootScope)
-   at Microsoft.Extensions.DependencyInjection.ServiceProvider.OnResolve(ServiceCallSite callSite, IServiceScope scope)
-   at Microsoft.Extensions.DependencyInjection.ServiceProvider.GetService(ServiceIdentifier serviceIdentifier, ServiceProviderEngineScope serviceProviderEngineScope)
-   at Microsoft.Extensions.DependencyInjection.ServiceProvider.GetService(Type serviceType)
-   at Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService(IServiceProvider provider, Type serviceType)
-   at Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService[T](IServiceProvider provider)
-   at KUKULCAN.SharedKernel.Database.Tests.Extensions.KukulcanDatabaseStartupInitializerTests.InitializeAsync_WithSeedEnabled_ShouldResolveAndInvokeSeeder() in /home/juan.pardogarcia/Proyectos/NETCore/KUKULCAN.SharedKernel.Database/Tests/KUKULCAN.SharedKernel.Database.Tests/Extensions/KukulcanDatabaseStartupInitializerTests.cs:line 44
-   at KUKULCAN.SharedKernel.Database.Tests.Extensions.KukulcanDatabaseStartupInitializerTests.InitializeAsync_WithSeedEnabled_ShouldResolveAndInvokeSeeder() in /home/juan.pardogarcia/Proyectos/NETCore/KUKULCAN.SharedKernel.Database/Tests/KUKULCAN.SharedKernel.Database.Tests/Extensions/KukulcanDatabaseStartupInitializerTests.cs:line 51
-   at KUKULCAN.SharedKernel.Database.Tests.Extensions.KukulcanDatabaseStartupInitializerTests.InitializeAsync_WithSeedEnabled_ShouldResolveAndInvokeSeeder() in /home/juan.pardogarcia/Proyectos/NETCore/KUKULCAN.SharedKernel.Database/Tests/KUKULCAN.SharedKernel.Database.Tests/Extensions/KukulcanDatabaseStartupInitializerTests.cs:line 51
-   at NUnit.Framework.Internal.TaskAwaitAdapter.GenericAdapter`1.GetResult()
-   at NUnit.Framework.Internal.AsyncToSyncAdapter.Await[TResult](TestExecutionContext context, Func`1 invoke)
-   at NUnit.Framework.Internal.AsyncToSyncAdapter.Await(TestExecutionContext context, Func`1 invoke)
-   at NUnit.Framework.Internal.Commands.TestMethodCommand.RunTestMethod(TestExecutionContext context)
-   at NUnit.Framework.Internal.Commands.TestMethodCommand.Execute(TestExecutionContext context)
-   at NUnit.Framework.Internal.Execution.SimpleWorkItem.<>c__DisplayClass3_0.<PerformWork>b__0()
-   at NUnit.Framework.Internal.ContextUtils.<>c__DisplayClass1_0`1.<DoIsolated>b__0(Object _)
-   at NUnit.Framework.Internal.ContextUtils.<>c__DisplayClass2_0.<DoIsolated>b__0(Object s)
-   at System.Threading.ExecutionContext.RunInternal(ExecutionContext executionContext, ContextCallback callback, Object state)
---- End of stack trace from previous location ---
-   at System.Threading.ExecutionContext.RunInternal(ExecutionContext executionContext, ContextCallback callback, Object state)
-   at NUnit.Framework.Internal.ContextUtils.DoIsolated(ContextCallback callback, Object state)
-   at NUnit.Framework.Internal.ContextUtils.DoIsolated[T](Func`1 func)
-   at NUnit.Framework.Internal.Execution.SimpleWorkItem.PerformWork()
-
-  Con error InitializeAsync_WithSeedEnabledAndNoSeederRegistered_ShouldNotThrow [1 ms]
-  Mensaje de error:
-   System.InvalidOperationException : Cannot resolve scoped service 'KUKULCAN.SharedKernel.Database.Extensions.KukulcanDatabaseStartupInitializer`1[KUKULCAN.SharedKernel.Database.Tests.Extensions.KukulcanDatabaseStartupInitializerTests+StartupTestDbContext]' from root provider.
-  Seguimiento de la pila:
-     at Microsoft.Extensions.DependencyInjection.ServiceLookup.CallSiteValidator.ValidateResolution(ServiceCallSite callSite, IServiceScope scope, IServiceScope rootScope)
-   at Microsoft.Extensions.DependencyInjection.ServiceProvider.OnResolve(ServiceCallSite callSite, IServiceScope scope)
-   at Microsoft.Extensions.DependencyInjection.ServiceProvider.GetService(ServiceIdentifier serviceIdentifier, ServiceProviderEngineScope serviceProviderEngineScope)
-   at Microsoft.Extensions.DependencyInjection.ServiceProvider.GetService(Type serviceType)
-   at Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService(IServiceProvider provider, Type serviceType)
-   at Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService[T](IServiceProvider provider)
-   at KUKULCAN.SharedKernel.Database.Tests.Extensions.KukulcanDatabaseStartupInitializerTests.InitializeAsync_WithSeedEnabledAndNoSeederRegistered_ShouldNotThrow() in /home/juan.pardogarcia/Proyectos/NETCore/KUKULCAN.SharedKernel.Database/Tests/KUKULCAN.SharedKernel.Database.Tests/Extensions/KukulcanDatabaseStartupInitializerTests.cs:line 87
-   at KUKULCAN.SharedKernel.Database.Tests.Extensions.KukulcanDatabaseStartupInitializerTests.InitializeAsync_WithSeedEnabledAndNoSeederRegistered_ShouldNotThrow() in /home/juan.pardogarcia/Proyectos/NETCore/KUKULCAN.SharedKernel.Database/Tests/KUKULCAN.SharedKernel.Database.Tests/Extensions/KukulcanDatabaseStartupInitializerTests.cs:line 89
-   at KUKULCAN.SharedKernel.Database.Tests.Extensions.KukulcanDatabaseStartupInitializerTests.InitializeAsync_WithSeedEnabledAndNoSeederRegistered_ShouldNotThrow() in /home/juan.pardogarcia/Proyectos/NETCore/KUKULCAN.SharedKernel.Database/Tests/KUKULCAN.SharedKernel.Database.Tests/Extensions/KukulcanDatabaseStartupInitializerTests.cs:line 89
-   at NUnit.Framework.Internal.TaskAwaitAdapter.GenericAdapter`1.GetResult()
-   at NUnit.Framework.Internal.AsyncToSyncAdapter.Await[TResult](TestExecutionContext context, Func`1 invoke)
-   at NUnit.Framework.Internal.AsyncToSyncAdapter.Await(TestExecutionContext context, Func`1 invoke)
-   at NUnit.Framework.Internal.Commands.TestMethodCommand.RunTestMethod(TestExecutionContext context)
-   at NUnit.Framework.Internal.Commands.TestMethodCommand.Execute(TestExecutionContext context)
-   at NUnit.Framework.Internal.Execution.SimpleWorkItem.<>c__DisplayClass3_0.<PerformWork>b__0()
-   at NUnit.Framework.Internal.ContextUtils.<>c__DisplayClass1_0`1.<DoIsolated>b__0(Object _)
-   at NUnit.Framework.Internal.ContextUtils.<>c__DisplayClass2_0.<DoIsolated>b__0(Object s)
-   at System.Threading.ExecutionContext.RunInternal(ExecutionContext executionContext, ContextCallback callback, Object state)
---- End of stack trace from previous location ---
-   at System.Threading.ExecutionContext.RunInternal(ExecutionContext executionContext, ContextCallback callback, Object state)
-   at NUnit.Framework.Internal.ContextUtils.DoIsolated(ContextCallback callback, Object state)
-   at NUnit.Framework.Internal.ContextUtils.DoIsolated[T](Func`1 func)
-   at NUnit.Framework.Internal.Execution.SimpleWorkItem.PerformWork()
-1)    at Microsoft.Extensions.DependencyInjection.ServiceLookup.CallSiteValidator.ValidateResolution(ServiceCallSite callSite, IServiceScope scope, IServiceScope rootScope)
-   at Microsoft.Extensions.DependencyInjection.ServiceProvider.OnResolve(ServiceCallSite callSite, IServiceScope scope)
-   at Microsoft.Extensions.DependencyInjection.ServiceProvider.GetService(ServiceIdentifier serviceIdentifier, ServiceProviderEngineScope serviceProviderEngineScope)
-   at Microsoft.Extensions.DependencyInjection.ServiceProvider.GetService(Type serviceType)
-   at Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService(IServiceProvider provider, Type serviceType)
-   at Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService[T](IServiceProvider provider)
-   at KUKULCAN.SharedKernel.Database.Tests.Extensions.KukulcanDatabaseStartupInitializerTests.InitializeAsync_WithSeedEnabledAndNoSeederRegistered_ShouldNotThrow() in /home/juan.pardogarcia/Proyectos/NETCore/KUKULCAN.SharedKernel.Database/Tests/KUKULCAN.SharedKernel.Database.Tests/Extensions/KukulcanDatabaseStartupInitializerTests.cs:line 87
-   at KUKULCAN.SharedKernel.Database.Tests.Extensions.KukulcanDatabaseStartupInitializerTests.InitializeAsync_WithSeedEnabledAndNoSeederRegistered_ShouldNotThrow() in /home/juan.pardogarcia/Proyectos/NETCore/KUKULCAN.SharedKernel.Database/Tests/KUKULCAN.SharedKernel.Database.Tests/Extensions/KukulcanDatabaseStartupInitializerTests.cs:line 89
-   at KUKULCAN.SharedKernel.Database.Tests.Extensions.KukulcanDatabaseStartupInitializerTests.InitializeAsync_WithSeedEnabledAndNoSeederRegistered_ShouldNotThrow() in /home/juan.pardogarcia/Proyectos/NETCore/KUKULCAN.SharedKernel.Database/Tests/KUKULCAN.SharedKernel.Database.Tests/Extensions/KukulcanDatabaseStartupInitializerTests.cs:line 89
-   at NUnit.Framework.Internal.TaskAwaitAdapter.GenericAdapter`1.GetResult()
-   at NUnit.Framework.Internal.AsyncToSyncAdapter.Await[TResult](TestExecutionContext context, Func`1 invoke)
-   at NUnit.Framework.Internal.AsyncToSyncAdapter.Await(TestExecutionContext context, Func`1 invoke)
-   at NUnit.Framework.Internal.Commands.TestMethodCommand.RunTestMethod(TestExecutionContext context)
-   at NUnit.Framework.Internal.Commands.TestMethodCommand.Execute(TestExecutionContext context)
-   at NUnit.Framework.Internal.Execution.SimpleWorkItem.<>c__DisplayClass3_0.<PerformWork>b__0()
-   at NUnit.Framework.Internal.ContextUtils.<>c__DisplayClass1_0`1.<DoIsolated>b__0(Object _)
-   at NUnit.Framework.Internal.ContextUtils.<>c__DisplayClass2_0.<DoIsolated>b__0(Object s)
-   at System.Threading.ExecutionContext.RunInternal(ExecutionContext executionContext, ContextCallback callback, Object state)
---- End of stack trace from previous location ---
-   at System.Threading.ExecutionContext.RunInternal(ExecutionContext executionContext, ContextCallback callback, Object state)
-   at NUnit.Framework.Internal.ContextUtils.DoIsolated(ContextCallback callback, Object state)
-   at NUnit.Framework.Internal.ContextUtils.DoIsolated[T](Func`1 func)
-   at NUnit.Framework.Internal.Execution.SimpleWorkItem.PerformWork()
-
-  Correctas ApplySoftDeleteFilter_ShouldConfigureOnlySoftDeleteEntities [1 ms]
-  Correctas ApplySoftDeleteFilter_WithNull_ShouldThrow [1 ms]
-  Correctas ApplyTenantFilter_ShouldConfigureGuidTenantProperty [1 ms]
-  Correctas ApplyTenantFilter_ShouldIgnoreEntitiesWithoutTenantId [< 1 ms]
-  Correctas ApplyTenantFilter_ShouldIgnoreOwnedEntities [33 ms]
-  Correctas ApplyTenantFilter_ShouldIgnoreTenantIdWithWrongType [< 1 ms]
-  Correctas ApplyTenantFilter_WithNullModelBuilder_ShouldThrow [< 1 ms]
-  Correctas ApplyTenantFilter_WithNullTenantContext_ShouldThrow [< 1 ms]
-  Con error AddKukulcanDbContext_ShouldResolveConfiguredProviderForEverySupportedDatabase(SqlServer,"Server=localhost;Database=KukulcanTests;Integrated Security=True;","Microsoft.EntityFrameworkCore.SqlServer") [25 ms]
-  Mensaje de error:
-     Assert.That(context.Database.ProviderName, Is.EqualTo(expectedProviderName))
-  Expected string length 39 but was 38. Strings differ at index 30.
-  Expected: "Microsoft.EntityFrameworkCore.SqlServer"
-  But was:  "Microsoft.EntityFrameworkCore.InMemory"
-  -----------------------------------------^
-
-  Seguimiento de la pila:
-     at KUKULCAN.SharedKernel.Database.Tests.Extensions.ServiceCollectionExtensionsProviderMatrixTests.AddKukulcanDbContext_ShouldResolveConfiguredProviderForEverySupportedDatabase(DatabaseProvider provider, String connectionString, String expectedProviderName) in /home/juan.pardogarcia/Proyectos/NETCore/KUKULCAN.SharedKernel.Database/Tests/KUKULCAN.SharedKernel.Database.Tests/Extensions/ServiceCollectionExtensionsProviderMatrixTests.cs:line 47
-   at KUKULCAN.SharedKernel.Database.Tests.Extensions.ServiceCollectionExtensionsProviderMatrixTests.AddKukulcanDbContext_ShouldResolveConfiguredProviderForEverySupportedDatabase(DatabaseProvider provider, String connectionString, String expectedProviderName) in /home/juan.pardogarcia/Proyectos/NETCore/KUKULCAN.SharedKernel.Database/Tests/KUKULCAN.SharedKernel.Database.Tests/Extensions/ServiceCollectionExtensionsProviderMatrixTests.cs:line 22
-
-1)    at KUKULCAN.SharedKernel.Database.Tests.Extensions.ServiceCollectionExtensionsProviderMatrixTests.AddKukulcanDbContext_ShouldResolveConfiguredProviderForEverySupportedDatabase(DatabaseProvider provider, String connectionString, String expectedProviderName) in /home/juan.pardogarcia/Proyectos/NETCore/KUKULCAN.SharedKernel.Database/Tests/KUKULCAN.SharedKernel.Database.Tests/Extensions/ServiceCollectionExtensionsProviderMatrixTests.cs:line 43
-
-
-  Con error AddKukulcanDbContext_ShouldResolveConfiguredProviderForEverySupportedDatabase(PostgresSql,"Host=localhost;Database=KukulcanTests;Username=test;Password=test;","Npgsql.EntityFrameworkCore.PostgreSQL") [6 ms]
-  Mensaje de error:
-     Assert.That(context.Database.ProviderName, Is.EqualTo(expectedProviderName))
-  Expected string length 37 but was 38. Strings differ at index 0.
-  Expected: "Npgsql.EntityFrameworkCore.PostgreSQL"
-  But was:  "Microsoft.EntityFrameworkCore.InMemory"
-  -----------^
-
-  Seguimiento de la pila:
-     at KUKULCAN.SharedKernel.Database.Tests.Extensions.ServiceCollectionExtensionsProviderMatrixTests.AddKukulcanDbContext_ShouldResolveConfiguredProviderForEverySupportedDatabase(DatabaseProvider provider, String connectionString, String expectedProviderName) in /home/juan.pardogarcia/Proyectos/NETCore/KUKULCAN.SharedKernel.Database/Tests/KUKULCAN.SharedKernel.Database.Tests/Extensions/ServiceCollectionExtensionsProviderMatrixTests.cs:line 47
-   at KUKULCAN.SharedKernel.Database.Tests.Extensions.ServiceCollectionExtensionsProviderMatrixTests.AddKukulcanDbContext_ShouldResolveConfiguredProviderForEverySupportedDatabase(DatabaseProvider provider, String connectionString, String expectedProviderName) in /home/juan.pardogarcia/Proyectos/NETCore/KUKULCAN.SharedKernel.Database/Tests/KUKULCAN.SharedKernel.Database.Tests/Extensions/ServiceCollectionExtensionsProviderMatrixTests.cs:line 22
-   at InvokeStub_ServiceCollectionExtensionsProviderMatrixTests.AddKukulcanDbContext_ShouldResolveConfiguredProviderForEverySupportedDatabase(Object, Span`1)
-
-1)    at KUKULCAN.SharedKernel.Database.Tests.Extensions.ServiceCollectionExtensionsProviderMatrixTests.AddKukulcanDbContext_ShouldResolveConfiguredProviderForEverySupportedDatabase(DatabaseProvider provider, String connectionString, String expectedProviderName) in /home/juan.pardogarcia/Proyectos/NETCore/KUKULCAN.SharedKernel.Database/Tests/KUKULCAN.SharedKernel.Database.Tests/Extensions/ServiceCollectionExtensionsProviderMatrixTests.cs:line 43
-   at InvokeStub_ServiceCollectionExtensionsProviderMatrixTests.AddKukulcanDbContext_ShouldResolveConfiguredProviderForEverySupportedDatabase(Object, Span`1)
-
-
-  Con error AddKukulcanDbContext_ShouldResolveConfiguredProviderForEverySupportedDatabase(MySql,"Server=localhost;Database=KukulcanTests;User Id=test;Password=test;","MySql.EntityFrameworkCore") [13 ms]
-  Mensaje de error:
-     Assert.That(context.Database.ProviderName, Is.EqualTo(expectedProviderName))
-  Expected string length 25 but was 38. Strings differ at index 1.
-  Expected: "MySql.EntityFrameworkCore"
-  But was:  "Microsoft.EntityFrameworkCore.InMemory"
-  ------------^
-
-  Seguimiento de la pila:
-     at KUKULCAN.SharedKernel.Database.Tests.Extensions.ServiceCollectionExtensionsProviderMatrixTests.AddKukulcanDbContext_ShouldResolveConfiguredProviderForEverySupportedDatabase(DatabaseProvider provider, String connectionString, String expectedProviderName) in /home/juan.pardogarcia/Proyectos/NETCore/KUKULCAN.SharedKernel.Database/Tests/KUKULCAN.SharedKernel.Database.Tests/Extensions/ServiceCollectionExtensionsProviderMatrixTests.cs:line 47
-   at KUKULCAN.SharedKernel.Database.Tests.Extensions.ServiceCollectionExtensionsProviderMatrixTests.AddKukulcanDbContext_ShouldResolveConfiguredProviderForEverySupportedDatabase(DatabaseProvider provider, String connectionString, String expectedProviderName) in /home/juan.pardogarcia/Proyectos/NETCore/KUKULCAN.SharedKernel.Database/Tests/KUKULCAN.SharedKernel.Database.Tests/Extensions/ServiceCollectionExtensionsProviderMatrixTests.cs:line 22
-   at InvokeStub_ServiceCollectionExtensionsProviderMatrixTests.AddKukulcanDbContext_ShouldResolveConfiguredProviderForEverySupportedDatabase(Object, Span`1)
-
-1)    at KUKULCAN.SharedKernel.Database.Tests.Extensions.ServiceCollectionExtensionsProviderMatrixTests.AddKukulcanDbContext_ShouldResolveConfiguredProviderForEverySupportedDatabase(DatabaseProvider provider, String connectionString, String expectedProviderName) in /home/juan.pardogarcia/Proyectos/NETCore/KUKULCAN.SharedKernel.Database/Tests/KUKULCAN.SharedKernel.Database.Tests/Extensions/ServiceCollectionExtensionsProviderMatrixTests.cs:line 43
-   at InvokeStub_ServiceCollectionExtensionsProviderMatrixTests.AddKukulcanDbContext_ShouldResolveConfiguredProviderForEverySupportedDatabase(Object, Span`1)
-
-
-  Correctas AddKukulcanDbContext_ShouldAttachSlowQueryInterceptorToDbContext [5 ms]
-  Correctas AddKukulcanDbContext_ShouldBindConfigurationOptions [1 ms]
-  Correctas AddKukulcanDbContext_WithMissingConnectionString_ShouldThrow [2 ms]
-  Correctas AddKukulcanDbContext_WithValidConfiguration_ShouldRegisterExpectedServices [< 1 ms]
-  Correctas SavingChanges_SyncPath_WhenEntityAdded_ShouldSetCreatedOn [18 ms]
-  Correctas SavingChanges_SyncPath_WhenEntityDeleted_ShouldNotSetModifiedOn [21 ms]
-  Correctas SavingChanges_SyncPath_WhenEntityModified_ShouldSetModifiedOn [17 ms]
-  Correctas SavingChangesAsync_WhenEntityAdded_ShouldSetCreatedOn [15 ms]
-  Correctas SavingChangesAsync_WhenEntityModified_ShouldSetModifiedOn [12 ms]
-  Correctas SavingChangesAsync_WhenEntityUnchanged_ShouldNotSetModifiedOn [76 ms]
-  Correctas CaptureAndDispatchIfCommittedAsync_WithNullContext_ShouldReturnWithoutDispatching [< 1 ms]
-  Correctas SavedChanges_ShouldDispatchEventsAndClearAggregate [17 ms]
-  Correctas SavedChangesAsync_ShouldDispatchEventsAndClearAggregate [10 ms]
-  Correctas SavedChangesAsync_WhenSecondEventFails_ShouldNotRedispatchFirstEventOnRetry [17 ms]
-  Correctas SavedChangesAsync_WithNoEvents_ShouldNotDispatch [8 ms]
-  Correctas SavingChanges_SyncPath_WhenImmutableEntityIsDeleted_ShouldThrow [13 ms]
-  Correctas SavingChanges_SyncPath_WhenImmutableEntityIsModified_ShouldThrow [10 ms]
-  Correctas SavingChanges_WhenImmutableEntityIsAdded_ShouldSucceed [9 ms]
-  Correctas SavingChanges_WhenImmutableEntityIsModified_ShouldThrow [14 ms]
-  Correctas SavingChanges_WhenNoImmutableEntityIsModified_ShouldSucceed [9 ms]
-  Correctas SavingChangesAsync_WhenImmutableEntityIsDeleted_ShouldThrow [9 ms]
-  Correctas CommandAtOrBelowThreshold_ShouldNotLogSlowQuery [8 ms]
-  Correctas Constructor_ShouldCreateInterceptor [< 1 ms]
-  Correctas NonQueryExecuted_WhenDurationExceedsThreshold_ShouldLogWarning [3 ms]
-  Correctas NonQueryExecutedAsync_WhenDurationExceedsThreshold_ShouldLogWarning [2 ms]
-  Correctas ReaderExecuted_SyncPath_WhenDurationExceedsThreshold_ShouldLogWarning [1 ms]
-  Correctas ReaderExecuted_WhenDurationExceedsThreshold_ShouldLogWarning [2 ms]
-  Correctas ReaderExecuted_WhenSensitiveLoggingEnabled_ShouldIncludeSql [1 ms]
-  Correctas ReaderExecutedAsync_WhenDurationExceedsThreshold_ShouldLogWarning [1 ms]
-  Correctas Threshold_ShouldBeMutable [< 1 ms]
-  Correctas SavingChanges_SyncPath_ShouldConvertDelete [14 ms]
-  Correctas SavingChanges_WhenSoftDeleteEntityIsDeleted_ShouldConvertToLogicalDelete [13 ms]
-  Correctas ConfigurePostgresSql_WhenProviderConfigurationFails_ShouldWrapOriginalException [4 ms]
-  Correctas ConfigureSqlServer_WhenProviderConfigurationFails_ShouldWrapOriginalException [2 ms]
-  Correctas Constructor_WithNullClock_ShouldThrow [< 1 ms]
-  Correctas Constructor_WithNullDispatcher_ShouldThrow [< 1 ms]
-  Correctas Constructor_WithNullOptions_ShouldThrow [2 ms]
-  Correctas Constructor_WithNullTenantContext_ShouldThrow [< 1 ms]
-  Correctas Context_ShouldExposeDerivedDbSets [7 ms]
-  Correctas NotInstalled_WhenInnerExceptionIsNull_ShouldCreateMissingPackageException [< 1 ms]
-  Correctas OnConfiguring_ShouldEnableSensitiveLoggingAndDetailedErrors [7 ms]
-  Correctas OnConfiguring_WhenOptionsAreAlreadyConfigured_ShouldNotReconfigureProvider [4 ms]
-  Correctas OnConfiguring_WithUnsupportedProvider_ShouldThrow [2 ms]
-  Correctas OnModelCreating_ShouldApplySoftDeleteAndTenantFilters [4 ms]
-  Correctas SoftDeleteFilter_ShouldHideDeletedEntities [96 ms]
-  Correctas TenantAndSoftDeleteFilters_ShouldApplyTogether [40 ms]
-  Correctas TenantFilter_ShouldReturnOnlyCurrentTenant [22 ms]
-  Correctas ConfigureProvider_ShouldRejectUnsupportedProvider [4 ms]
-  Correctas Constructor_ShouldRejectNullClock [< 1 ms]
-  Correctas Constructor_ShouldRejectNullDomainEventDispatcher [< 1 ms]
-  Correctas Constructor_ShouldRejectNullOptions [< 1 ms]
-  Correctas Constructor_ShouldRejectNullTenantContext [< 1 ms]
-  Correctas Constructor_ShouldRejectOptionsWithNullValue [8 ms]
-  Correctas AddKukulcanDbContext_ShouldConfigureSelectedProviderThroughDependencyInjection(SqlServer,"Microsoft.EntityFrameworkCore.SqlServer","Server=localhost;Database=KukulcanTests;Integrated Security=True;") [94 ms]
-  Correctas AddKukulcanDbContext_ShouldConfigureSelectedProviderThroughDependencyInjection(PostgresSql,"Npgsql.EntityFrameworkCore.PostgreSQL","Host=localhost;Database=KukulcanTests;Username=test;Password=test;") [74 ms]
-  Correctas AddKukulcanDbContext_ShouldConfigureSelectedProviderThroughDependencyInjection(MySql,"MySql.EntityFrameworkCore","Server=localhost;Database=KukulcanTests;User Id=test;Password=test;") [38 ms]
-  Correctas DisabledPoolOptions_ShouldRemoveProviderSpecificPoolingKeys(SqlServer,"Server=localhost;Database=KukulcanTests;","Pooling=true","Min Pool Size=7","Max Pool Size=31") [24 ms]
-  Correctas DisabledPoolOptions_ShouldRemoveProviderSpecificPoolingKeys(PostgresSql,"Host=localhost;Database=KukulcanTests;Username=test;Password=test;","Pooling=true","Minimum Pool Size=7","Maximum Pool Size=31") [32 ms]
-  Correctas DisabledPoolOptions_ShouldRemoveProviderSpecificPoolingKeys(MySql,"Server=localhost;Database=KukulcanTests;User Id=test;Password=test;","Pooling=true","MinimumPoolSize=7","MaximumPoolSize=31") [20 ms]
-  Con error EnabledPoolOptions_ShouldProduceProviderSpecificConnectionString(SqlServer,"Server=localhost;Database=KukulcanTests;","Pooling=true","Min Pool Size=7","Max Pool Size=31") [71 ms]
-  Mensaje de error:
-     Assert.That(connectionString, Does.Contain(pooling))
-  Expected: String containing "Pooling=true"
-  But was:  "Data Source=localhost;Initial Catalog=KukulcanTests;Pooling=True;Min Pool Size=7;Max Pool Size=31;Application Name="EFCore/10.0.11 (Arch Linux X64)""
-
-  Seguimiento de la pila:
-     at KUKULCAN.SharedKernel.Database.Tests.KukulcanDbContextPoolOptionsBehaviorTests.EnabledPoolOptions_ShouldProduceProviderSpecificConnectionString(DatabaseProvider provider, String baseConnectionString, String pooling, String minPool, String maxPool) in /home/juan.pardogarcia/Proyectos/NETCore/KUKULCAN.SharedKernel.Database/Tests/KUKULCAN.SharedKernel.Database.Tests/KukulcanDbContextPoolOptionsBehaviorTests.cs:line 38
-   at KUKULCAN.SharedKernel.Database.Tests.KukulcanDbContextPoolOptionsBehaviorTests.EnabledPoolOptions_ShouldProduceProviderSpecificConnectionString(DatabaseProvider provider, String baseConnectionString, String pooling, String minPool, String maxPool) in /home/juan.pardogarcia/Proyectos/NETCore/KUKULCAN.SharedKernel.Database/Tests/KUKULCAN.SharedKernel.Database.Tests/KukulcanDbContextPoolOptionsBehaviorTests.cs:line 24
-
-1)    at KUKULCAN.SharedKernel.Database.Tests.KukulcanDbContextPoolOptionsBehaviorTests.EnabledPoolOptions_ShouldProduceProviderSpecificConnectionString(DatabaseProvider provider, String baseConnectionString, String pooling, String minPool, String maxPool) in /home/juan.pardogarcia/Proyectos/NETCore/KUKULCAN.SharedKernel.Database/Tests/KUKULCAN.SharedKernel.Database.Tests/KukulcanDbContextPoolOptionsBehaviorTests.cs:line 35
-
-
-  Correctas EnabledPoolOptions_ShouldProduceProviderSpecificConnectionString(PostgresSql,"Host=localhost;Database=KukulcanTests;Username=test;Password=test;","Pooling=true","Minimum Pool Size=7","Maximum Pool Size=31") [68 ms]
-  Con error EnabledPoolOptions_ShouldProduceProviderSpecificConnectionString(MySql,"Server=localhost;Database=KukulcanTests;User Id=test;Password=test;","Pooling=true","MinimumPoolSize=7","MaximumPoolSize=31") [77 ms]
+Running all tests in /home/juan.pardogarcia/Proyectos/NETCore/KUKULCAN.SharedKernel.Database/Tests/KUKULCAN.SharedKernel.Database.SQLServer.Integration/bin/Release/net10.0/KUKULCAN.SharedKernel.Database.SQLServer.Integration.dll
+   NUnit3TestExecutor discovered 93 of 93 NUnit test cases using Current Discovery mode, Non-Explicit run
+  Correctas CommitFailure_ShouldNotDispatchDomainEventsAgainstRealSqlServer [1 s]
+  Correctas CommitTransaction_ShouldDispatchMultipleAggregateEventsOnceAgainstRealSqlServer [90 ms]
+  Correctas CommitTransaction_ShouldPersistAndDispatchDomainEventFromRealSqlServer [507 ms]
+  Correctas DispatcherFailureAfterCommit_ShouldLeaveDatabaseCommittedAndEventPendingAgainstRealSqlServer [74 ms]
+  Correctas RollbackTransaction_ShouldClearPendingDispatchStateAndAllowDomainEventRetryAgainstRealSqlServer [56 ms]
+  Correctas SlowQueryInterceptor_ScalarExecuted_ShouldLogRealScalarQueryAgainstSqlServer [51 ms]
+  Correctas SlowQueryInterceptor_ScalarExecutedAsync_ShouldLogRealScalarQueryAgainstSqlServer [23 ms]
+  Correctas SlowQueryInterceptor_ShouldLogRealSqlServerNonQueryCommandAboveThreshold [17 ms]
+  Correctas AuditInterceptor_ShouldApplySameCreationTimestampToMultipleEntities [70 ms]
+  Correctas AuditInterceptor_ShouldUpdateOnlyModifiedEntityTimestamp [76 ms]
+  Correctas SoftDeleteInterceptor_ShouldApplyAuditMetadataWhenEntityIsDeleted [111 ms]
+  Correctas SoftDeleteInterceptor_ShouldConvertMultipleDeletesWithoutPhysicalDeletion [116 ms]
+  Correctas SoftDeleteInterceptor_ShouldKeepDeletedEntityExcludedByDefaultFilter [86 ms]
+  Correctas SoftDeleteInterceptor_ShouldNotAffectEntityWithoutSoftDeleteContract [59 ms]
+  Correctas BeginTransaction_ShouldHonorCancellationTokenAgainstRealSqlServer [16 ms]
+  Correctas ExecuteSql_ShouldHonorCancellationTokenAgainstRealSqlServer [14 ms]
+  Correctas SaveChanges_ShouldHonorCancellationTokenAgainstRealSqlServer [41 ms]
+  Correctas AddKukulcanDbContext_ShouldRegisterContextAndUnitOfWorkAgainstRealSqlServer [81 ms]
+  Correctas CombinedTenantAndSoftDeleteFilters_ShouldApplyAgainstRealSqlServer [77 ms]
+  Correctas DomainEventDispatchInterceptor_ShouldDispatchAllEventsFromMultipleAggregatesAgainstRealSqlServer [71 ms]
+  Correctas DomainEventDispatchInterceptor_ShouldDispatchAndClearEventsAfterSuccessfulSave [52 ms]
+  Correctas DomainEventDispatchInterceptor_ShouldPropagateSaveChangesCancellationTokenAgainstRealSqlServer [53 ms]
+  Correctas IgnoreQueryFilters_ShouldExposeDeletedAndOtherTenantRowsAgainstRealSqlServer [59 ms]
+  Correctas ImmutableEntityInterceptor_ShouldAllowInsertAgainstRealSqlServer [41 ms]
+  Correctas ImmutableEntityInterceptor_ShouldRejectAsyncDeleteAgainstRealSqlServer [39 ms]
+  Correctas ImmutableEntityInterceptor_ShouldRejectAsyncUpdateAgainstRealSqlServer [38 ms]
+  Correctas ImmutableEntityInterceptor_ShouldReportAllModifiedImmutableEntitiesAgainstRealSqlServer [44 ms]
+  Correctas KukulcanDbContextBase_ShouldApplyEntityConfigurationsFromDerivedContextAssembly [24 ms]
+  Correctas Provider_ShouldUseSqlServerAndPersistData [56 ms]
+  Correctas RetryConfiguration_ShouldBeAppliedToRealSqlServerContext [42 ms]
+  Correctas TenantFilter_ShouldApplyToDomainEventEntityAgainstRealSqlServer [50 ms]
+  Correctas TenantFilter_ShouldApplyToEntityWithoutSoftDeleteContractAgainstRealSqlServer [57 ms]
+  Correctas TenantFilter_ShouldIsolateRealDatabaseRows [42 ms]
+  Correctas TenantModelCache_ShouldKeepTenantModelsIndependentAcrossContexts [124 ms]
+  Correctas CommitTransaction_ShouldDispatchAllDomainEventsAgainstRealSqlServer [31 ms]
+  Correctas CommitTransaction_ShouldPersistEntityAndDispatchDomainEventAgainstNewSqlServerContext [47 ms]
+  Correctas EndTransaction_ShouldRollbackSavedChangesObservedFromNewSqlServerContext [50 ms]
+  Correctas AddKukulcanDbContext_ShouldBindAllNestedDatabaseOptions [3 ms]
+  Correctas AddKukulcanDbContext_ShouldBindDatabaseOptionsFromConfiguration [3 ms]
+  Correctas AddKukulcanDbContext_ShouldPreserveDefaultNestedOptionValues [1 ms]
+  Correctas AddKukulcanDbContext_ShouldRegisterInfrastructureWithExpectedLifetimes [1 ms]
+  Correctas AddKukulcanDbContext_ShouldRegisterUnitOfWorkAsScopedService [2 ms]
+  Correctas AddKukulcanDbContext_ShouldRejectMissingConnectionString [< 1 ms]
+  Correctas AddKukulcanDbContext_ShouldRejectWhitespaceConnectionString [< 1 ms]
+  Correctas AddKukulcanDbContext_ShouldResolveOneContextPerScope [1 ms]
+  Correctas ConfigureProvider_ShouldRejectUnsupportedProvider [1 ms]
+  Correctas ConfigureProvider_ShouldUseSqlServerWhenProviderInstalled [12 ms]
+  Con error ExecutionStrategy_ShouldRetryAfterRealSqlServerDeadlock [227 ms]
   Mensaje de error:
    Multiple failures or warnings in test:
-  1)   Assert.That(connectionString, Does.Contain(pooling))
-  Expected: String containing "Pooling=true"
-  But was:  "server=localhost;database=KukulcanTests;user id=test;password=test;pooling=True;minpoolsize=7;maxpoolsize=31"
+  1)   Assert.That(attempts, Is.EqualTo(2))
+  Expected: 2
+  But was:  1
 
-     at KUKULCAN.SharedKernel.Database.Tests.KukulcanDbContextPoolOptionsBehaviorTests.EnabledPoolOptions_ShouldProduceProviderSpecificConnectionString(DatabaseProvider provider, String baseConnectionString, String pooling, String minPool, String maxPool) in /home/juan.pardogarcia/Proyectos/NETCore/KUKULCAN.SharedKernel.Database/Tests/KUKULCAN.SharedKernel.Database.Tests/KukulcanDbContextPoolOptionsBehaviorTests.cs:line 35
-   at InvokeStub_KukulcanDbContextPoolOptionsBehaviorTests.EnabledPoolOptions_ShouldProduceProviderSpecificConnectionString(Object, Span`1)
+     at KUKULCAN.SharedKernel.Database.SQLServer.Integration.SqlServerRealRetryIntegrationTests.ExecutionStrategy_ShouldRetryAfterRealSqlServerDeadlock() in /home/juan.pardogarcia/Proyectos/NETCore/KUKULCAN.SharedKernel.Database/Tests/KUKULCAN.SharedKernel.Database.SQLServer.Integration/SqlServerRealRetryIntegrationTests.cs:line 143
+   at System.Runtime.CompilerServices.AsyncTaskMethodBuilder`1.AsyncStateMachineBox`1.ExecutionContextCallback(Object s)
 
-  2)   Assert.That(connectionString, Does.Contain(minPool))
-  Expected: String containing "MinimumPoolSize=7"
-  But was:  "server=localhost;database=KukulcanTests;user id=test;password=test;pooling=True;minpoolsize=7;maxpoolsize=31"
+  2)   Assert.That(result, Is.EqualTo(2))
+  Expected: 2
+  But was:  0
 
-     at KUKULCAN.SharedKernel.Database.Tests.KukulcanDbContextPoolOptionsBehaviorTests.EnabledPoolOptions_ShouldProduceProviderSpecificConnectionString(DatabaseProvider provider, String baseConnectionString, String pooling, String minPool, String maxPool) in /home/juan.pardogarcia/Proyectos/NETCore/KUKULCAN.SharedKernel.Database/Tests/KUKULCAN.SharedKernel.Database.Tests/KukulcanDbContextPoolOptionsBehaviorTests.cs:line 36
-   at InvokeStub_KukulcanDbContextPoolOptionsBehaviorTests.EnabledPoolOptions_ShouldProduceProviderSpecificConnectionString(Object, Span`1)
-
-  3)   Assert.That(connectionString, Does.Contain(maxPool))
-  Expected: String containing "MaximumPoolSize=31"
-  But was:  "server=localhost;database=KukulcanTests;user id=test;password=test;pooling=True;minpoolsize=7;maxpoolsize=31"
-
-     at KUKULCAN.SharedKernel.Database.Tests.KukulcanDbContextPoolOptionsBehaviorTests.EnabledPoolOptions_ShouldProduceProviderSpecificConnectionString(DatabaseProvider provider, String baseConnectionString, String pooling, String minPool, String maxPool) in /home/juan.pardogarcia/Proyectos/NETCore/KUKULCAN.SharedKernel.Database/Tests/KUKULCAN.SharedKernel.Database.Tests/KukulcanDbContextPoolOptionsBehaviorTests.cs:line 37
-   at InvokeStub_KukulcanDbContextPoolOptionsBehaviorTests.EnabledPoolOptions_ShouldProduceProviderSpecificConnectionString(Object, Span`1)
+     at KUKULCAN.SharedKernel.Database.SQLServer.Integration.SqlServerRealRetryIntegrationTests.ExecutionStrategy_ShouldRetryAfterRealSqlServerDeadlock() in /home/juan.pardogarcia/Proyectos/NETCore/KUKULCAN.SharedKernel.Database/Tests/KUKULCAN.SharedKernel.Database.SQLServer.Integration/SqlServerRealRetryIntegrationTests.cs:line 144
+   at System.Runtime.CompilerServices.AsyncTaskMethodBuilder`1.AsyncStateMachineBox`1.ExecutionContextCallback(Object s)
 
 
   Seguimiento de la pila:
-     at KUKULCAN.SharedKernel.Database.Tests.KukulcanDbContextPoolOptionsBehaviorTests.EnabledPoolOptions_ShouldProduceProviderSpecificConnectionString(DatabaseProvider provider, String baseConnectionString, String pooling, String minPool, String maxPool) in /home/juan.pardogarcia/Proyectos/NETCore/KUKULCAN.SharedKernel.Database/Tests/KUKULCAN.SharedKernel.Database.Tests/KukulcanDbContextPoolOptionsBehaviorTests.cs:line 38
-   at KUKULCAN.SharedKernel.Database.Tests.KukulcanDbContextPoolOptionsBehaviorTests.EnabledPoolOptions_ShouldProduceProviderSpecificConnectionString(DatabaseProvider provider, String baseConnectionString, String pooling, String minPool, String maxPool) in /home/juan.pardogarcia/Proyectos/NETCore/KUKULCAN.SharedKernel.Database/Tests/KUKULCAN.SharedKernel.Database.Tests/KukulcanDbContextPoolOptionsBehaviorTests.cs:line 24
-   at InvokeStub_KukulcanDbContextPoolOptionsBehaviorTests.EnabledPoolOptions_ShouldProduceProviderSpecificConnectionString(Object, Span`1)
+     at KUKULCAN.SharedKernel.Database.SQLServer.Integration.SqlServerRealRetryIntegrationTests.ExecutionStrategy_ShouldRetryAfterRealSqlServerDeadlock() in /home/juan.pardogarcia/Proyectos/NETCore/KUKULCAN.SharedKernel.Database/Tests/KUKULCAN.SharedKernel.Database.SQLServer.Integration/SqlServerRealRetryIntegrationTests.cs:line 145
+   at KUKULCAN.SharedKernel.Database.SQLServer.Integration.SqlServerRealRetryIntegrationTests.ExecutionStrategy_ShouldRetryAfterRealSqlServerDeadlock()
+   at KUKULCAN.SharedKernel.Database.SQLServer.Integration.SqlServerRealRetryIntegrationTests.ExecutionStrategy_ShouldRetryAfterRealSqlServerDeadlock() in /home/juan.pardogarcia/Proyectos/NETCore/KUKULCAN.SharedKernel.Database/Tests/KUKULCAN.SharedKernel.Database.SQLServer.Integration/SqlServerRealRetryIntegrationTests.cs:line 145
+   at KUKULCAN.SharedKernel.Database.SQLServer.Integration.SqlServerRealRetryIntegrationTests.ExecutionStrategy_ShouldRetryAfterRealSqlServerDeadlock() in /home/juan.pardogarcia/Proyectos/NETCore/KUKULCAN.SharedKernel.Database/Tests/KUKULCAN.SharedKernel.Database.SQLServer.Integration/SqlServerRealRetryIntegrationTests.cs:line 145
+   at KUKULCAN.SharedKernel.Database.SQLServer.Integration.SqlServerRealRetryIntegrationTests.ExecutionStrategy_ShouldRetryAfterRealSqlServerDeadlock() in /home/juan.pardogarcia/Proyectos/NETCore/KUKULCAN.SharedKernel.Database/Tests/KUKULCAN.SharedKernel.Database.SQLServer.Integration/SqlServerRealRetryIntegrationTests.cs:line 145
+   at NUnit.Framework.Internal.TaskAwaitAdapter.GenericAdapter`1.BlockUntilCompleted()
+   at NUnit.Framework.Internal.MessagePumpStrategy.NoMessagePumpStrategy.WaitForCompletion(AwaitAdapter awaiter)
+   at NUnit.Framework.Internal.AsyncToSyncAdapter.Await[TResult](TestExecutionContext context, Func`1 invoke)
+   at NUnit.Framework.Internal.AsyncToSyncAdapter.Await(TestExecutionContext context, Func`1 invoke)
+   at NUnit.Framework.Internal.Commands.TestMethodCommand.RunTestMethod(TestExecutionContext context)
+   at NUnit.Framework.Internal.Commands.TestMethodCommand.Execute(TestExecutionContext context)
+   at NUnit.Framework.Internal.Execution.SimpleWorkItem.<>c__DisplayClass3_0.<PerformWork>b__0()
+   at NUnit.Framework.Internal.ContextUtils.<>c__DisplayClass1_0`1.<DoIsolated>b__0(Object _)
+   at NUnit.Framework.Internal.ContextUtils.<>c__DisplayClass2_0.<DoIsolated>b__0(Object s)
 
-1)    at KUKULCAN.SharedKernel.Database.Tests.KukulcanDbContextPoolOptionsBehaviorTests.EnabledPoolOptions_ShouldProduceProviderSpecificConnectionString(DatabaseProvider provider, String baseConnectionString, String pooling, String minPool, String maxPool) in /home/juan.pardogarcia/Proyectos/NETCore/KUKULCAN.SharedKernel.Database/Tests/KUKULCAN.SharedKernel.Database.Tests/KukulcanDbContextPoolOptionsBehaviorTests.cs:line 35
-   at InvokeStub_KukulcanDbContextPoolOptionsBehaviorTests.EnabledPoolOptions_ShouldProduceProviderSpecificConnectionString(Object, Span`1)
+1)    at KUKULCAN.SharedKernel.Database.SQLServer.Integration.SqlServerRealRetryIntegrationTests.ExecutionStrategy_ShouldRetryAfterRealSqlServerDeadlock() in /home/juan.pardogarcia/Proyectos/NETCore/KUKULCAN.SharedKernel.Database/Tests/KUKULCAN.SharedKernel.Database.SQLServer.Integration/SqlServerRealRetryIntegrationTests.cs:line 143
+   at System.Runtime.CompilerServices.AsyncTaskMethodBuilder`1.AsyncStateMachineBox`1.ExecutionContextCallback(Object s)
 
-2)    at KUKULCAN.SharedKernel.Database.Tests.KukulcanDbContextPoolOptionsBehaviorTests.EnabledPoolOptions_ShouldProduceProviderSpecificConnectionString(DatabaseProvider provider, String baseConnectionString, String pooling, String minPool, String maxPool) in /home/juan.pardogarcia/Proyectos/NETCore/KUKULCAN.SharedKernel.Database/Tests/KUKULCAN.SharedKernel.Database.Tests/KukulcanDbContextPoolOptionsBehaviorTests.cs:line 36
-   at InvokeStub_KukulcanDbContextPoolOptionsBehaviorTests.EnabledPoolOptions_ShouldProduceProviderSpecificConnectionString(Object, Span`1)
-
-3)    at KUKULCAN.SharedKernel.Database.Tests.KukulcanDbContextPoolOptionsBehaviorTests.EnabledPoolOptions_ShouldProduceProviderSpecificConnectionString(DatabaseProvider provider, String baseConnectionString, String pooling, String minPool, String maxPool) in /home/juan.pardogarcia/Proyectos/NETCore/KUKULCAN.SharedKernel.Database/Tests/KUKULCAN.SharedKernel.Database.Tests/KukulcanDbContextPoolOptionsBehaviorTests.cs:line 37
-   at InvokeStub_KukulcanDbContextPoolOptionsBehaviorTests.EnabledPoolOptions_ShouldProduceProviderSpecificConnectionString(Object, Span`1)
+2)    at KUKULCAN.SharedKernel.Database.SQLServer.Integration.SqlServerRealRetryIntegrationTests.ExecutionStrategy_ShouldRetryAfterRealSqlServerDeadlock() in /home/juan.pardogarcia/Proyectos/NETCore/KUKULCAN.SharedKernel.Database/Tests/KUKULCAN.SharedKernel.Database.SQLServer.Integration/SqlServerRealRetryIntegrationTests.cs:line 144
+   at System.Runtime.CompilerServices.AsyncTaskMethodBuilder`1.AsyncStateMachineBox`1.ExecutionContextCallback(Object s)
 
 
-  Correctas ConfigureProvider_WhenRetryIsDisabled_ShouldNotEnableRetryingStrategy [2 ms]
-  Correctas ConfigureProvider_WithMySql_ShouldConfigureMySql [4 ms]
-  Correctas ConfigureProvider_WithMySql_WhenProviderThrows_ShouldWrapFailure [< 1 ms]
-  Correctas ConfigureProvider_WithPostgresSql_ShouldConfigurePostgreSql [2 ms]
-  Correctas ConfigureProvider_WithSqlServer_ShouldConfigureSqlServer [2 ms]
-  Correctas LoadProviderExtensionType_WhenExpectedTypeIsMissing_ShouldRejectProvider [< 1 ms]
-  Correctas ConfigureProvider_ShouldExposeConfiguredCommandTimeout(SqlServer,"Server=localhost;Database=KukulcanTests;Integrated Security=True;","Microsoft.EntityFrameworkCore.SqlServer","SqlServerRetryingExecutionStrategy") [2 ms]
-  Correctas ConfigureProvider_ShouldExposeConfiguredCommandTimeout(PostgresSql,"Host=localhost;Database=KukulcanTests;Username=test;Password=test;","Npgsql.EntityFrameworkCore.PostgreSQL","NpgsqlRetryingExecutionStrategy") [7 ms]
-  Correctas ConfigureProvider_ShouldExposeConfiguredCommandTimeout(MySql,"Server=localhost;Database=KukulcanTests;User Id=test;Password=test;","MySql.EntityFrameworkCore","MySQLRetryingExecutionStrategy") [1 ms]
-  Correctas ExecutionStrategy_ShouldRetryTransientTimeoutAndSucceed(SqlServer,"Server=localhost;Database=KukulcanTests;Integrated Security=True;","Microsoft.EntityFrameworkCore.SqlServer","SqlServerRetryingExecutionStrategy") [17 ms]
-  Correctas ExecutionStrategy_ShouldRetryTransientTimeoutAndSucceed(PostgresSql,"Host=localhost;Database=KukulcanTests;Username=test;Password=test;","Npgsql.EntityFrameworkCore.PostgreSQL","NpgsqlRetryingExecutionStrategy") [2 ms]
-  Correctas ExecutionStrategy_ShouldRetryTransientTimeoutAndSucceed(MySql,"Server=localhost;Database=KukulcanTests;User Id=test;Password=test;","MySql.EntityFrameworkCore","MySQLRetryingExecutionStrategy") [2 ms]
-  Correctas DifferentTenants_ShouldProduceIndependentModels [6 ms]
-  Correctas TenantSpecificModels_ShouldReturnOnlyRowsForCurrentTenant [30 ms]
-  Correctas BeginTransaction_WhenAlreadyActive_ShouldThrow [21 ms]
-  Correctas CommitTransaction_ShouldCompleteAndReleaseTransaction [6 ms]
-  Correctas CommitTransaction_WhenInactive_ShouldThrow [1 ms]
-  Correctas CommitTransaction_WhenSaveIsCancelled_ShouldReleaseTransaction [71 ms]
-  Correctas Constructor_WithNullContext_ShouldThrow [< 1 ms]
-  Correctas Dispose_ShouldReleaseActiveTransaction [2 ms]
-  Correctas Dispose_WhenNoTransactionIsActive_ShouldBeIdempotent [< 1 ms]
-  Correctas DisposeAsync_ShouldReleaseActiveTransaction [2 ms]
-  Correctas EndTransaction_ShouldReleaseTransaction [2 ms]
+  Correctas ApplySoftDeleteFilter_ShouldRejectNullModelBuilder [< 1 ms]
+  Correctas AuditInterceptor_ShouldPersistSynchronousSaveChangesAgainstRealSqlServer [29 ms]
+  Correctas DomainEventDispatchInterceptor_ShouldDispatchSynchronouslyAgainstRealSqlServer [32 ms]
+  Correctas ImmutableEntityInterceptor_ShouldRejectSynchronousUpdateAgainstRealSqlServer [22 ms]
+  Correctas ModelBuilderFilter_ShouldApplySoftDeleteFilterToModel [11 ms]
+  Correctas ModelBuilderFilter_ShouldApplyTenantFilterToModel [11 ms]
+  Correctas SlowQueryInterceptor_ShouldLogAsynchronousNonQueryCommandAgainstRealSqlServer [12 ms]
+  Correctas SlowQueryInterceptor_ShouldLogAsynchronousReaderCommandAgainstRealSqlServer [25 ms]
+  Correctas SlowQueryInterceptor_ShouldNotLogAsynchronousNonQueryCommandAtOrBelowThreshold [15 ms]
+  Correctas SoftDeleteInterceptor_ShouldHandleSynchronousSaveChangesAgainstRealSqlServer [55 ms]
+  Correctas TenantModelCache_ShouldBuildDistinctKeysForTenantsAndReuseKeyForSameTenant [47 ms]
+  Correctas Create_NonKukulcanDbContext_UsesNullTenantId [2 ms]
+  Correctas SlowQueryInterceptor_ShouldIncludeSqlWhenSensitiveDataLoggingIsEnabled [47 ms]
+  Correctas SlowQueryInterceptor_ShouldLogRealSqlServerCommandAboveThreshold [18 ms]
+  Correctas SlowQueryInterceptor_ShouldLogRealSqlServerReaderCommandAboveThreshold [24 ms]
+  Correctas SlowQueryInterceptor_ShouldLogSynchronousNonQueryCommandAgainstRealSqlServer [15 ms]
+  Correctas SlowQueryInterceptor_ShouldLogSynchronousReaderCommandAgainstRealSqlServer [19 ms]
+  Correctas SlowQueryInterceptor_ShouldNotLogReaderCommandAtOrBelowThreshold [25 ms]
+  Correctas TenantModelCacheKeyFactory_ShouldIgnoreTenantForNonKukulcanContext [< 1 ms]
+  Correctas TenantModelCacheKeyFactory_ShouldIncludeDesignTimeInCacheKey [12 ms]
+  Correctas TenantModelCacheKeyFactory_ShouldKeepNonKukulcanDesignTimeKeysDistinct [< 1 ms]
+  Correctas TenantModelCacheKeyFactory_ShouldProduceDifferentKeysForDifferentTenants [22 ms]
+  Correctas TenantModelCacheKeyFactory_ShouldProduceSameKeyForSameTenantAndDesignTime [25 ms]
+  Correctas TenantModelCacheKeyFactory_ShouldRejectNullContext [< 1 ms]
+  Con error StartupInitializer_ShouldApplyMigrationAndSeedAgainstRealSqlServer [13 ms]
+  Mensaje de error:
+   System.InvalidOperationException : Unable to resolve service for type 'Microsoft.Extensions.Logging.ILogger`1[KUKULCAN.SharedKernel.Database.Interceptors.SlowQueryInterceptor]' while attempting to activate 'KUKULCAN.SharedKernel.Database.Interceptors.SlowQueryInterceptor'.
+  Seguimiento de la pila:
+     at Microsoft.Extensions.DependencyInjection.ServiceLookup.CallSiteFactory.CreateArgumentCallSites(ServiceIdentifier serviceIdentifier, Type implementationType, CallSiteChain callSiteChain, ParameterInfo[] parameters, Boolean throwIfCallSiteNotFound)
+   at Microsoft.Extensions.DependencyInjection.ServiceLookup.CallSiteFactory.CreateConstructorCallSite(ResultCache lifetime, ServiceIdentifier serviceIdentifier, Type implementationType, CallSiteChain callSiteChain)
+   at Microsoft.Extensions.DependencyInjection.ServiceLookup.CallSiteFactory.CreateExact(ServiceDescriptor descriptor, ServiceIdentifier serviceIdentifier, CallSiteChain callSiteChain, Int32 slot)
+   at Microsoft.Extensions.DependencyInjection.ServiceLookup.CallSiteFactory.TryCreateExact(ServiceDescriptor descriptor, ServiceIdentifier serviceIdentifier, CallSiteChain callSiteChain, Int32 slot)
+   at Microsoft.Extensions.DependencyInjection.ServiceLookup.CallSiteFactory.TryCreateExact(ServiceIdentifier serviceIdentifier, CallSiteChain callSiteChain)
+   at Microsoft.Extensions.DependencyInjection.ServiceLookup.CallSiteFactory.CreateCallSite(ServiceIdentifier serviceIdentifier, CallSiteChain callSiteChain)
+   at Microsoft.Extensions.DependencyInjection.ServiceLookup.CallSiteFactory.GetCallSite(ServiceIdentifier serviceIdentifier, CallSiteChain callSiteChain)
+   at Microsoft.Extensions.DependencyInjection.ServiceLookup.CallSiteFactory.CreateArgumentCallSites(ServiceIdentifier serviceIdentifier, Type implementationType, CallSiteChain callSiteChain, ParameterInfo[] parameters, Boolean throwIfCallSiteNotFound)
+   at Microsoft.Extensions.DependencyInjection.ServiceLookup.CallSiteFactory.CreateConstructorCallSite(ResultCache lifetime, ServiceIdentifier serviceIdentifier, Type implementationType, CallSiteChain callSiteChain)
+   at Microsoft.Extensions.DependencyInjection.ServiceLookup.CallSiteFactory.CreateExact(ServiceDescriptor descriptor, ServiceIdentifier serviceIdentifier, CallSiteChain callSiteChain, Int32 slot)
+   at Microsoft.Extensions.DependencyInjection.ServiceLookup.CallSiteFactory.TryCreateExact(ServiceDescriptor descriptor, ServiceIdentifier serviceIdentifier, CallSiteChain callSiteChain, Int32 slot)
+   at Microsoft.Extensions.DependencyInjection.ServiceLookup.CallSiteFactory.TryCreateExact(ServiceIdentifier serviceIdentifier, CallSiteChain callSiteChain)
+   at Microsoft.Extensions.DependencyInjection.ServiceLookup.CallSiteFactory.CreateCallSite(ServiceIdentifier serviceIdentifier, CallSiteChain callSiteChain)
+   at Microsoft.Extensions.DependencyInjection.ServiceLookup.CallSiteFactory.GetCallSite(ServiceIdentifier serviceIdentifier, CallSiteChain callSiteChain)
+   at Microsoft.Extensions.DependencyInjection.ServiceProvider.CreateServiceAccessor(ServiceIdentifier serviceIdentifier)
+   at System.Collections.Concurrent.ConcurrentDictionary`2.GetOrAdd(TKey key, Func`2 valueFactory)
+   at Microsoft.Extensions.DependencyInjection.ServiceProvider.GetService(ServiceIdentifier serviceIdentifier, ServiceProviderEngineScope serviceProviderEngineScope)
+   at Microsoft.Extensions.DependencyInjection.ServiceLookup.ServiceProviderEngineScope.GetService(Type serviceType)
+   at Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService(IServiceProvider provider, Type serviceType)
+   at Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService[T](IServiceProvider provider)
+   at KUKULCAN.SharedKernel.Database.Extensions.KukulcanDatabaseStartupInitializer`1.InitializeAsync(CancellationToken cancellationToken) in /home/juan.pardogarcia/Proyectos/NETCore/KUKULCAN.SharedKernel.Database/Source/KUKULCAN.SharedKernel.Database/Extensions/KukulcanDatabaseStartupInitializer.cs:line 27
+   at KUKULCAN.SharedKernel.Database.Extensions.KukulcanDatabaseStartupInitializer`1.InitializeAsync(CancellationToken cancellationToken) in /home/juan.pardogarcia/Proyectos/NETCore/KUKULCAN.SharedKernel.Database/Source/KUKULCAN.SharedKernel.Database/Extensions/KukulcanDatabaseStartupInitializer.cs:line 38
+   at KUKULCAN.SharedKernel.Database.SQLServer.Integration.SqlServerStartupMigrationSeedIntegrationTests.StartupInitializer_ShouldApplyMigrationAndSeedAgainstRealSqlServer() in /home/juan.pardogarcia/Proyectos/NETCore/KUKULCAN.SharedKernel.Database/Tests/KUKULCAN.SharedKernel.Database.SQLServer.Integration/SqlServerStartupMigrationSeedIntegrationTests.cs:line 39
+   at KUKULCAN.SharedKernel.Database.SQLServer.Integration.SqlServerStartupMigrationSeedIntegrationTests.StartupInitializer_ShouldApplyMigrationAndSeedAgainstRealSqlServer() in /home/juan.pardogarcia/Proyectos/NETCore/KUKULCAN.SharedKernel.Database/Tests/KUKULCAN.SharedKernel.Database.SQLServer.Integration/SqlServerStartupMigrationSeedIntegrationTests.cs:line 48
+   at KUKULCAN.SharedKernel.Database.SQLServer.Integration.SqlServerStartupMigrationSeedIntegrationTests.StartupInitializer_ShouldApplyMigrationAndSeedAgainstRealSqlServer() in /home/juan.pardogarcia/Proyectos/NETCore/KUKULCAN.SharedKernel.Database/Tests/KUKULCAN.SharedKernel.Database.SQLServer.Integration/SqlServerStartupMigrationSeedIntegrationTests.cs:line 48
+   at NUnit.Framework.Internal.TaskAwaitAdapter.GenericAdapter`1.GetResult()
+   at NUnit.Framework.Internal.AsyncToSyncAdapter.Await[TResult](TestExecutionContext context, Func`1 invoke)
+   at NUnit.Framework.Internal.AsyncToSyncAdapter.Await(TestExecutionContext context, Func`1 invoke)
+   at NUnit.Framework.Internal.Commands.TestMethodCommand.RunTestMethod(TestExecutionContext context)
+   at NUnit.Framework.Internal.Commands.TestMethodCommand.Execute(TestExecutionContext context)
+   at NUnit.Framework.Internal.Execution.SimpleWorkItem.<>c__DisplayClass3_0.<PerformWork>b__0()
+   at NUnit.Framework.Internal.ContextUtils.<>c__DisplayClass1_0`1.<DoIsolated>b__0(Object _)
+   at NUnit.Framework.Internal.ContextUtils.<>c__DisplayClass2_0.<DoIsolated>b__0(Object s)
+   at System.Threading.ExecutionContext.RunInternal(ExecutionContext executionContext, ContextCallback callback, Object state)
+--- End of stack trace from previous location ---
+   at System.Threading.ExecutionContext.RunInternal(ExecutionContext executionContext, ContextCallback callback, Object state)
+   at NUnit.Framework.Internal.ContextUtils.DoIsolated(ContextCallback callback, Object state)
+   at NUnit.Framework.Internal.ContextUtils.DoIsolated[T](Func`1 func)
+   at NUnit.Framework.Internal.Execution.SimpleWorkItem.PerformWork()
+1)    at Microsoft.Extensions.DependencyInjection.ServiceLookup.CallSiteFactory.CreateArgumentCallSites(ServiceIdentifier serviceIdentifier, Type implementationType, CallSiteChain callSiteChain, ParameterInfo[] parameters, Boolean throwIfCallSiteNotFound)
+   at Microsoft.Extensions.DependencyInjection.ServiceLookup.CallSiteFactory.CreateConstructorCallSite(ResultCache lifetime, ServiceIdentifier serviceIdentifier, Type implementationType, CallSiteChain callSiteChain)
+   at Microsoft.Extensions.DependencyInjection.ServiceLookup.CallSiteFactory.CreateExact(ServiceDescriptor descriptor, ServiceIdentifier serviceIdentifier, CallSiteChain callSiteChain, Int32 slot)
+   at Microsoft.Extensions.DependencyInjection.ServiceLookup.CallSiteFactory.TryCreateExact(ServiceDescriptor descriptor, ServiceIdentifier serviceIdentifier, CallSiteChain callSiteChain, Int32 slot)
+   at Microsoft.Extensions.DependencyInjection.ServiceLookup.CallSiteFactory.TryCreateExact(ServiceIdentifier serviceIdentifier, CallSiteChain callSiteChain)
+   at Microsoft.Extensions.DependencyInjection.ServiceLookup.CallSiteFactory.CreateCallSite(ServiceIdentifier serviceIdentifier, CallSiteChain callSiteChain)
+   at Microsoft.Extensions.DependencyInjection.ServiceLookup.CallSiteFactory.GetCallSite(ServiceIdentifier serviceIdentifier, CallSiteChain callSiteChain)
+   at Microsoft.Extensions.DependencyInjection.ServiceLookup.CallSiteFactory.CreateArgumentCallSites(ServiceIdentifier serviceIdentifier, Type implementationType, CallSiteChain callSiteChain, ParameterInfo[] parameters, Boolean throwIfCallSiteNotFound)
+   at Microsoft.Extensions.DependencyInjection.ServiceLookup.CallSiteFactory.CreateConstructorCallSite(ResultCache lifetime, ServiceIdentifier serviceIdentifier, Type implementationType, CallSiteChain callSiteChain)
+   at Microsoft.Extensions.DependencyInjection.ServiceLookup.CallSiteFactory.CreateExact(ServiceDescriptor descriptor, ServiceIdentifier serviceIdentifier, CallSiteChain callSiteChain, Int32 slot)
+   at Microsoft.Extensions.DependencyInjection.ServiceLookup.CallSiteFactory.TryCreateExact(ServiceDescriptor descriptor, ServiceIdentifier serviceIdentifier, CallSiteChain callSiteChain, Int32 slot)
+   at Microsoft.Extensions.DependencyInjection.ServiceLookup.CallSiteFactory.TryCreateExact(ServiceIdentifier serviceIdentifier, CallSiteChain callSiteChain)
+   at Microsoft.Extensions.DependencyInjection.ServiceLookup.CallSiteFactory.CreateCallSite(ServiceIdentifier serviceIdentifier, CallSiteChain callSiteChain)
+   at Microsoft.Extensions.DependencyInjection.ServiceLookup.CallSiteFactory.GetCallSite(ServiceIdentifier serviceIdentifier, CallSiteChain callSiteChain)
+   at Microsoft.Extensions.DependencyInjection.ServiceProvider.CreateServiceAccessor(ServiceIdentifier serviceIdentifier)
+   at System.Collections.Concurrent.ConcurrentDictionary`2.GetOrAdd(TKey key, Func`2 valueFactory)
+   at Microsoft.Extensions.DependencyInjection.ServiceProvider.GetService(ServiceIdentifier serviceIdentifier, ServiceProviderEngineScope serviceProviderEngineScope)
+   at Microsoft.Extensions.DependencyInjection.ServiceLookup.ServiceProviderEngineScope.GetService(Type serviceType)
+   at Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService(IServiceProvider provider, Type serviceType)
+   at Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService[T](IServiceProvider provider)
+   at KUKULCAN.SharedKernel.Database.Extensions.KukulcanDatabaseStartupInitializer`1.InitializeAsync(CancellationToken cancellationToken) in /home/juan.pardogarcia/Proyectos/NETCore/KUKULCAN.SharedKernel.Database/Source/KUKULCAN.SharedKernel.Database/Extensions/KukulcanDatabaseStartupInitializer.cs:line 27
+   at KUKULCAN.SharedKernel.Database.Extensions.KukulcanDatabaseStartupInitializer`1.InitializeAsync(CancellationToken cancellationToken) in /home/juan.pardogarcia/Proyectos/NETCore/KUKULCAN.SharedKernel.Database/Source/KUKULCAN.SharedKernel.Database/Extensions/KukulcanDatabaseStartupInitializer.cs:line 38
+   at KUKULCAN.SharedKernel.Database.SQLServer.Integration.SqlServerStartupMigrationSeedIntegrationTests.StartupInitializer_ShouldApplyMigrationAndSeedAgainstRealSqlServer() in /home/juan.pardogarcia/Proyectos/NETCore/KUKULCAN.SharedKernel.Database/Tests/KUKULCAN.SharedKernel.Database.SQLServer.Integration/SqlServerStartupMigrationSeedIntegrationTests.cs:line 39
+   at KUKULCAN.SharedKernel.Database.SQLServer.Integration.SqlServerStartupMigrationSeedIntegrationTests.StartupInitializer_ShouldApplyMigrationAndSeedAgainstRealSqlServer() in /home/juan.pardogarcia/Proyectos/NETCore/KUKULCAN.SharedKernel.Database/Tests/KUKULCAN.SharedKernel.Database.SQLServer.Integration/SqlServerStartupMigrationSeedIntegrationTests.cs:line 48
+   at KUKULCAN.SharedKernel.Database.SQLServer.Integration.SqlServerStartupMigrationSeedIntegrationTests.StartupInitializer_ShouldApplyMigrationAndSeedAgainstRealSqlServer() in /home/juan.pardogarcia/Proyectos/NETCore/KUKULCAN.SharedKernel.Database/Tests/KUKULCAN.SharedKernel.Database.SQLServer.Integration/SqlServerStartupMigrationSeedIntegrationTests.cs:line 48
+   at NUnit.Framework.Internal.TaskAwaitAdapter.GenericAdapter`1.GetResult()
+   at NUnit.Framework.Internal.AsyncToSyncAdapter.Await[TResult](TestExecutionContext context, Func`1 invoke)
+   at NUnit.Framework.Internal.AsyncToSyncAdapter.Await(TestExecutionContext context, Func`1 invoke)
+   at NUnit.Framework.Internal.Commands.TestMethodCommand.RunTestMethod(TestExecutionContext context)
+   at NUnit.Framework.Internal.Commands.TestMethodCommand.Execute(TestExecutionContext context)
+   at NUnit.Framework.Internal.Execution.SimpleWorkItem.<>c__DisplayClass3_0.<PerformWork>b__0()
+   at NUnit.Framework.Internal.ContextUtils.<>c__DisplayClass1_0`1.<DoIsolated>b__0(Object _)
+   at NUnit.Framework.Internal.ContextUtils.<>c__DisplayClass2_0.<DoIsolated>b__0(Object s)
+   at System.Threading.ExecutionContext.RunInternal(ExecutionContext executionContext, ContextCallback callback, Object state)
+--- End of stack trace from previous location ---
+   at System.Threading.ExecutionContext.RunInternal(ExecutionContext executionContext, ContextCallback callback, Object state)
+   at NUnit.Framework.Internal.ContextUtils.DoIsolated(ContextCallback callback, Object state)
+   at NUnit.Framework.Internal.ContextUtils.DoIsolated[T](Func`1 func)
+   at NUnit.Framework.Internal.Execution.SimpleWorkItem.PerformWork()
+
+  Correctas BeginTransaction_ShouldRejectSecondActiveTransactionAgainstRealSqlServer [25 ms]
+  Correctas CommitTransaction_ShouldHonorCancellationTokenAndReleaseRealSqlServerTransaction [24 ms]
+  Correctas CommitTransaction_ShouldPersistChangesAfterExplicitSaveChangesAgainstRealSqlServer [44 ms]
+  Correctas CommitTransaction_ShouldRejectMissingTransaction [32 ms]
+  Correctas Dispose_ShouldReleaseActiveRealSqlServerTransactionAndAllowAnotherTransaction [19 ms]
+  Correctas Dispose_ShouldReleaseTransactionAndDiscardSavedChangesAgainstRealSqlServer [39 ms]
+  Correctas DisposeAsync_ShouldBeIdempotentWithoutActiveTransactionAgainstRealSqlServer [14 ms]
+  Correctas DisposeAsync_ShouldReleaseActiveRealSqlServerTransactionAndAllowAnotherTransaction [17 ms]
+  Correctas EndTransaction_ShouldDiscardSavedChangesAgainstRealSqlServer [41 ms]
+  Correctas EndTransaction_ShouldRejectMissingTransaction [15 ms]
+  Correctas EndTransaction_ShouldReleaseRealSqlServerTransactionAndAllowAnotherTransaction [20 ms]
+  Correctas EndTransaction_ShouldReleaseTransactionEvenWhenCancellationTokenIsAlreadyCancelled [17 ms]
+  Correctas RollbackTransaction_ShouldDiscardPreviouslySavedChangesAgainstRealSqlServer [42 ms]
+  Correctas RollbackTransaction_ShouldHonorCancellationTokenAndReleaseRealSqlServerTransaction [17 ms]
+  Correctas RollbackTransaction_ShouldRejectMissingTransaction [14 ms]
+  Correctas SaveChanges_ShouldPersistThroughRealSqlServerUnitOfWork [31 ms]
+  Correctas UnitOfWork_Commit_ShouldPersistTransaction [42 ms]
+  Correctas UnitOfWork_FailedCommit_ShouldRollbackDatabaseTransactionAfterSqlServerConstraintViolation [55 ms]
+  Correctas UnitOfWork_Rollback_ShouldNotPersistTransaction [30 ms]
 NUnit Adapter 5.2.0.0: Test execution complete
-  Correctas EndTransaction_WhenInactive_ShouldThrow [1 ms]
-  Correctas RollbackTransaction_ShouldCompleteAndReleaseTransaction [2 ms]
-  Correctas RollbackTransaction_WhenCancelled_ShouldReleaseTransaction [2 ms]
-  Correctas RollbackTransaction_WhenInactive_ShouldThrow [1 ms]
-  Correctas SaveChangesAsync_ShouldDelegateToContext [2 ms]
-  Correctas Constructor_ShouldRejectNullContext [< 1 ms]
+  Correctas UnitOfWork_ShouldSupportMultipleConsecutiveRealSqlServerTransactions [63 ms]
 
-Pruebas totales: 132
-     Correcto: 122
-     Incorrecto: 10
- Tiempo total: 5,0551 Segundos
+Pruebas totales: 93
+     Correcto: 91
+     Incorrecto: 2
+ Tiempo total: 16,6392 Segundos
 
 Datos adjuntos:
-  /home/juan.pardogarcia/Proyectos/NETCore/KUKULCAN.SharedKernel.Database/Tests/KUKULCAN.SharedKernel.Database.Tests/TestResults/07617f1e-6774-4835-bee8-69341103a699/coverage.cobertura.xml
+  /home/juan.pardogarcia/Proyectos/NETCore/KUKULCAN.SharedKernel.Database/Tests/KUKULCAN.SharedKernel.Database.SQLServer.Integration/TestResults/15769d90-6b23-462d-8ebd-867b33a35cba/coverage.cobertura.xml

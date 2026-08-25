@@ -180,7 +180,7 @@ public abstract class KukulcanDbContextBase(
         try
         {
             Type type = LoadProviderExtensionType("Microsoft.EntityFrameworkCore.SqlServerDbContextOptionsExtensions", "Microsoft.EntityFrameworkCore.SqlServer");
-            InvokeProviderUseMethod(type, "UseSqlServer", optionsBuilder, connectionString, timeoutSec, maxRetry, maxDelay);
+            InvokeProviderUseMethod(type, "UseSqlServer", optionsBuilder, connectionString, timeoutSec, maxRetry, maxDelay, null);
         }
         catch (Exception ex) when (ex is not NotSupportedException)
         {
@@ -193,7 +193,7 @@ public abstract class KukulcanDbContextBase(
         try
         {
             Type type = LoadProviderExtensionType("Microsoft.EntityFrameworkCore.NpgsqlDbContextOptionsBuilderExtensions", "Npgsql.EntityFrameworkCore.PostgreSQL");
-            InvokeProviderUseMethod(type, "UseNpgsql", optionsBuilder, connectionString, timeoutSec, maxRetry, maxDelay);
+            InvokeProviderUseMethod(type, "UseNpgsql", optionsBuilder, connectionString, timeoutSec, maxRetry, maxDelay, null);
         }
         catch (Exception ex) when (ex is not NotSupportedException)
         {
@@ -206,7 +206,8 @@ public abstract class KukulcanDbContextBase(
         try
         {
             Type type = LoadProviderExtensionType("Microsoft.EntityFrameworkCore.MySQLDbContextOptionsExtensions", "MySql.EntityFrameworkCore");
-            InvokeProviderUseMethod(type, "UseMySQL", optionsBuilder, connectionString, timeoutSec, maxRetry, maxDelay);
+            InvokeProviderUseMethod(type, "UseMySQL", optionsBuilder, connectionString, timeoutSec, maxRetry, maxDelay,
+                [1205, 1213, 1614, 2006, 2013]);
         }
         catch (Exception ex) when (ex is not NotSupportedException)
         {
@@ -247,7 +248,15 @@ public abstract class KukulcanDbContextBase(
                ?? throw new NotSupportedException($"Assembly '{assemblyName}' does not expose the expected provider extension type '{typeName}'.");
     }
 
-    private static void InvokeProviderUseMethod(Type extensionType, string methodName, DbContextOptionsBuilder optionsBuilder, string connectionString, int timeoutSec, int maxRetry, TimeSpan maxDelay)
+    private static void InvokeProviderUseMethod(
+        Type extensionType,
+        string methodName,
+        DbContextOptionsBuilder optionsBuilder,
+        string connectionString,
+        int timeoutSec,
+        int maxRetry,
+        TimeSpan maxDelay,
+        int[]? retryErrorNumbers)
     {
         MethodInfo? method = extensionType
             .GetMethods(BindingFlags.Public | BindingFlags.Static)
@@ -270,17 +279,25 @@ public abstract class KukulcanDbContextBase(
         typeof(KukulcanDbContextBase)
             .GetMethod(nameof(InvokeProviderUseMethodGeneric), BindingFlags.NonPublic | BindingFlags.Static)!
             .MakeGenericMethod(providerOptionsBuilderType)
-            .Invoke(null, [method, optionsBuilder, connectionString, timeoutSec, maxRetry, maxDelay]);
+            .Invoke(null, [method, optionsBuilder, connectionString, timeoutSec, maxRetry, maxDelay, retryErrorNumbers]);
     }
 
-    private static void InvokeProviderUseMethodGeneric<TProviderOptionsBuilder>(MethodInfo method, DbContextOptionsBuilder optionsBuilder, string connectionString, int timeoutSec, int maxRetry, TimeSpan maxDelay)
+    private static void InvokeProviderUseMethodGeneric<TProviderOptionsBuilder>(
+        MethodInfo method,
+        DbContextOptionsBuilder optionsBuilder,
+        string connectionString,
+        int timeoutSec,
+        int maxRetry,
+        TimeSpan maxDelay,
+        int[]? retryErrorNumbers)
     {
         Action<TProviderOptionsBuilder> configure = providerOptions =>
         {
             Type providerOptionsType = providerOptions!.GetType();
             providerOptionsType.GetMethod(_commandTimeoutMethodName)?.Invoke(providerOptions, [timeoutSec]);
 
-            if (maxRetry <= 0) return;
+            if (maxRetry <= 0)
+                return;
 
             MethodInfo? retryMethod = providerOptionsType
                 .GetMethods(BindingFlags.Public | BindingFlags.Instance)
@@ -289,7 +306,7 @@ public abstract class KukulcanDbContextBase(
             if (retryMethod is null)
                 throw new NotSupportedException($"Provider '{providerOptionsType.FullName}' does not expose a compatible EnableRetryOnFailure method.");
 
-            retryMethod.Invoke(providerOptions, [maxRetry, maxDelay, null]);
+            retryMethod.Invoke(providerOptions, [maxRetry, maxDelay, retryErrorNumbers]);
         };
 
         method.Invoke(null, [optionsBuilder, connectionString, configure]);
