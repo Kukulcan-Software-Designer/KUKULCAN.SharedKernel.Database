@@ -1,7 +1,6 @@
-using KUKULCAN.SharedKernel.Database.UnitOfWork;
 using NUnit.Framework;
 
-namespace KUKULCAN.SharedKernel.Database.Integration;
+namespace KUKULCAN.SharedKernel.Database.PostgreSQL.Integration;
 
 [TestFixture]
 [NonParallelizable]

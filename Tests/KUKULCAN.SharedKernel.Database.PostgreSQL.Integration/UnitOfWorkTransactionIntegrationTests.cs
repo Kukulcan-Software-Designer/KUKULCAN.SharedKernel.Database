@@ -2,6 +2,7 @@ using KUKULCAN.SharedKernel.Abstractions;
 using KUKULCAN.SharedKernel.Database;
 using KUKULCAN.SharedKernel.Database.Abstractions;
 using KUKULCAN.SharedKernel.Database.Configuration;
+using KUKULCAN.SharedKernel.Database.PostgreSQL.Integration;
 using KUKULCAN.SharedKernel.Database.UnitOfWork;
 using KUKULCAN.SharedKernel.DomainEvents.Abstractions;
 using Microsoft.EntityFrameworkCore;
@@ -9,7 +10,7 @@ using Microsoft.Extensions.Options;
 using Moq;
 using NUnit.Framework;
 
-namespace KUKULCAN.SharedKernel.Database.Integration;
+namespace KUKULCAN.SharedKernel.Database.PostgreSQL.Integration;
 
 [TestFixture]
 [NonParallelizable]
@@ -19,7 +20,7 @@ public sealed class UnitOfWorkTransactionIntegrationTests
         new(2030, 1, 2, 3, 4, 5, TimeSpan.Zero);
 
     private readonly Guid _tenantId = Guid.NewGuid();
-    private TransactionDbContext _context = null!;
+    private TransactionDbContext? _context;
 
     [SetUp]
     public async Task SetUp()
@@ -31,12 +32,15 @@ public sealed class UnitOfWorkTransactionIntegrationTests
 
     [TearDown]
     public async Task TearDown()
-        => await _context.DisposeAsync();
+    {
+        if (_context is not null)
+            await _context.DisposeAsync();
+    }
 
     [Test]
     public async Task BeginTransaction_ShouldRejectSecondActiveTransactionAgainstRealPostgreSql()
     {
-        var unitOfWork = new UnitOfWork<TransactionDbContext>(_context);
+        var unitOfWork = new UnitOfWork<TransactionDbContext>(_context!);
         await unitOfWork.BeginTransactionAsync();
 
         InvalidOperationException exception = Assert.ThrowsAsync<InvalidOperationException>(
@@ -50,7 +54,7 @@ public sealed class UnitOfWorkTransactionIntegrationTests
     [Test]
     public async Task CommitTransaction_ShouldRejectMissingTransaction()
     {
-        var unitOfWork = new UnitOfWork<TransactionDbContext>(_context);
+        var unitOfWork = new UnitOfWork<TransactionDbContext>(_context!);
 
         InvalidOperationException exception = Assert.ThrowsAsync<InvalidOperationException>(
             async () => await unitOfWork.CommitTransactionAsync())!;
@@ -62,7 +66,7 @@ public sealed class UnitOfWorkTransactionIntegrationTests
     [Test]
     public async Task RollbackTransaction_ShouldRejectMissingTransaction()
     {
-        var unitOfWork = new UnitOfWork<TransactionDbContext>(_context);
+        var unitOfWork = new UnitOfWork<TransactionDbContext>(_context!);
 
         InvalidOperationException exception = Assert.ThrowsAsync<InvalidOperationException>(
             async () => await unitOfWork.RollbackTransactionAsync())!;
@@ -74,7 +78,7 @@ public sealed class UnitOfWorkTransactionIntegrationTests
     [Test]
     public async Task EndTransaction_ShouldRejectMissingTransaction()
     {
-        var unitOfWork = new UnitOfWork<TransactionDbContext>(_context);
+        var unitOfWork = new UnitOfWork<TransactionDbContext>(_context!);
 
         InvalidOperationException exception = Assert.ThrowsAsync<InvalidOperationException>(
             async () => await unitOfWork.EndTransactionAsync())!;
@@ -86,10 +90,10 @@ public sealed class UnitOfWorkTransactionIntegrationTests
     [Test]
     public async Task EndTransaction_ShouldReleaseRealPostgreSqlTransactionAndAllowAnotherTransaction()
     {
-        var unitOfWork = new UnitOfWork<TransactionDbContext>(_context);
+        var unitOfWork = new UnitOfWork<TransactionDbContext>(_context!);
 
         await unitOfWork.BeginTransactionAsync();
-        _context.Entities.Add(new TransactionEntity { TenantId = _tenantId, Name = "First" });
+        _context!.Entities.Add(new TransactionEntity { TenantId = _tenantId, Name = "First" });
         await unitOfWork.SaveChangesAsync();
         await unitOfWork.EndTransactionAsync();
 
@@ -107,10 +111,10 @@ public sealed class UnitOfWorkTransactionIntegrationTests
     [Test]
     public async Task SaveChanges_ShouldPersistThroughRealPostgreSqlUnitOfWork()
     {
-        var unitOfWork = new UnitOfWork<TransactionDbContext>(_context);
+        var unitOfWork = new UnitOfWork<TransactionDbContext>(_context!);
         var entity = new TransactionEntity { TenantId = _tenantId, Name = "UnitOfWork-SaveChanges" };
 
-        _context.Entities.Add(entity);
+        _context!.Entities.Add(entity);
         int saved = await unitOfWork.SaveChangesAsync();
 
         Assert.That(saved, Is.EqualTo(1));
@@ -125,11 +129,11 @@ public sealed class UnitOfWorkTransactionIntegrationTests
     [Test]
     public async Task CommitTransaction_ShouldPersistChangesAfterExplicitSaveChangesAgainstRealPostgreSql()
     {
-        var unitOfWork = new UnitOfWork<TransactionDbContext>(_context);
+        var unitOfWork = new UnitOfWork<TransactionDbContext>(_context!);
         await unitOfWork.BeginTransactionAsync();
 
         var entity = new TransactionEntity { TenantId = _tenantId, Name = "Explicit-Save-Then-Commit" };
-        _context.Entities.Add(entity);
+        _context!.Entities.Add(entity);
         int saved = await unitOfWork.SaveChangesAsync();
 
         Assert.That(saved, Is.EqualTo(1));
@@ -146,11 +150,11 @@ public sealed class UnitOfWorkTransactionIntegrationTests
     [Test]
     public async Task RollbackTransaction_ShouldDiscardPreviouslySavedChangesAgainstRealPostgreSql()
     {
-        var unitOfWork = new UnitOfWork<TransactionDbContext>(_context);
+        var unitOfWork = new UnitOfWork<TransactionDbContext>(_context!);
         await unitOfWork.BeginTransactionAsync();
 
         var entity = new TransactionEntity { TenantId = _tenantId, Name = "Should-Rollback" };
-        _context.Entities.Add(entity);
+        _context!.Entities.Add(entity);
         await unitOfWork.SaveChangesAsync();
         Assert.That(entity.Id, Is.GreaterThan(0));
 
@@ -166,10 +170,10 @@ public sealed class UnitOfWorkTransactionIntegrationTests
     [Test]
     public async Task Dispose_ShouldReleaseActiveRealPostgreSqlTransactionAndAllowAnotherTransaction()
     {
-        var unitOfWork = new UnitOfWork<TransactionDbContext>(_context);
+        var unitOfWork = new UnitOfWork<TransactionDbContext>(_context!);
         await unitOfWork.BeginTransactionAsync();
 
-        _context.Entities.Add(new TransactionEntity { TenantId = _tenantId, Name = "Disposed-Transaction" });
+        _context!.Entities.Add(new TransactionEntity { TenantId = _tenantId, Name = "Disposed-Transaction" });
         await unitOfWork.SaveChangesAsync();
         unitOfWork.Dispose();
 
@@ -190,10 +194,10 @@ public sealed class UnitOfWorkTransactionIntegrationTests
     [Test]
     public async Task DisposeAsync_ShouldReleaseActiveRealPostgreSqlTransactionAndAllowAnotherTransaction()
     {
-        var unitOfWork = new UnitOfWork<TransactionDbContext>(_context);
+        var unitOfWork = new UnitOfWork<TransactionDbContext>(_context!);
         await unitOfWork.BeginTransactionAsync();
 
-        _context.Entities.Add(new TransactionEntity { TenantId = _tenantId, Name = "Async-Disposed-Transaction" });
+        _context!.Entities.Add(new TransactionEntity { TenantId = _tenantId, Name = "Async-Disposed-Transaction" });
         await unitOfWork.SaveChangesAsync();
         await unitOfWork.DisposeAsync();
 
@@ -214,10 +218,10 @@ public sealed class UnitOfWorkTransactionIntegrationTests
     [Test]
     public async Task UnitOfWork_ShouldSupportMultipleConsecutiveRealPostgreSqlTransactions()
     {
-        var unitOfWork = new UnitOfWork<TransactionDbContext>(_context);
+        var unitOfWork = new UnitOfWork<TransactionDbContext>(_context!);
 
         await unitOfWork.BeginTransactionAsync();
-        _context.Entities.Add(new TransactionEntity { TenantId = _tenantId, Name = "Transaction-1" });
+        _context!.Entities.Add(new TransactionEntity { TenantId = _tenantId, Name = "Transaction-1" });
         await unitOfWork.CommitTransactionAsync();
 
         await unitOfWork.BeginTransactionAsync();

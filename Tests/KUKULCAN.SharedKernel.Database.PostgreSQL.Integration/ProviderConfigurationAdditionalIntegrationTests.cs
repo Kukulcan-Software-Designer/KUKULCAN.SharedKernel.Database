@@ -1,9 +1,6 @@
-using KUKULCAN.SharedKernel.Database.Configuration;
-using Microsoft.Extensions.Options;
-using Moq;
 using NUnit.Framework;
 
-namespace KUKULCAN.SharedKernel.Database.Integration;
+namespace KUKULCAN.SharedKernel.Database.PostgreSQL.Integration;
 
 [TestFixture]
 [NonParallelizable]

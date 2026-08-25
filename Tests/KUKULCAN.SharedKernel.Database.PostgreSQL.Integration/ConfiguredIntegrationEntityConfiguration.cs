@@ -1,7 +1,6 @@
-using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace KUKULCAN.SharedKernel.Database.Integration;
+namespace KUKULCAN.SharedKernel.Database.PostgreSQL.Integration;
 
 internal sealed class ConfiguredIntegrationEntityConfiguration
     : IEntityTypeConfiguration<PostgreSqlDatabaseIntegrationTests.ConfiguredIntegrationEntity>
