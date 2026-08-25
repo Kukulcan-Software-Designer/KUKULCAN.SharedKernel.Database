@@ -64,3 +64,29 @@ jobs:
 
       - name: Run SQL Server integration tests
         run: dotnet test Tests/KUKULCAN.SharedKernel.Database.SQLServer.Integration/KUKULCAN.SharedKernel.Database.SQLServer.Integration.csproj --no-build --configuration Release --logger "console;verbosity=normal"
+
+  mysql-integration-tests:
+    name: MySQL integration tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Verify Docker runtime
+        run: docker info
+
+      - name: Restore MySQL integration tests
+        run: dotnet restore Tests/KUKULCAN.SharedKernel.Database.MySQL.Integration/KUKULCAN.SharedKernel.Database.MySQL.Integration.csproj
+
+      - name: Build MySQL integration tests
+        run: dotnet build Tests/KUKULCAN.SharedKernel.Database.MySQL.Integration/KUKULCAN.SharedKernel.Database.MySQL.Integration.csproj --no-restore --configuration Release
+
+      - name: Run MySQL integration tests
+        run: dotnet test Tests/KUKULCAN.SharedKernel.Database.MySQL.Integration/KUKULCAN.SharedKernel.Database.MySQL.Integration.csproj --no-build --configuration Release --logger "console;verbosity=normal"
