@@ -1,3 +1,4 @@
+using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 namespace KUKULCAN.SharedKernel.Database.Tests.Extensions;
