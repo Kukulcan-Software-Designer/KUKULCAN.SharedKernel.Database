@@ -41,3 +41,6 @@ jobs:
 
       - name: Run SQL Server integration tests
         run: dotnet test Tests/KUKULCAN.SharedKernel.Database.SQLServer.Integration/KUKULCAN.SharedKernel.Database.SQLServer.Integration.csproj --no-build --configuration Release --logger "console;verbosity=normal"
+
+      - name: Run MySQL integration tests
+        run: dotnet test Tests/KUKULCAN.SharedKernel.Database.MySQL.Integration/KUKULCAN.SharedKernel.Database.MySQL.Integration.csproj --no-build --configuration Release --logger "console;verbosity=normal"
