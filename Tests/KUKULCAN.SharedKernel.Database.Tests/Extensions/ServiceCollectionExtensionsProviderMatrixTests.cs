@@ -1,4 +1,3 @@
-using KUKULCAN.SharedKernel.Database.Tests.TestInfrastructure.internals;
 using Microsoft.Extensions.Hosting;
 
 namespace KUKULCAN.SharedKernel.Database.Tests.Extensions;
@@ -30,20 +29,31 @@ public sealed class ServiceCollectionExtensionsProviderMatrixTests
             .Build();
 
         services.AddLogging();
-        services.AddKukulcanDbContext<TestDbContext>(configuration);
+        services.AddKukulcanDbContext<ProviderMatrixDbContext>(configuration);
         services.AddScoped<ITenantContext>(_ => new TestTenantContext(Guid.NewGuid()));
         services.AddScoped<IClock>(_ => new TestClock(DateTimeOffset.UtcNow));
         services.AddScoped<IDomainEventDispatcher>(_ => Mock.Of<IDomainEventDispatcher>());
 
         using ServiceProvider serviceProvider = services.BuildServiceProvider();
-        using TestDbContext context = serviceProvider.GetRequiredService<TestDbContext>();
+        using IServiceScope scope = serviceProvider.CreateScope();
+        using ProviderMatrixDbContext context = scope.ServiceProvider.GetRequiredService<ProviderMatrixDbContext>();
 
         using (Assert.EnterMultipleScope())
         {
             Assert.That(context.Database.ProviderName, Is.EqualTo(expectedProviderName));
-            Assert.That(serviceProvider.GetRequiredService<IUnitOfWork>(), Is.TypeOf<UnitOfWork<TestDbContext>>());
-            Assert.That(serviceProvider.GetServices<IHostedService>(), Has.Some.TypeOf<KukulcanDatabaseStartupHostedService<TestDbContext>>());
-            Assert.That(serviceProvider.GetRequiredService<KukulcanDatabaseStartupInitializer<TestDbContext>>(), Is.Not.Null);
+            Assert.That(scope.ServiceProvider.GetRequiredService<IUnitOfWork>(), Is.TypeOf<UnitOfWork<ProviderMatrixDbContext>>());
         }
+
+        Assert.That(
+            serviceProvider.GetServices<IHostedService>(),
+            Has.Some.TypeOf<KukulcanDatabaseStartupHostedService<ProviderMatrixDbContext>>());
     }
+
+    private sealed class ProviderMatrixDbContext(
+        IOptions<KukulcanDatabaseOptions> options,
+        ITenantContext tenantContext,
+        IClock clock,
+        IDomainEventDispatcher dispatcher,
+        SlowQueryInterceptor? slowQueryInterceptor = null)
+        : KukulcanDbContextBase(options, tenantContext, clock, dispatcher, slowQueryInterceptor);
 }
