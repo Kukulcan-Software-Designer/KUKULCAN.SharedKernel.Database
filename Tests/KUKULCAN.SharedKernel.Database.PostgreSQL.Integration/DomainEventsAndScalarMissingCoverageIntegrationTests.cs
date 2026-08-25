@@ -71,19 +71,25 @@ public sealed class DomainEventsAndScalarMissingCoverageIntegrationTests
     }
 
     [Test]
-    public async Task RollbackTransaction_ShouldNotDispatchDomainEventsAndShouldClearPendingStateAgainstRealPostgreSql()
+    public async Task RollbackTransaction_ShouldClearPendingDispatchStateAndAllowDomainEventRetryAgainstRealPostgreSql()
     {
         var dispatcher = new CapturingDispatcher();
         await using var context = Create(dispatcher);
         await context.Database.EnsureCreatedAsync();
         await using var unit = new UnitOfWork<PostgreSqlDatabaseIntegrationTests.IntegrationDbContext>(context);
+        var domainEvent = new PostgreSqlDatabaseIntegrationTests.TestDomainEvent(PostgreSqlDatabaseIntegrationTests.FixedNow);
         var entity = new PostgreSqlDatabaseIntegrationTests.DomainEventEntity { TenantId = _tenantId, Name = "Rollback event" };
-        entity.AddDomainEventForTest(new PostgreSqlDatabaseIntegrationTests.TestDomainEvent(PostgreSqlDatabaseIntegrationTests.FixedNow));
+        entity.AddDomainEventForTest(domainEvent);
         context.DomainEventEntities.Add(entity);
         await unit.BeginTransactionAsync();
         await context.SaveChangesAsync();
         await unit.RollbackTransactionAsync();
         Assert.That(dispatcher.Events, Is.Empty);
+        Assert.That(entity.DomainEvents, Contains.Item(domainEvent));
+
+        await unit.BeginTransactionAsync();
+        await unit.CommitTransactionAsync();
+        Assert.That(dispatcher.Events, Is.EqualTo(new IDomainEvent[] { domainEvent }));
         Assert.That(entity.DomainEvents, Is.Empty);
     }
 
