@@ -4,12 +4,15 @@ on:
   push:
     branches:
       - main
-      - 'TEST/ADDCobertura'
   workflow_dispatch:
+
+permissions:
+  contents: read
 
 jobs:
   coverage:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
 
     steps:
       - name: Checkout
