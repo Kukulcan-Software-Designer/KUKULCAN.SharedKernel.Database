@@ -39,7 +39,7 @@ public sealed class PostgreSqlMissingTransactionAndDomainEventCoverageIntegratio
         Guid tenantId = Guid.NewGuid();
         var dispatcher = new Mock<IDomainEventDispatcher>();
         const string name = "Commit with event";
-        var domainEvent = new PostgreSqlDatabaseIntegrationTests.TestDomainEvent(PostGreSqlDatabaseIntegrationTests.FixedNow);
+        var domainEvent = new PostgreSqlDatabaseIntegrationTests.TestDomainEvent(PostgreSqlDatabaseIntegrationTests.FixedNow);
 
         var options = Options.Create(new KukulcanDatabaseOptions
         {
