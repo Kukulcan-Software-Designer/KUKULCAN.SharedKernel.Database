@@ -31,7 +31,7 @@ public sealed class MySqlCoreIntegrationTests
         var persisted = await _context.Entities.SingleAsync(x => x.Id == entity.Id);
         using (Assert.EnterMultipleScope())
         {
-            Assert.That(_context.Database.ProviderName, Is.EqualTo("Pomelo.EntityFrameworkCore.MySql"));
+            Assert.That(_context.Database.ProviderName, Is.EqualTo("MySql.EntityFrameworkCore"));
             Assert.That(_context.Database.IsMySql(), Is.True);
             Assert.That(persisted.Name, Is.EqualTo("MySQL integration"));
             Assert.That(persisted.TenantId, Is.EqualTo(_tenantId));
