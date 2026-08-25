@@ -1,4 +1,3 @@
-using KUKULCAN.SharedKernel.Database.Integration;
 using NUnit.Framework;
 
 namespace KUKULCAN.SharedKernel.Database.PostgreSQL.Integration;
