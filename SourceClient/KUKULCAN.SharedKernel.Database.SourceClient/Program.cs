@@ -1,11 +1,11 @@
+using KUKULCAN.SharedKernel.Database.Abstractions;
+using KUKULCAN.SharedKernel.Database.Client;
 using KUKULCAN.SharedKernel.Database.Client.Client;
 using KUKULCAN.SharedKernel.Database.Client.UI;
 using KUKULCAN.SharedKernel.Database.Configuration;
 using KUKULCAN.SharedKernel.Database.Interceptors;
 using KUKULCAN.SharedKernel.Database.UnitOfWork;
-using KUKULCAN.SharedKernel.Database.Abstractions;
 using KUKULCAN.SharedKernel.Abstractions;
-using KUKULCAN.SharedKernel.Database.Client;
 using KUKULCAN.SharedKernel.DomainEvents.Abstractions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -70,8 +70,8 @@ services.Configure<KukulcanDatabaseOptions>(opts =>
 });
 
 services.AddSingleton<ConsoleCurrentUser>();
-services.AddSingleton<ConsoleTenantContext>();
-services.AddSingleton<ITenantContext>(sp => sp.GetRequiredService<ConsoleTenantContext>());
+services.AddScoped<ConsoleTenantContext>();
+services.AddScoped<ITenantContext>(sp => sp.GetRequiredService<ConsoleTenantContext>());
 services.AddSingleton<ConsoleDateTimeProvider>();
 services.AddSingleton<IClock>(sp => sp.GetRequiredService<ConsoleDateTimeProvider>());
 services.AddSingleton<ConsoleDomainEventDispatcher>();
@@ -79,6 +79,7 @@ services.AddSingleton<IDomainEventDispatcher>(sp => sp.GetRequiredService<Consol
 services.AddSingleton<SlowQueryInterceptor>();
 services.AddDbContext<ClientDbContext>();
 services.AddScoped<UnitOfWork<ClientDbContext>>();
+services.AddScoped<IUnitOfWork>(sp => sp.GetRequiredService<UnitOfWork<ClientDbContext>>());
 services.AddScoped<ClientDatabaseInitializer>();
 services.AddScoped<ReferenceClientScenarioRunner>();
 services.AddScoped<ConsoleMenu>(sp => new ConsoleMenu(
@@ -121,7 +122,7 @@ try
 }
 catch (OperationCanceledException)
 {
-    AnsiConsole.MarkupLine("[grey]Operación cancelada.[/]");
+    AnsiConsole.MarkupLine("[grey]Operación cancelada.[/");
 }
 catch (Exception ex)
 {
