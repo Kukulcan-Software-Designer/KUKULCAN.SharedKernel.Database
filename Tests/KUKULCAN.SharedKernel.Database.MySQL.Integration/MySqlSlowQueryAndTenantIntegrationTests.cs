@@ -121,8 +121,7 @@ public sealed class MySqlSlowQueryAndTenantIntegrationTests
     public async Task TenantModelCacheKeyFactory_ShouldIncludeDesignTimeInCacheKey()
     {
         await using var context = await MySqlIntegrationContextFactory.CreateAsync(Guid.NewGuid());
-        var factory = new TenantModelCacheKeyFactory();
-        Assert.That(factory.Create(context, false), Is.Not.EqualTo(factory.Create(context, true)));
+        Assert.That(MySqlTenantModelCacheKeyHelper.Create(context, false), Is.Not.EqualTo(MySqlTenantModelCacheKeyHelper.Create(context, true)));
     }
 
     [Test]
@@ -130,8 +129,7 @@ public sealed class MySqlSlowQueryAndTenantIntegrationTests
     {
         await using var first = await MySqlIntegrationContextFactory.CreateAsync(Guid.NewGuid());
         await using var second = await MySqlIntegrationContextFactory.CreateAsync(Guid.NewGuid());
-        var factory = new TenantModelCacheKeyFactory();
-        Assert.That(factory.Create(first, false), Is.Not.EqualTo(factory.Create(second, false)));
+        Assert.That(MySqlTenantModelCacheKeyHelper.Create(first, false), Is.Not.EqualTo(MySqlTenantModelCacheKeyHelper.Create(second, false)));
     }
 
     [Test]
@@ -140,19 +138,18 @@ public sealed class MySqlSlowQueryAndTenantIntegrationTests
         Guid tenantId = Guid.NewGuid();
         await using var first = await MySqlIntegrationContextFactory.CreateAsync(tenantId);
         await using var second = await MySqlIntegrationContextFactory.CreateAsync(tenantId);
-        var factory = new TenantModelCacheKeyFactory();
-        Assert.That(factory.Create(first, false), Is.EqualTo(factory.Create(second, false)));
+        Assert.That(MySqlTenantModelCacheKeyHelper.Create(first, false), Is.EqualTo(MySqlTenantModelCacheKeyHelper.Create(second, false)));
     }
 
     [Test]
     public void TenantModelCacheKeyFactory_ShouldRejectNullContext()
-        => Assert.Throws<ArgumentNullException>(() => new TenantModelCacheKeyFactory().Create(null!, false));
+        => Assert.Throws<ArgumentNullException>(() => MySqlTenantModelCacheKeyHelper.Create(null!, false));
 
     [Test]
     public void TenantModelCacheKeyFactory_ShouldIgnoreTenantForNonKukulcanContext()
     {
         using var context = new DbContext(new DbContextOptionsBuilder<DbContext>().Options);
-        var key = ((Type, Guid?, bool))new TenantModelCacheKeyFactory().Create(context, false);
+        var key = ((Type, Guid?, bool))MySqlTenantModelCacheKeyHelper.Create(context, false);
         using (Assert.EnterMultipleScope())
         {
             Assert.That(key.Item1, Is.EqualTo(typeof(DbContext)));
