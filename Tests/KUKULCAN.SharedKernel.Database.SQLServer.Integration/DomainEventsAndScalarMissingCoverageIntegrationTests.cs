@@ -1,3 +1,5 @@
+using Microsoft.EntityFrameworkCore.Storage;
+
 namespace KUKULCAN.SharedKernel.Database.SQLServer.Integration;
 
 [TestFixture]
