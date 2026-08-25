@@ -73,7 +73,7 @@ public abstract class KukulcanDbContextBase(
                 ConfigurePostgresSql(optionsBuilder, connStr, timeout, maxRetry, maxDelay);
                 break;
             case DatabaseProvider.MySql:
-                ConfigureMySql(optionsBuilder, connStr);
+                ConfigureMySql(optionsBuilder, connStr, timeout, maxRetry, maxDelay);
                 break;
             default:
                 throw new NotSupportedException($"Database provider '{_opts.Provider}' is not supported.");
@@ -110,29 +110,14 @@ public abstract class KukulcanDbContextBase(
         }
     }
 
-    private static void ConfigureMySql(DbContextOptionsBuilder optionsBuilder, string connectionString)
+    private static void ConfigureMySql(DbContextOptionsBuilder optionsBuilder, string connectionString, int timeoutSec, int maxRetry, TimeSpan maxDelay)
     {
         try
         {
             Type type = LoadProviderExtensionType(
-                "MySQL.Data.EntityFrameworkCore.Extensions.MySQLDbContextOptionsBuilderExtensions",
+                "Microsoft.EntityFrameworkCore.MySQLDbContextOptionsExtensions",
                 "MySql.EntityFrameworkCore");
-
-            MethodInfo? method = type
-                .GetMethods(BindingFlags.Public | BindingFlags.Static)
-                .Where(m => m.Name == "UseMySQL" && !m.IsGenericMethodDefinition)
-                .FirstOrDefault(m =>
-                {
-                    ParameterInfo[] parameters = m.GetParameters();
-                    return parameters.Length == 2
-                           && parameters[0].ParameterType == typeof(DbContextOptionsBuilder)
-                           && parameters[1].ParameterType == typeof(string);
-                });
-
-            if (method is null)
-                throw new NotSupportedException("MySql.EntityFrameworkCore does not expose a compatible UseMySQL method.");
-
-            method.Invoke(null, [optionsBuilder, connectionString]);
+            InvokeProviderUseMethod(type, "UseMySQL", optionsBuilder, connectionString, timeoutSec, maxRetry, maxDelay);
         }
         catch (Exception ex) when (ex is not NotSupportedException)
         {
