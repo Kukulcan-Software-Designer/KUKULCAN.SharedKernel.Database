@@ -5,86 +5,94 @@
 The coverage target is the production assembly `KUKULCAN.SharedKernel.Database`.
 Test assemblies are excluded from the report.
 
-Coverage is evaluated primarily from the **unit-test coverage report** because unit tests are responsible for deterministic code-path and branch coverage.
+Coverage is evaluated from two complementary sources:
 
-The integration layer is split by provider: **PostgreSQL is the reference database management system (DBMS) for relational integration validation**, while a dedicated SQL Server integration project validates the Microsoft SQL Server provider path. Neither integration project defines the branch-coverage threshold.
+- **Unit tests** provide deterministic line and branch coverage of the production library.
+- **Provider-specific integration tests** validate that the same infrastructure behaves correctly against each supported relational DBMS.
 
-## Current Coverage Baseline
+The supported providers are:
 
-The current coverage baseline is the result of the validated test strategy
-using provider-specific integration suites for database-backed validation:
+- Microsoft SQL Server
+- PostgreSQL
+- MySQL
 
-| Metric           |            Result  |
-|------------------|-------------------:|
-| Line coverage    | **100% (221/221)** |
-| Branch coverage  | **97.36% (74/76)** |
-| Reference DBMS   | **PostgreSQL**     |
-| Additional DBMS  | **Microsoft SQL Server** |
+## Current Unit-Test Baseline
 
-All executable production lines are covered. All classes and methods in the
-production assembly have executable line coverage, including:
+The latest successful `Code Coverage` workflow on `main` was inspected before this coverage-completion branch was created. Its Cobertura artifact reports:
 
-All executable production lines are covered. The remaining two uncovered branches are intentional defensive provider-resolution branches.
+| Metric | Baseline |
+|---|---:|
+| Line coverage | **94.78% (218/230)** |
+| Branch coverage | **97.29% (72/74)** |
 
-## Why Branch Coverage Is 97.36%
+The baseline gap is not caused by untested interceptor or Unit of Work behavior. It is concentrated in the provider-resolution path added for MySQL support.
 
-The two uncovered branches belong to `KukulcanDbContextBase` and are the failure sides of the runtime type-resolution expressions used by `ConfigureSqlServer` and `ConfigurePostgresSql` when a required provider assembly cannot be resolved.
+### Identified unit-test gaps
 
-The supported unit-test environment references both provider packages, so those assemblies are present and the supported paths resolve successfully. Forcing assembly absence solely to reach 100% branch coverage would require an artificial runtime condition and would make the tests less representative of the supported configuration.
+`KukulcanDbContextBase` was the only production class below complete line coverage:
 
-The provider error contract is still covered through unsupported-provider validation, reflection error handling and direct coverage of the `NotInstalled` error construction.
+- `ConfigureMySql(...)` was not exercised by the unit-test project.
+- The `DatabaseProvider.MySql` switch arm was therefore not covered.
+- The defensive `Assembly.GetType(...) ?? throw ...` path in `LoadProviderExtensionType(...)` was not covered.
 
-Therefore:
+The branch `TEST/CoverageCompleted` adds the missing MySQL provider package to the unit-test project and adds focused tests for:
 
-> **100% line coverage and 97.36% branch coverage are the accepted and reviewed coverage boundary for this module. PostgreSQL is the reference DBMS for database-backed validation and Microsoft SQL Server has its own dedicated integration suite.**
+1. Successful MySQL provider configuration.
+2. MySQL provider configuration failure wrapping.
+3. Missing provider extension type handling.
 
-The project does not add artificial tests merely to raise the coverage percentage.
+No additional unit tests are required for the already fully covered interceptors, filters, tenant model cache or Unit of Work paths.
 
-## Test Responsibilities
+## Integration-Test Coverage Strategy
 
-### Unit tests
+Integration tests are not expected to replace unit-test branch coverage. Their purpose is to prove provider-specific behavior against a real database engine.
 
-`KUKULCAN.SharedKernel.Database.Tests` covers deterministic logic such as constructor argument validation, provider-selection errors, provider reflection/configuration logic, `UnitOfWork<TContext>` contracts and interceptor branches.
+The three provider suites cover the following responsibilities:
 
-### PostgreSQL integration tests
+| Responsibility | SQL Server | PostgreSQL | MySQL |
+|---|:---:|:---:|:---:|
+| Real provider selection and persistence | Yes | Yes | Yes |
+| Tenant filtering/isolation | Yes | Yes | Yes |
+| Tenant model-cache isolation | Yes | Yes | Yes |
+| Audit interceptor | Yes | Yes | Yes |
+| Soft delete | Yes | Yes | Yes |
+| Domain-event dispatch | Yes | Yes | Yes |
+| Immutable entity protection | Yes | Yes | Yes |
+| Slow-query diagnostics | Yes | Yes | Yes |
+| Cancellation behavior | Yes | Yes | Yes |
+| Unit of Work transactions | Yes | Yes | Yes |
+| Synchronous persistence paths | Yes | Yes | Yes |
+| Asynchronous persistence paths | Yes | Yes | Yes |
+| Provider-specific configuration | Yes | Yes | Yes |
 
-`KUKULCAN.SharedKernel.Database.PostgreSQL.Integration` validates PostgreSQL connectivity, persistence, tenant isolation, model-cache isolation, auditing, soft delete, domain events, immutability, slow-query diagnostics and transaction/cancellation behavior.
+PostgreSQL contains additional provider-independent regression scenarios and remains the broadest relational reference suite. That does not imply that SQL Server or MySQL need copies of every PostgreSQL test: tests should be duplicated only when they validate behavior that can differ at the provider boundary.
 
-### SQL Server integration tests
+### Integration gaps requiring no additional test cases
 
-`KUKULCAN.SharedKernel.Database.SQLServer.Integration` validates Microsoft SQL Server provider configuration and real persistence, tenant isolation, model-cache behavior, interception, synchronous/asynchronous persistence, slow-query diagnostics, cancellation and `UnitOfWork<TContext>` transaction behavior.
+The current SQL Server, PostgreSQL and MySQL suites already exercise the important provider boundary behaviors. No additional integration scenario was identified as necessary solely for increasing confidence in the current production implementation.
 
-Both integration projects use Testcontainers and own their database container lifecycle.
+In particular, adding duplicate tests for every PostgreSQL scenario to SQL Server and MySQL would increase maintenance without adding meaningful provider coverage where the tested behavior is provider-independent.
 
-## Local Execution
+## Integration Coverage Reporting
 
-Unit-test coverage:
+The integration projects already contain `coverage.runsettings`, but the integration workflow previously executed them without collecting coverage. The coverage-completion branch changes the workflow so each DBMS job now runs with `XPlat Code Coverage` and uploads an independent Cobertura artifact:
 
-```bash
-dotnet test \
-  Tests/KUKULCAN.SharedKernel.Database.Tests/KUKULCAN.SharedKernel.Database.Tests.csproj \
-  --configuration Release \
-  --settings Tests/KUKULCAN.SharedKernel.Database.Tests/coverage.runsettings \
-  --logger "console;verbosity=normal" \
-  --collect:"XPlat Code Coverage"
-```
+- `kukulcan-sharedkernel-database-postgresql-coverage`
+- `kukulcan-sharedkernel-database-sqlserver-coverage`
+- `kukulcan-sharedkernel-database-mysql-coverage`
 
-PostgreSQL integration tests:
+This allows the integration suites to be audited quantitatively per provider instead of relying only on successful test execution.
 
-```bash
-dotnet test \
-  Tests/KUKULCAN.SharedKernel.Database.PostgreSQL.Integration/KUKULCAN.SharedKernel.Database.PostgreSQL.Integration.csproj \
-  --configuration Release
-```
+## Acceptance Criteria for This Branch
 
-SQL Server integration tests:
+The branch is considered coverage-complete after CI confirms:
 
-```bash
-dotnet test \
-  Tests/KUKULCAN.SharedKernel.Database.SQLServer.Integration/KUKULCAN.SharedKernel.Database.SQLServer.Integration.csproj \
-  --configuration Release
-```
+1. The unit-test project passes with the new MySQL provider tests.
+2. Unit line coverage reaches **100%**.
+3. Unit branch coverage reaches **100%**, unless the resulting report identifies a genuinely artificial defensive branch that should remain intentionally uncovered.
+4. PostgreSQL integration tests pass.
+5. Microsoft SQL Server integration tests pass.
+6. MySQL integration tests pass.
+7. Each integration job produces a Cobertura artifact that can be inspected at class and method level.
 
-## Audit Rule
-
-Coverage is considered complete only after the generated report has been inspected at class and method level. A successful test run alone does not prove complete coverage.
+A successful test run alone does not prove complete coverage; the generated Cobertura reports must be inspected before the branch is frozen.
