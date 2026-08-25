@@ -1,4 +1,3 @@
-using Pomelo.EntityFrameworkCore.MySql.Infrastructure;
 using Testcontainers.MySql;
 
 namespace KUKULCAN.SharedKernel.Database.Integration.MySQL;
@@ -59,7 +58,6 @@ internal static class MySqlIntegrationContextFactory
 internal static class MySqlIntegrationConstants
 {
     public static readonly DateTimeOffset FixedNow = new(2030, 1, 2, 3, 4, 5, TimeSpan.Zero);
-    public static readonly MySqlServerVersion ServerVersion = new(new Version(8, 4, 0));
 }
 
 internal sealed class MySqlTenantContext(Guid tenantId) : ITenantContext
