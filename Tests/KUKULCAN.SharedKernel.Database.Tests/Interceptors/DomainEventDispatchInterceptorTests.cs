@@ -35,6 +35,47 @@ public sealed class DomainEventDispatchInterceptorTests
     }
 
     [Test]
+    public async Task SavedChangesAsync_WhenSecondEventFails_ShouldNotRedispatchFirstEventOnRetry()
+    {
+        var result = DatabaseTestContextFactory.Create();
+        await using var context = result.Context;
+        var aggregate = new DomainEventEntityForTests();
+        var first = new TestDomainEvent();
+        var second = new TestDomainEvent();
+        var dispatchAttempts = 0;
+
+        aggregate.AddDomainEvent(first);
+        aggregate.AddDomainEvent(second);
+        context.Add(aggregate);
+
+        result.Dispatcher
+            .Setup(x => x.DispatchAsync(It.IsAny<IDomainEvent>(), It.IsAny<CancellationToken>()))
+            .Callback<IDomainEvent, CancellationToken>((domainEvent, _) =>
+            {
+                dispatchAttempts++;
+                if (ReferenceEquals(domainEvent, second) && dispatchAttempts == 2)
+                    throw new InvalidOperationException("Simulated second-event failure.");
+            })
+            .Returns(Task.CompletedTask);
+
+        Assert.ThrowsAsync<InvalidOperationException>(
+            () => context.SaveChangesAsync());
+
+        await context.SaveChangesAsync();
+
+        Assert.Multiple(() =>
+        {
+            result.Dispatcher.Verify(
+                x => x.DispatchAsync(first, It.IsAny<CancellationToken>()),
+                Times.Once);
+            result.Dispatcher.Verify(
+                x => x.DispatchAsync(second, It.IsAny<CancellationToken>()),
+                Times.Exactly(2));
+            Assert.That(aggregate.DomainEvents, Is.Empty);
+        });
+    }
+
+    [Test]
     public void SavedChanges_ShouldDispatchEventsAndClearAggregate()
     {
         var result = DatabaseTestContextFactory.Create();
