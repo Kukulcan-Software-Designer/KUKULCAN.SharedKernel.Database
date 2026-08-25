@@ -24,6 +24,7 @@ public sealed class KukulcanDbContextDependencyInjectionTests
             .Build();
 
         var services = new ServiceCollection();
+        services.AddLogging();
         services.AddSingleton<ITenantContext>(_ => new TestTenantContext(Guid.NewGuid()));
         services.AddSingleton<IClock>(_ => new TestClock(DateTimeOffset.UtcNow));
         services.AddSingleton<IDomainEventDispatcher>(_ => Mock.Of<IDomainEventDispatcher>());
