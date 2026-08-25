@@ -2,6 +2,7 @@ using KUKULCAN.SharedKernel.Database.Abstractions;
 using KUKULCAN.SharedKernel.Database.Client.Client;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Spectre.Console;
 
 namespace KUKULCAN.SharedKernel.Database.Client;
 
