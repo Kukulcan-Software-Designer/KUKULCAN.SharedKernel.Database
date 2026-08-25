@@ -25,7 +25,12 @@ public sealed class KukulcanDatabaseStartupInitializerTests
         await initializer.InitializeAsync();
 
         await using var context = scope.ServiceProvider.GetRequiredService<StartupTestDbContext>();
-        Assert.That(await context.Database.ExecuteSqlRawAsync("SELECT COUNT(*) FROM StartupInitializedRows"), Is.EqualTo(0));
+        await context.Database.OpenConnectionAsync();
+        await using var command = context.Database.GetDbConnection().CreateCommand();
+        command.CommandText = "SELECT COUNT(*) FROM StartupInitializedRows";
+        object? result = await command.ExecuteScalarAsync();
+
+        Assert.That(Convert.ToInt32(result), Is.EqualTo(0));
     }
 
     [Test]
