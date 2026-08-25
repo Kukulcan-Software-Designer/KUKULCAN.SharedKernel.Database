@@ -236,7 +236,7 @@ public sealed class KukulcanDatabaseStartupInitializerTests
                 {
                     Id = table.Column<int>(nullable: false)
                 },
-                constraints: table => constraints.PrimaryKey("PK_StartupInitializedRows", x => x.Id));
+                constraints: table => table.PrimaryKey("PK_StartupInitializedRows", x => x.Id));
 
         protected override void Down(MigrationBuilder migrationBuilder)
             => migrationBuilder.DropTable("StartupInitializedRows");
