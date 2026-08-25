@@ -66,6 +66,8 @@ public abstract class KukulcanDbContextBase(
         _acknowledgedDomainEvents.Clear();
     }
 
+    /// <inheritdoc/>
+    /// <summary>Configures the EF Core model, interceptors, diagnostics, and database provider.</summary>
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
         optionsBuilder.ReplaceService<IModelCacheKeyFactory, TenantModelCacheKeyFactory>();
@@ -92,6 +94,9 @@ public abstract class KukulcanDbContextBase(
             ConfigureProvider(optionsBuilder);
     }
 
+    /// <summary>
+    /// Configures the selected EF Core database provider, connection pooling, command timeout, and retry strategy.
+    /// </summary>
     protected virtual void ConfigureProvider(DbContextOptionsBuilder optionsBuilder)
     {
         var connStr = _opts.ConnectionString;
@@ -188,7 +193,7 @@ public abstract class KukulcanDbContextBase(
     {
         try
         {
-            Type type = LoadProviderExtensionType("Microsoft.EntityFrameworkCore.NpgsqlDbContextOptionsBuilderExtensions", "Npgsql.EntityFrameworkCore.PostgreSQL");
+            Type type = LoadProviderExtensionType("Microsoft.EntityFrameworkCore.NpgsqlDbContextOptionsExtensions", "Npgsql.EntityFrameworkCore.PostgreSQL");
             InvokeProviderUseMethod(type, "UseNpgsql", optionsBuilder, connectionString, timeoutSec, maxRetry, maxDelay);
         }
         catch (Exception ex) when (ex is not NotSupportedException)
@@ -279,6 +284,7 @@ public abstract class KukulcanDbContextBase(
             ? new NotSupportedException($"Package '{package}' is not installed. Add it to the consuming module's Infrastructure project.")
             : new NotSupportedException($"Failed to configure provider. Ensure '{package}' is installed in the consuming project.", inner);
 
+    /// <inheritdoc/>
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
