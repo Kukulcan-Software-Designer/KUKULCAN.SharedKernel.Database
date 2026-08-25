@@ -92,7 +92,7 @@ public sealed class RemainingExecutableCoverageTests
 
         TargetInvocationException exception = Assert.Throws<TargetInvocationException>(() =>
             method.Invoke(null,
-                [typeof(string), "UseMissing", new DbContextOptionsBuilder(), "ignored", 30, 0, TimeSpan.FromSeconds(5)]))!;
+                [typeof(string), "UseMissing", new DbContextOptionsBuilder(), "ignored", 30, 0, TimeSpan.FromSeconds(5), null]))!;
 
         Assert.That(exception.InnerException, Is.TypeOf<NotSupportedException>());
         Assert.That(exception.InnerException!.Message, Does.Contain("UseMissing"));
@@ -106,7 +106,7 @@ public sealed class RemainingExecutableCoverageTests
 
         TargetInvocationException outer = Assert.Throws<TargetInvocationException>(() =>
             method.Invoke(null,
-                [typeof(FakeProviderExtensions), "UseFake", new DbContextOptionsBuilder(), "ignored", 3, 2, TimeSpan.FromSeconds(5)]))!;
+                [typeof(FakeProviderExtensions), "UseFake", new DbContextOptionsBuilder(), "ignored", 3, 2, TimeSpan.FromSeconds(5), null]))!;
 
         Exception? inner = outer.InnerException;
         while (inner is TargetInvocationException invocation && invocation.InnerException is not null)
