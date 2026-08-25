@@ -5,6 +5,7 @@ using KUKULCAN.SharedKernel.Database.Interceptors;
 using KUKULCAN.SharedKernel.Database.UnitOfWork;
 using KUKULCAN.SharedKernel.Database.Abstractions;
 using KUKULCAN.SharedKernel.Abstractions;
+using KUKULCAN.SharedKernel.Database.Client;
 using KUKULCAN.SharedKernel.DomainEvents.Abstractions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;

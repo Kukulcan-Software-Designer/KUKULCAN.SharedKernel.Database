@@ -1,5 +1,6 @@
 using KUKULCAN.SharedKernel.Database.Client.Client;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace KUKULCAN.SharedKernel.Database.Client;
 
