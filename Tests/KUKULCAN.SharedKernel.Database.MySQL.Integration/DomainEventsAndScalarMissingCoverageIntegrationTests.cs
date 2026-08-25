@@ -55,19 +55,25 @@ public sealed class DomainEventsAndScalarMissingCoverageIntegrationTests
     }
 
     [Test]
-    public async Task RollbackTransaction_ShouldNotDispatchDomainEventsAndShouldClearPendingStateAgainstRealMySql()
+    public async Task RollbackTransaction_ShouldClearPendingDispatchStateAndAllowDomainEventRetryAgainstRealMySql()
     {
         var dispatcher = new CapturingDispatcher();
         await using var context = await MySqlIntegrationContextFactory.CreateAsync(_tenantId, dispatcher);
         await using var unit = new UnitOfWork<MySqlIntegrationDbContext>(context);
+        var domainEvent = new MySqlTestDomainEvent(MySqlIntegrationConstants.FixedNow);
         var entity = new MySqlDomainEventEntity { TenantId = _tenantId, Name = "Rollback event" };
-        entity.AddDomainEventForTest(new MySqlTestDomainEvent(MySqlIntegrationConstants.FixedNow));
+        entity.AddDomainEventForTest(domainEvent);
         context.DomainEventEntities.Add(entity);
         await unit.BeginTransactionAsync();
         await context.SaveChangesAsync();
         await unit.RollbackTransactionAsync();
 
         Assert.That(dispatcher.Events, Is.Empty);
+        Assert.That(entity.DomainEvents, Contains.Item(domainEvent));
+
+        await unit.BeginTransactionAsync();
+        await unit.CommitTransactionAsync();
+        Assert.That(dispatcher.Events, Is.EqualTo(new IDomainEvent[] { domainEvent }));
         Assert.That(entity.DomainEvents, Is.Empty);
     }
 
