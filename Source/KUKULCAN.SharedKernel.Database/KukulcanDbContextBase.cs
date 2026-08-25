@@ -52,8 +52,7 @@ public abstract class KukulcanDbContextBase(
                      .Select(e => e.Entity)
                      .Distinct())
         {
-            foreach (IDomainEvent domainEvent in _pendingDomainEvents)
-                aggregate.DomainEvents.Remove(domainEvent);
+            aggregate.ClearDomainEvents();
         }
 
         _pendingDomainEvents.Clear();
@@ -89,10 +88,15 @@ public abstract class KukulcanDbContextBase(
             ConfigureProvider(optionsBuilder);
     }
 
-    /// <summary>Configures the database provider based on the configured provider and connection options.</summary>
+    /// <summary>
+    /// Configures the database provider based on <see cref="KukulcanDatabaseOptions.Provider"/>.
+    /// Override in a derived class to customize provider configuration.
+    /// </summary>
     protected virtual void ConfigureProvider(DbContextOptionsBuilder optionsBuilder)
     {
-        var connStr = ConfigureConnectionPool(_opts.Provider, _opts.ConnectionString, _opts.Pool);
+        var connStr = _opts.ConnectionString;
+        var pool = _opts.Pool;
+        var connStringWithPool = BuildProviderConnectionString(_opts.Provider, connStr, pool);
         var timeout = _opts.CommandTimeoutSeconds;
         var maxRetry = _opts.Retry.Enabled ? _opts.Retry.MaxRetryCount : 0;
         var maxDelay = TimeSpan.FromSeconds(_opts.Retry.MaxRetryDelaySeconds);
@@ -100,60 +104,74 @@ public abstract class KukulcanDbContextBase(
         switch (_opts.Provider)
         {
             case DatabaseProvider.SqlServer:
-                ConfigureSqlServer(optionsBuilder, connStr, timeout, maxRetry, maxDelay);
+                ConfigureSqlServer(optionsBuilder, connStringWithPool, timeout, maxRetry, maxDelay);
                 break;
             case DatabaseProvider.PostgresSql:
-                ConfigurePostgresSql(optionsBuilder, connStr, timeout, maxRetry, maxDelay);
+                ConfigurePostgresSql(optionsBuilder, connStringWithPool, timeout, maxRetry, maxDelay);
                 break;
             case DatabaseProvider.MySql:
-                ConfigureMySql(optionsBuilder, connStr, timeout, maxRetry, maxDelay);
+                ConfigureMySql(optionsBuilder, connStringWithPool, timeout, maxRetry, maxDelay);
                 break;
             default:
                 throw new NotSupportedException($"Database provider '{_opts.Provider}' is not supported.");
         }
     }
 
-    private static string ConfigureConnectionPool(DatabaseProvider provider, string connectionString, KukulcanDatabaseOptions.PoolOptions pool)
+    private static string BuildProviderConnectionString(
+        DatabaseProvider provider,
+        string connectionString,
+        KukulcanDatabaseOptions.PoolOptions pool)
+    {
+        if (!pool.Enabled)
+        {
+            return provider switch
+            {
+                DatabaseProvider.SqlServer => RemoveConnectionStringKeys(connectionString, "Pooling", "Min Pool Size", "Max Pool Size"),
+                DatabaseProvider.PostgresSql => RemoveConnectionStringKeys(connectionString, "Pooling", "Minimum Pool Size", "Maximum Pool Size"),
+                DatabaseProvider.MySql => RemoveConnectionStringKeys(connectionString, "Pooling", "MinimumPoolSize", "MaximumPoolSize"),
+                _ => connectionString
+            };
+        }
+
+        return provider switch
+        {
+            DatabaseProvider.SqlServer => AppendConnectionStringOptions(connectionString,
+                $"Pooling=true;Min Pool Size={pool.MinSize};Max Pool Size={pool.MaxSize}"),
+            DatabaseProvider.PostgresSql => AppendConnectionStringOptions(connectionString,
+                $"Pooling=true;Minimum Pool Size={pool.MinSize};Maximum Pool Size={pool.MaxSize}"),
+            DatabaseProvider.MySql => AppendConnectionStringOptions(connectionString,
+                $"Pooling=true;MinimumPoolSize={pool.MinSize};MaximumPoolSize={pool.MaxSize}"),
+            _ => connectionString
+        };
+    }
+
+    private static string AppendConnectionStringOptions(string connectionString, string options)
+        => string.IsNullOrWhiteSpace(connectionString)
+            ? options
+            : $"{connectionString.TrimEnd(';')};{options};";
+
+    private static string RemoveConnectionStringKeys(string connectionString, params string[] keys)
     {
         if (string.IsNullOrWhiteSpace(connectionString))
             return connectionString;
 
-        var builder = new System.Data.Common.DbConnectionStringBuilder { ConnectionString = connectionString };
-        string poolingKey = "Pooling";
-        builder[poolingKey] = pool.Enabled;
-
-        if (!pool.Enabled)
-            return builder.ConnectionString;
-
-        if (pool.MinSize < 0 || pool.MaxSize <= 0 || pool.MinSize > pool.MaxSize)
-            throw new ArgumentOutOfRangeException(nameof(pool), "Pool MinSize/MaxSize values are invalid.");
-
-        string minKey = provider switch
+        string[] segments = connectionString.Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        return string.Join(';', segments.Where(segment =>
         {
-            DatabaseProvider.SqlServer => "Min Pool Size",
-            DatabaseProvider.PostgresSql => "Minimum Pool Size",
-            DatabaseProvider.MySql => "MinimumPoolSize",
-            _ => throw new NotSupportedException($"Database provider '{provider}' is not supported.")
-        };
-
-        string maxKey = provider switch
-        {
-            DatabaseProvider.SqlServer => "Max Pool Size",
-            DatabaseProvider.PostgresSql => "Maximum Pool Size",
-            DatabaseProvider.MySql => "MaximumPoolSize",
-            _ => throw new NotSupportedException($"Database provider '{provider}' is not supported.")
-        };
-
-        builder[minKey] = pool.MinSize;
-        builder[maxKey] = pool.MaxSize;
-        return builder.ConnectionString;
+            int separator = segment.IndexOf('=');
+            if (separator <= 0) return true;
+            string key = segment[..separator].Trim();
+            return !keys.Any(candidate => string.Equals(candidate, key, StringComparison.OrdinalIgnoreCase));
+        }));
     }
 
     private static void ConfigureSqlServer(DbContextOptionsBuilder optionsBuilder, string connectionString, int timeoutSec, int maxRetry, TimeSpan maxDelay)
     {
         try
         {
-            Type type = LoadProviderExtensionType("Microsoft.EntityFrameworkCore.SqlServerDbContextOptionsExtensions", "Microsoft.EntityFrameworkCore.SqlServer");
+            Type type = LoadProviderExtensionType(
+                "Microsoft.EntityFrameworkCore.SqlServerDbContextOptionsExtensions",
+                "Microsoft.EntityFrameworkCore.SqlServer");
             InvokeProviderUseMethod(type, "UseSqlServer", optionsBuilder, connectionString, timeoutSec, maxRetry, maxDelay);
         }
         catch (Exception ex) when (ex is not NotSupportedException)
@@ -166,7 +184,9 @@ public abstract class KukulcanDbContextBase(
     {
         try
         {
-            Type type = LoadProviderExtensionType("Microsoft.EntityFrameworkCore.NpgsqlDbContextOptionsBuilderExtensions", "Npgsql.EntityFrameworkCore.PostgreSQL");
+            Type type = LoadProviderExtensionType(
+                "Microsoft.EntityFrameworkCore.NpgsqlDbContextOptionsBuilderExtensions",
+                "Npgsql.EntityFrameworkCore.PostgreSQL");
             InvokeProviderUseMethod(type, "UseNpgsql", optionsBuilder, connectionString, timeoutSec, maxRetry, maxDelay);
         }
         catch (Exception ex) when (ex is not NotSupportedException)
@@ -179,7 +199,9 @@ public abstract class KukulcanDbContextBase(
     {
         try
         {
-            Type type = LoadProviderExtensionType("Microsoft.EntityFrameworkCore.MySQLDbContextOptionsExtensions", "MySql.EntityFrameworkCore");
+            Type type = LoadProviderExtensionType(
+                "Microsoft.EntityFrameworkCore.MySQLDbContextOptionsExtensions",
+                "MySql.EntityFrameworkCore");
             InvokeProviderUseMethod(type, "UseMySQL", optionsBuilder, connectionString, timeoutSec, maxRetry, maxDelay);
         }
         catch (Exception ex) when (ex is not NotSupportedException)
@@ -191,8 +213,14 @@ public abstract class KukulcanDbContextBase(
     private static Type LoadProviderExtensionType(string typeName, string assemblyName)
     {
         Assembly assembly;
-        try { assembly = Assembly.Load(new AssemblyName(assemblyName)); }
-        catch (FileNotFoundException ex) { throw NotInstalled(assemblyName, ex); }
+        try
+        {
+            assembly = Assembly.Load(new AssemblyName(assemblyName));
+        }
+        catch (FileNotFoundException ex)
+        {
+            throw NotInstalled(assemblyName, ex);
+        }
 
         return assembly.GetType(typeName, throwOnError: false)
                ?? throw new NotSupportedException($"Assembly '{assemblyName}' does not expose the expected provider extension type '{typeName}'.");
@@ -200,12 +228,14 @@ public abstract class KukulcanDbContextBase(
 
     private static void InvokeProviderUseMethod(Type extensionType, string methodName, DbContextOptionsBuilder optionsBuilder, string connectionString, int timeoutSec, int maxRetry, TimeSpan maxDelay)
     {
-        MethodInfo? method = extensionType.GetMethods(BindingFlags.Public | BindingFlags.Static)
+        MethodInfo? method = extensionType
+            .GetMethods(BindingFlags.Public | BindingFlags.Static)
             .Where(m => m.Name == methodName && !m.IsGenericMethodDefinition)
             .FirstOrDefault(m =>
             {
                 ParameterInfo[] parameters = m.GetParameters();
-                return parameters.Length == 3 && parameters[0].ParameterType == typeof(DbContextOptionsBuilder)
+                return parameters.Length == 3
+                       && parameters[0].ParameterType == typeof(DbContextOptionsBuilder)
                        && parameters[1].ParameterType == typeof(string)
                        && parameters[2].ParameterType.IsGenericType
                        && parameters[2].ParameterType.GetGenericTypeDefinition() == typeof(Action<>);
@@ -215,7 +245,9 @@ public abstract class KukulcanDbContextBase(
             throw new NotSupportedException($"Provider '{extensionType.Assembly.GetName().Name}' does not expose a compatible {methodName} method.");
 
         Type providerOptionsBuilderType = method.GetParameters()[2].ParameterType.GetGenericArguments()[0];
-        typeof(KukulcanDbContextBase).GetMethod(nameof(InvokeProviderUseMethodGeneric), BindingFlags.NonPublic | BindingFlags.Static)!
+
+        typeof(KukulcanDbContextBase)
+            .GetMethod(nameof(InvokeProviderUseMethodGeneric), BindingFlags.NonPublic | BindingFlags.Static)!
             .MakeGenericMethod(providerOptionsBuilderType)
             .Invoke(null, [method, optionsBuilder, connectionString, timeoutSec, maxRetry, maxDelay]);
     }
@@ -229,7 +261,8 @@ public abstract class KukulcanDbContextBase(
 
             if (maxRetry <= 0) return;
 
-            MethodInfo? retryMethod = providerOptionsType.GetMethods(BindingFlags.Public | BindingFlags.Instance)
+            MethodInfo? retryMethod = providerOptionsType
+                .GetMethods(BindingFlags.Public | BindingFlags.Instance)
                 .FirstOrDefault(m => m.Name == "EnableRetryOnFailure" && m.GetParameters().Length == 3);
 
             if (retryMethod is null)
