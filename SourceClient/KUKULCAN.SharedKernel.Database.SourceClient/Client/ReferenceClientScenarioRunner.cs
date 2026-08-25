@@ -141,11 +141,12 @@ public sealed class ReferenceClientScenarioRunner(
         try
         {
             db.Products.Add(ClientProduct.Create(name, 77m, "Reference"));
+            await uow.SaveChangesAsync(ct);
             await uow.EndTransactionAsync(ct);
             db.ChangeTracker.Clear();
 
             if (await db.Products.IgnoreQueryFilters().AnyAsync(p => p.Name == name, ct))
-                throw new InvalidOperationException("EndTransactionAsync unexpectedly committed data.");
+                throw new InvalidOperationException("EndTransactionAsync did not release the uncommitted transaction as expected.");
         }
         catch
         {
