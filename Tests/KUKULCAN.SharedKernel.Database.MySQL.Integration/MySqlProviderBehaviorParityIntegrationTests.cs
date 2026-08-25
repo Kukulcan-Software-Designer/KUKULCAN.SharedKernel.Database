@@ -25,7 +25,7 @@ public sealed class MySqlProviderBehaviorParityIntegrationTests
         using IServiceScope scope = provider.CreateScope();
         await using MySqlIntegrationDbContext context = scope.ServiceProvider.GetRequiredService<MySqlIntegrationDbContext>();
 
-        IExecutionStrategy strategy = context.Database.CreateExecutionStrategy();
+        Microsoft.EntityFrameworkCore.Storage.IExecutionStrategy strategy = context.Database.CreateExecutionStrategy();
         int attempts = 0;
 
         int result = await strategy.ExecuteAsync(async () =>
@@ -35,14 +35,15 @@ public sealed class MySqlProviderBehaviorParityIntegrationTests
             if (attempts == 1)
                 throw new TimeoutException("Synthetic transient failure for retry contract coverage.");
 
-            return await context.Database.ExecuteSqlRawAsync("SELECT 1;");
+            await context.Database.ExecuteSqlRawAsync("SELECT 1;");
+            return 42;
         });
 
         using (Assert.EnterMultipleScope())
         {
             Assert.That(strategy.RetriesOnFailure, Is.True);
             Assert.That(attempts, Is.EqualTo(2));
-            Assert.That(result, Is.EqualTo(-1).Or.EqualTo(0));
+            Assert.That(result, Is.EqualTo(42));
         }
     }
 
