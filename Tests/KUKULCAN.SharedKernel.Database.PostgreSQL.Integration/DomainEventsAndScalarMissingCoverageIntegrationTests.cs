@@ -51,6 +51,27 @@ public sealed class DomainEventsAndScalarMissingCoverageIntegrationTests
     }
 
     [Test]
+    public async Task CommitTransaction_ShouldDispatchMultipleAggregateEventsOnceAgainstRealPostgreSql()
+    {
+        var dispatcher = new CapturingDispatcher();
+        await using var context = Create(dispatcher);
+        await context.Database.EnsureCreatedAsync();
+        await using var unit = new UnitOfWork<PostgreSqlDatabaseIntegrationTests.IntegrationDbContext>(context);
+        var first = new PostgreSqlDatabaseIntegrationTests.TestDomainEvent(PostgreSqlDatabaseIntegrationTests.FixedNow);
+        var second = new PostgreSqlDatabaseIntegrationTests.TestDomainEvent(PostgreSqlDatabaseIntegrationTests.FixedNow.AddSeconds(1));
+        var firstEntity = new PostgreSqlDatabaseIntegrationTests.DomainEventEntity { TenantId = _tenantId, Name = "Aggregate A" };
+        var secondEntity = new PostgreSqlDatabaseIntegrationTests.DomainEventEntity { TenantId = _tenantId, Name = "Aggregate B" };
+        firstEntity.AddDomainEventForTest(first);
+        secondEntity.AddDomainEventForTest(second);
+        context.DomainEventEntities.AddRange(firstEntity, secondEntity);
+        await unit.BeginTransactionAsync();
+        await unit.CommitTransactionAsync();
+        Assert.That(dispatcher.Events, Is.EqualTo(new IDomainEvent[] { first, second }));
+        Assert.That(firstEntity.DomainEvents, Is.Empty);
+        Assert.That(secondEntity.DomainEvents, Is.Empty);
+    }
+
+    [Test]
     public async Task RollbackTransaction_ShouldNotDispatchDomainEventsAndShouldClearPendingStateAgainstRealPostgreSql()
     {
         var dispatcher = new CapturingDispatcher();
@@ -87,9 +108,8 @@ public sealed class DomainEventsAndScalarMissingCoverageIntegrationTests
         Assert.That(entity.DomainEvents, Contains.Item(domainEvent));
     }
 
-    [TestCase(false)]
-    [TestCase(true)]
-    public async Task SlowQueryInterceptor_ScalarExecution_ShouldLogRealScalarQueryAgainstPostgreSql(bool asynchronous)
+    [Test]
+    public async Task SlowQueryInterceptor_ScalarExecutedAsync_ShouldLogRealScalarQueryAgainstPostgreSql()
     {
         int previousThreshold = SlowQueryInterceptor.SlowQueryThresholdMs;
         SlowQueryInterceptor.SlowQueryThresholdMs = 0;
@@ -101,7 +121,27 @@ public sealed class DomainEventsAndScalarMissingCoverageIntegrationTests
             await context.Database.OpenConnectionAsync();
             await using var command = context.Database.GetDbConnection().CreateCommand();
             command.CommandText = "SELECT 1";
-            _ = asynchronous ? await command.ExecuteScalarAsync() : command.ExecuteScalar();
+            _ = await command.ExecuteScalarAsync();
+            await context.Database.CloseConnectionAsync();
+            Assert.That(logger.WarningMessages, Has.Some.Contains("[SlowQuery]"));
+        }
+        finally { SlowQueryInterceptor.SlowQueryThresholdMs = previousThreshold; }
+    }
+
+    [Test]
+    public async Task SlowQueryInterceptor_ScalarExecuted_ShouldLogRealScalarQueryAgainstPostgreSql()
+    {
+        int previousThreshold = SlowQueryInterceptor.SlowQueryThresholdMs;
+        SlowQueryInterceptor.SlowQueryThresholdMs = 0;
+        try
+        {
+            var logger = new PostgreSqlCapturingLogger<SlowQueryInterceptor>();
+            await using var context = Create(new CapturingDispatcher(), new SlowQueryInterceptor(logger));
+            await context.Database.EnsureCreatedAsync();
+            await context.Database.OpenConnectionAsync();
+            await using var command = context.Database.GetDbConnection().CreateCommand();
+            command.CommandText = "SELECT 1";
+            _ = command.ExecuteScalar();
             await context.Database.CloseConnectionAsync();
             Assert.That(logger.WarningMessages, Has.Some.Contains("[SlowQuery]"));
         }
