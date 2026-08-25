@@ -100,9 +100,8 @@ public sealed class DomainEventsAndScalarMissingCoverageIntegrationTests
         Assert.That(entity.DomainEvents, Contains.Item(domainEvent));
     }
 
-    [TestCase(false)]
-    [TestCase(true)]
-    public async Task SlowQueryInterceptor_ScalarExecution_ShouldLogRealScalarQueryAgainstMySql(bool asynchronous)
+    [Test]
+    public async Task SlowQueryInterceptor_ScalarExecutedAsync_ShouldLogRealScalarQueryAgainstMySql()
     {
         int previousThreshold = SlowQueryInterceptor.SlowQueryThresholdMs;
         SlowQueryInterceptor.SlowQueryThresholdMs = 0;
@@ -113,7 +112,26 @@ public sealed class DomainEventsAndScalarMissingCoverageIntegrationTests
             await context.Database.OpenConnectionAsync();
             await using var command = context.Database.GetDbConnection().CreateCommand();
             command.CommandText = "SELECT 1";
-            _ = asynchronous ? await command.ExecuteScalarAsync() : command.ExecuteScalar();
+            _ = await command.ExecuteScalarAsync();
+            await context.Database.CloseConnectionAsync();
+            Assert.That(logger.WarningMessages, Has.Some.Contains("[SlowQuery]"));
+        }
+        finally { SlowQueryInterceptor.SlowQueryThresholdMs = previousThreshold; }
+    }
+
+    [Test]
+    public async Task SlowQueryInterceptor_ScalarExecuted_ShouldLogRealScalarQueryAgainstMySql()
+    {
+        int previousThreshold = SlowQueryInterceptor.SlowQueryThresholdMs;
+        SlowQueryInterceptor.SlowQueryThresholdMs = 0;
+        try
+        {
+            var logger = new MySqlCapturingLogger<SlowQueryInterceptor>();
+            await using var context = await MySqlIntegrationContextFactory.CreateAsync(_tenantId, slowQueryInterceptor: new SlowQueryInterceptor(logger));
+            await context.Database.OpenConnectionAsync();
+            await using var command = context.Database.GetDbConnection().CreateCommand();
+            command.CommandText = "SELECT 1";
+            _ = command.ExecuteScalar();
             await context.Database.CloseConnectionAsync();
             Assert.That(logger.WarningMessages, Has.Some.Contains("[SlowQuery]"));
         }
