@@ -67,7 +67,6 @@ public sealed class KukulcanDatabaseStartupInitializerTests
         await initializer.InitializeAsync();
 
         scopeFactory.Verify(x => x.CreateScope(), Times.Never);
-        scopeFactory.Verify(x => x.CreateAsyncScope(), Times.Never);
     }
 
     [Test]
@@ -89,9 +88,10 @@ public sealed class KukulcanDatabaseStartupInitializerTests
     }
 
     [Test]
-    public async Task HostedService_StartAsync_ShouldDelegateToInitializer()
+    public async Task HostedService_StartAsync_ShouldRunConfiguredInitializer()
     {
         await using var database = new StartupTestDatabase();
+        var seeder = new RecordingSeeder();
         await using var provider = BuildProvider(database, new KukulcanDatabaseOptions
         {
             Migration = new KukulcanDatabaseOptions.MigrationOptions
@@ -99,14 +99,14 @@ public sealed class KukulcanDatabaseStartupInitializerTests
                 AutoMigrateOnStartup = false,
                 SeedDataOnStartup = true
             }
-        }, new RecordingSeeder());
+        }, seeder);
 
         var initializer = provider.GetRequiredService<KukulcanDatabaseStartupInitializer<StartupTestDbContext>>();
         var hostedService = new KukulcanDatabaseStartupHostedService<StartupTestDbContext>(initializer);
 
         await hostedService.StartAsync(CancellationToken.None);
 
-        Assert.Pass();
+        Assert.That(seeder.CallCount, Is.EqualTo(1));
     }
 
     [Test]
@@ -178,7 +178,11 @@ public sealed class KukulcanDatabaseStartupInitializerTests
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
             if (!optionsBuilder.IsConfigured)
-                optionsBuilder.UseSqlite(database.Connection, sqlite => sqlite.MigrationsAssembly(typeof(StartupTestMigration).Assembly.FullName));
+            {
+                optionsBuilder.UseSqlite(
+                    database.Connection,
+                    sqlite => sqlite.MigrationsAssembly(typeof(StartupTestMigration).Assembly.FullName));
+            }
 
             base.OnConfiguring(optionsBuilder);
         }
