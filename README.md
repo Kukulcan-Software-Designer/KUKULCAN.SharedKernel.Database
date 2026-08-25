@@ -72,22 +72,24 @@ The current provider configuration supports Microsoft SQL Server, PostgreSQL and
 
 Nullable reference types are enabled, warnings are treated as errors and XML documentation generation is enabled. Public APIs are documented and persistence behavior is covered by behavior-focused tests.
 
-The latest successful unit coverage report on `main` reports:
+The latest successful `Code Coverage` workflow on `main` reports **132/132 passing unit tests** and the following Cobertura metrics for the production assembly:
 
 | Metric | Result |
 |---|---:|
-| Line coverage | **99.13% (228/230)** |
-| Branch coverage | **100% (74/74)** |
+| Line coverage | **96.68% (292/302)** |
+| Branch coverage | **92.70% (89/96)** |
 
-`KukulcanDbContextBase` is the only production class below 100% line coverage at **98.26%**. Every other production class in the report has 100% line and branch coverage. The remaining two lines are defensive provider-resolution code; the logical branches are already fully covered. The suite is not weakened or altered merely to manufacture a 100% line metric through artificial assembly-loading conditions.
+`KukulcanDbContextBase` is at **95.42% line coverage / 91.30% branch coverage**, while `SlowQueryInterceptor` is at **92.00% line coverage / 100% branch coverage**. `DomainEventDispatchInterceptor` and `KukulcanDatabaseStartupInitializer<TContext>` both have 100% line coverage but 50% branch coverage. The remaining production classes are at 100% line and branch coverage.
 
-Provider-specific integration coverage is measured separately against real database engines. The integration workflow is configured to generate one Cobertura report per DBMS for Microsoft SQL Server, PostgreSQL and MySQL.
+The uncovered production lines are concentrated in defensive provider-resolution/configuration paths of `KukulcanDbContextBase` and two lines in `SlowQueryInterceptor`. These figures are intentionally reported as measured rather than inflated through artificial test conditions.
 
-See [`Documentation/COVERAGE.md`](Documentation/COVERAGE.md) for the authoritative coverage report and provider-specific integration coverage results.
+Provider-specific integration tests complement unit coverage by validating the infrastructure against real Microsoft SQL Server, PostgreSQL and MySQL engines. Integration execution coverage is kept separate from the deterministic unit percentage.
+
+See [`Documentation/COVERAGE.md`](Documentation/COVERAGE.md) for the complete coverage breakdown and current coverage policy.
 
 ## Integration Testing
 
-The provider-specific integration projects use Testcontainers and real database engines. They validate persistence behavior including provider selection, tenant isolation, tenant-aware model caching, audit and soft-delete interception, domain-event dispatch, immutable-entity enforcement, slow-query diagnostics, cancellation and transaction behavior.
+The provider-specific integration projects use Testcontainers and real database engines. They validate persistence behavior including provider selection, tenant isolation, tenant-aware model caching, audit and soft-delete interception, domain-event dispatch, immutable-entity enforcement, slow-query diagnostics, cancellation, retry, migration/seed and transaction behavior.
 
 Integration coverage is not used as a substitute for unit coverage. Unit tests measure deterministic production code paths and branches; integration tests measure provider-backed execution against real DBMS engines.
 
