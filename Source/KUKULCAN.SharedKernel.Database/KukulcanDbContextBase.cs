@@ -25,10 +25,8 @@ public abstract class KukulcanDbContextBase(
     private readonly HashSet<IDomainEvent> _acknowledgedDomainEvents = [];
     private const string _commandTimeoutMethodName = "CommandTimeout";
 
-    /// <summary>Gets the current tenant identifier used to build the EF Core model cache key.</summary>
     internal Guid CurrentTenantId => _tenantContext.TenantId;
 
-    /// <summary>Captures pending domain events without clearing them from their aggregates.</summary>
     internal void CapturePendingDomainEvents()
     {
         var events = ChangeTracker.Entries<IHasDomainEvents>()
@@ -40,9 +38,6 @@ public abstract class KukulcanDbContextBase(
         _pendingDomainEvents.AddRange(events);
     }
 
-    /// <summary>
-    /// Dispatches all captured domain events and acknowledges each event individually after successful dispatch.
-    /// </summary>
     internal async Task DispatchPendingDomainEventsAsync(CancellationToken cancellationToken = default)
     {
         foreach (IDomainEvent domainEvent in _pendingDomainEvents.ToList())
@@ -65,14 +60,12 @@ public abstract class KukulcanDbContextBase(
         _acknowledgedDomainEvents.Clear();
     }
 
-    /// <summary>Discards captured and acknowledged events when the enclosing explicit transaction is abandoned.</summary>
     internal void DiscardPendingDomainEvents()
     {
         _pendingDomainEvents.Clear();
         _acknowledgedDomainEvents.Clear();
     }
 
-    /// <inheritdoc/>
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
         optionsBuilder.ReplaceService<IModelCacheKeyFactory, TenantModelCacheKeyFactory>();
@@ -99,10 +92,6 @@ public abstract class KukulcanDbContextBase(
             ConfigureProvider(optionsBuilder);
     }
 
-    /// <summary>
-    /// Configures the database provider based on <see cref="KukulcanDatabaseOptions.Provider"/>.
-    /// Override in a derived class to customize provider configuration.
-    /// </summary>
     protected virtual void ConfigureProvider(DbContextOptionsBuilder optionsBuilder)
     {
         var connStr = _opts.ConnectionString;
@@ -139,7 +128,13 @@ public abstract class KukulcanDbContextBase(
             {
                 DatabaseProvider.SqlServer => RemoveConnectionStringKeys(connectionString, "Pooling", "Min Pool Size", "Max Pool Size"),
                 DatabaseProvider.PostgresSql => RemoveConnectionStringKeys(connectionString, "Pooling", "Minimum Pool Size", "Maximum Pool Size"),
-                DatabaseProvider.MySql => RemoveConnectionStringKeys(connectionString, "Pooling", "MinimumPoolSize", "MaximumPoolSize"),
+                DatabaseProvider.MySql => RemoveConnectionStringKeys(
+                    connectionString,
+                    "Pooling",
+                    "MinimumPoolSize",
+                    "MaximumPoolSize",
+                    "MinPoolSize",
+                    "MaxPoolSize"),
                 _ => connectionString
             };
         }
@@ -180,9 +175,7 @@ public abstract class KukulcanDbContextBase(
     {
         try
         {
-            Type type = LoadProviderExtensionType(
-                "Microsoft.EntityFrameworkCore.SqlServerDbContextOptionsExtensions",
-                "Microsoft.EntityFrameworkCore.SqlServer");
+            Type type = LoadProviderExtensionType("Microsoft.EntityFrameworkCore.SqlServerDbContextOptionsExtensions", "Microsoft.EntityFrameworkCore.SqlServer");
             InvokeProviderUseMethod(type, "UseSqlServer", optionsBuilder, connectionString, timeoutSec, maxRetry, maxDelay);
         }
         catch (Exception ex) when (ex is not NotSupportedException)
@@ -195,9 +188,7 @@ public abstract class KukulcanDbContextBase(
     {
         try
         {
-            Type type = LoadProviderExtensionType(
-                "Microsoft.EntityFrameworkCore.NpgsqlDbContextOptionsBuilderExtensions",
-                "Npgsql.EntityFrameworkCore.PostgreSQL");
+            Type type = LoadProviderExtensionType("Microsoft.EntityFrameworkCore.NpgsqlDbContextOptionsBuilderExtensions", "Npgsql.EntityFrameworkCore.PostgreSQL");
             InvokeProviderUseMethod(type, "UseNpgsql", optionsBuilder, connectionString, timeoutSec, maxRetry, maxDelay);
         }
         catch (Exception ex) when (ex is not NotSupportedException)
@@ -210,9 +201,7 @@ public abstract class KukulcanDbContextBase(
     {
         try
         {
-            Type type = LoadProviderExtensionType(
-                "Microsoft.EntityFrameworkCore.MySQLDbContextOptionsExtensions",
-                "MySql.EntityFrameworkCore");
+            Type type = LoadProviderExtensionType("Microsoft.EntityFrameworkCore.MySQLDbContextOptionsExtensions", "MySql.EntityFrameworkCore");
             InvokeProviderUseMethod(type, "UseMySQL", optionsBuilder, connectionString, timeoutSec, maxRetry, maxDelay);
         }
         catch (Exception ex) when (ex is not NotSupportedException)
@@ -290,7 +279,6 @@ public abstract class KukulcanDbContextBase(
             ? new NotSupportedException($"Package '{package}' is not installed. Add it to the consuming module's Infrastructure project.")
             : new NotSupportedException($"Failed to configure provider. Ensure '{package}' is installed in the consuming project.", inner);
 
-    /// <inheritdoc/>
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
