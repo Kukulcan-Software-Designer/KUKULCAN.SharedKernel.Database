@@ -1,7 +1,6 @@
-using KUKULCAN.SharedKernel.Database.Interceptors;
 using Testcontainers.MsSql;
 
-namespace KUKULCAN.SharedKernel.Database.Integration.SQLServer;
+namespace KUKULCAN.SharedKernel.Database.SQLServer.Integration;
 
 [SetUpFixture]
 public sealed class SqlServerIntegrationDatabase

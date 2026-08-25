@@ -1,8 +1,9 @@
 using KUKULCAN.SharedKernel.Database.Extensions;
+using KUKULCAN.SharedKernel.Database.Integration;
 using Microsoft.EntityFrameworkCore.Metadata;
 using NUnit.Framework;
 
-namespace KUKULCAN.SharedKernel.Database.Integration;
+namespace KUKULCAN.SharedKernel.Database.PostgreSQL.Integration;
 
 public sealed class MissingCoverageIntegrationTests
 {

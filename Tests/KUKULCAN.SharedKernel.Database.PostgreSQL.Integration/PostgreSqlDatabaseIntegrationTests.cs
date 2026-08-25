@@ -1,20 +1,12 @@
-using System.ComponentModel.DataAnnotations.Schema;
-using KUKULCAN.SharedKernel.Abstractions;
-using KUKULCAN.SharedKernel.Database.Abstractions;
-using KUKULCAN.SharedKernel.Database.Configuration;
 using KUKULCAN.SharedKernel.Database.Extensions;
 using KUKULCAN.SharedKernel.Database.Interceptors;
-using KUKULCAN.SharedKernel.DomainEvents.Abstractions;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
-using Moq;
 using NUnit.Framework;
 using Testcontainers.PostgreSql;
 
-namespace KUKULCAN.SharedKernel.Database.Integration;
+namespace KUKULCAN.SharedKernel.Database.PostgreSQL.Integration;
 
 [SetUpFixture]
 public sealed class IntegrationTestDatabase

@@ -2,6 +2,7 @@ using KUKULCAN.SharedKernel.Abstractions;
 using KUKULCAN.SharedKernel.Database;
 using KUKULCAN.SharedKernel.Database.Abstractions;
 using KUKULCAN.SharedKernel.Database.Configuration;
+using KUKULCAN.SharedKernel.Database.PostgreSQL.Integration;
 using KUKULCAN.SharedKernel.Database.UnitOfWork;
 using KUKULCAN.SharedKernel.DomainEvents.Abstractions;
 using Microsoft.EntityFrameworkCore;

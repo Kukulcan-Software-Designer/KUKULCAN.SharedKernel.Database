@@ -1,6 +1,6 @@
 using MySql.EntityFrameworkCore.Extensions;
 
-namespace KUKULCAN.SharedKernel.Database.Integration.MySQL;
+namespace KUKULCAN.SharedKernel.Database.MySQL.Integration;
 
 [TestFixture]
 [NonParallelizable]

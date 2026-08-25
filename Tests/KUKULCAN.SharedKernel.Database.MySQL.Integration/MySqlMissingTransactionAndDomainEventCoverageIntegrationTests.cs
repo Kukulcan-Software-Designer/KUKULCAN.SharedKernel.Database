@@ -1,7 +1,4 @@
-using KUKULCAN.SharedKernel.DomainEvents.Abstractions;
-using Moq;
-
-namespace KUKULCAN.SharedKernel.Database.Integration.MySQL;
+namespace KUKULCAN.SharedKernel.Database.MySQL.Integration;
 
 [TestFixture]
 [NonParallelizable]

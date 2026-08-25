@@ -1,10 +1,9 @@
-using KUKULCAN.SharedKernel.Database.Configuration;
+using KUKULCAN.SharedKernel.Database.Integration;
 using KUKULCAN.SharedKernel.Database.Interceptors;
-using KUKULCAN.SharedKernel.Database.UnitOfWork;
-using KUKULCAN.SharedKernel.DomainEvents.Abstractions;
-using Microsoft.Extensions.Options;
+using Microsoft.Extensions.Logging;
+using NUnit.Framework;
 
-namespace KUKULCAN.SharedKernel.Database.Integration;
+namespace KUKULCAN.SharedKernel.Database.PostgreSQL.Integration;
 
 [TestFixture]
 [NonParallelizable]

@@ -1,7 +1,7 @@
-using Microsoft.EntityFrameworkCore;
+using KUKULCAN.SharedKernel.Database.Integration;
 using NUnit.Framework;
 
-namespace KUKULCAN.SharedKernel.Database.Integration;
+namespace KUKULCAN.SharedKernel.Database.PostgreSQL.Integration;
 
 [TestFixture]
 [NonParallelizable]

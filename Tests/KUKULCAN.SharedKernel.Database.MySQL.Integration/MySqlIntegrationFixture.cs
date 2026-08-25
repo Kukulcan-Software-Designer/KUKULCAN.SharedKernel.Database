@@ -2,7 +2,7 @@ using System.Reflection;
 using System.Runtime.ExceptionServices;
 using Testcontainers.MySql;
 
-namespace KUKULCAN.SharedKernel.Database.Integration.MySQL;
+namespace KUKULCAN.SharedKernel.Database.MySQL.Integration;
 
 [SetUpFixture]
 public sealed class MySqlIntegrationDatabase

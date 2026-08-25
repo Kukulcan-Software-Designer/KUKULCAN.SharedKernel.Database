@@ -1,6 +1,4 @@
-using KUKULCAN.SharedKernel.Database.Extensions;
-
-namespace KUKULCAN.SharedKernel.Database.Integration.SQLServer;
+namespace KUKULCAN.SharedKernel.Database.SQLServer.Integration;
 
 [TestFixture]
 [NonParallelizable]
