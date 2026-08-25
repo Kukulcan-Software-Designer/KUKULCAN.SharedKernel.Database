@@ -24,6 +24,7 @@ public sealed class SqlServerStartupMigrationSeedIntegrationTests
 
         var services = new ServiceCollection();
         services.AddSingleton<IConfiguration>(configuration);
+        services.AddLogging();
         services.AddScoped<ITenantContext>(_ => new SqlServerTenantContext(Guid.NewGuid()));
         services.AddSingleton<IClock>(new FixedClock(SqlServerIntegrationConstants.FixedNow));
         services.AddSingleton<IDomainEventDispatcher>(Mock.Of<IDomainEventDispatcher>());
