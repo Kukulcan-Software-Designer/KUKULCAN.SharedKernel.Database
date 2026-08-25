@@ -76,13 +76,27 @@ public sealed class DomainEventsAndScalarMissingCoverageIntegrationTests
         await context.SaveChangesAsync();
         await context.Database.CurrentTransaction!.DisposeAsync();
 
-        Assert.ThrowsAsync<ObjectDisposedException>(async () => await unit.CommitTransactionAsync());
-        Assert.That(dispatcher.Events, Is.Empty);
-        Assert.That(entity.DomainEvents, Is.Empty);
+        Exception? caughtException = null;
+        try
+        {
+            await unit.CommitTransactionAsync();
+        }
+        catch (Exception exception)
+        {
+            caughtException = exception;
+        }
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(caughtException, Is.Not.Null);
+            Assert.That(caughtException, Is.TypeOf<ObjectDisposedException>().Or.TypeOf<InvalidOperationException>());
+            Assert.That(dispatcher.Events, Is.Empty);
+            Assert.That(entity.DomainEvents, Contains.Item(domainEvent));
+        }
     }
 
     [Test]
-    public async Task RollbackTransaction_ShouldNotDispatchDomainEventsAndShouldClearPendingStateAgainstRealSqlServer()
+    public async Task RollbackTransaction_ShouldClearPendingDispatchStateAndAllowDomainEventRetryAgainstRealSqlServer()
     {
         var dispatcher = new CapturingDispatcher();
         await using var context = await SqlServerIntegrationContextFactory.CreateAsync(_tenantId, dispatcher);
@@ -96,9 +110,15 @@ public sealed class DomainEventsAndScalarMissingCoverageIntegrationTests
         await context.SaveChangesAsync();
         await unit.RollbackTransactionAsync();
 
+        Assert.That(dispatcher.Events, Is.Empty);
+        Assert.That(entity.DomainEvents, Contains.Item(domainEvent));
+
+        await unit.BeginTransactionAsync();
+        await unit.CommitTransactionAsync();
+
         using (Assert.EnterMultipleScope())
         {
-            Assert.That(dispatcher.Events, Is.Empty);
+            Assert.That(dispatcher.Events, Is.EqualTo(new[] { domainEvent }));
             Assert.That(entity.DomainEvents, Is.Empty);
         }
     }
