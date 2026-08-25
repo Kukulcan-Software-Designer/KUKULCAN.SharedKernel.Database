@@ -1,0 +1,34 @@
+name: Reference Client
+
+on:
+  push:
+    branches:
+      - 'CLIENT/**'
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-client:
+    name: Build KUKULCAN.SharedKernel.Database.Client
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Restore client
+        run: dotnet restore SourceClient/KUKULCAN.SharedKernel.Database.SourceClient/KUKULCAN.SharedKernel.Database.Client.csproj
+
+      - name: Build client
+        run: dotnet build SourceClient/KUKULCAN.SharedKernel.Database.SourceClient/KUKULCAN.SharedKernel.Database.Client.csproj --no-restore --configuration Release
