@@ -31,3 +31,12 @@ New public types require a clear consumer-facing purpose. Implementation details
 ## Quality Gates
 
 Changes should compile with warnings treated as errors, satisfy XML documentation requirements and include appropriate behavior-focused tests.
+
+Pull requests targeting `main` should require the following GitHub Actions checks before merge:
+
+- `CI / Restore, build and test Database`
+- `Reference Client / Build KUKULCAN.SharedKernel.Database.Client`
+- `Coverage / ...` when the coverage workflow is part of the required check set
+- the provider-specific integration checks for SQL Server, PostgreSQL and MySQL when they are configured as required checks
+
+The `main` branch should be configured in GitHub with branch protection or an equivalent ruleset so that direct merges cannot bypass these quality gates.

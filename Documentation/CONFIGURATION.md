@@ -4,7 +4,7 @@
 
 The configuration root is:
 
-``` text
+```text
 Kukulcan:Database
 ```
 
@@ -12,7 +12,7 @@ Kukulcan:Database
 
 `KukulcanDatabaseOptions` contains:
 
-``` text
+```text
 Provider
 ConnectionString
 CommandTimeoutSeconds
@@ -23,61 +23,71 @@ Pool
 Migration
 ```
 
-## Provider
+## Providers
 
-The current `DatabaseProvider` enum contains:
+The current `DatabaseProvider` enum supports:
 
-``` text
+```text
 SqlServer
 PostgresSql
+MySql
 ```
 
-The provider package itself is not referenced by the shared database
-package.
+The production `KUKULCAN.SharedKernel.Database` package remains provider-neutral and does not reference a concrete database provider package. The consuming infrastructure or host supplies the required provider package:
+
+```text
+Microsoft.EntityFrameworkCore.SqlServer
+Npgsql.EntityFrameworkCore.PostgreSQL
+MySql.EntityFrameworkCore
+```
+
+Provider configuration is resolved dynamically by `KukulcanDbContextBase`.
 
 ## Retry
 
 Retry configuration contains:
 
-``` text
+```text
 Enabled
 MaxRetryCount
 MaxRetryDelaySeconds
 ```
 
-The base context uses these values when configuring supported providers.
+When enabled, these values are used by the provider configuration to enable the provider's EF Core execution strategy.
 
 ## Pool
 
-The options model exposes:
+Pool configuration contains:
 
-``` text
+```text
 Enabled
 MinSize
 MaxSize
 ```
 
-These values describe pool configuration, although concrete provider
-behavior remains provider-specific.
+The shared database infrastructure applies these settings to the provider connection string for SQL Server, PostgreSQL and MySQL. The exact connection-string keywords are provider-specific, while the public configuration model remains provider-neutral.
 
-## Migration
+## Migration and Seed
 
 Migration options contain:
 
-``` text
+```text
 AutoMigrateOnStartup
 SeedDataOnStartup
 ```
 
-The options model describes these concerns, while the current base
-database infrastructure does not itself execute startup migrations or
-seeding.
+When enabled through dependency injection:
+
+- `AutoMigrateOnStartup` applies pending EF Core migrations during application startup.
+- `SeedDataOnStartup` invokes an optional `IKukulcanDatabaseSeeder<TContext>` registered by the consuming application.
+
+The SharedKernel Database package does not provide application-specific seed data; the consumer supplies the seeder implementation.
 
 ## Diagnostics
 
 Two diagnostic flags are available:
 
-``` text
+```text
 EnableSensitiveDataLogging
 EnableDetailedErrors
 ```
@@ -88,9 +98,12 @@ Sensitive data logging must be disabled in production.
 
 `AddKukulcanDbContext<TContext>()`:
 
-1.  reads `Kukulcan:Database`;
-2.  binds `KukulcanDatabaseOptions`;
-3.  validates the connection string;
-4.  registers the DbContext;
-5.  registers `IUnitOfWork`;
-6.  registers `SlowQueryInterceptor`.
+1. reads `Kukulcan:Database`;
+2. binds `KukulcanDatabaseOptions`;
+3. validates the connection string;
+4. registers the derived DbContext;
+5. registers `IUnitOfWork` as scoped;
+6. registers `SlowQueryInterceptor` as a singleton;
+7. keeps provider configuration provider-neutral and allows an explicitly configured EF Core provider to take precedence.
+
+The registration also supports the optional startup migration and seed infrastructure configured through `Migration`.
