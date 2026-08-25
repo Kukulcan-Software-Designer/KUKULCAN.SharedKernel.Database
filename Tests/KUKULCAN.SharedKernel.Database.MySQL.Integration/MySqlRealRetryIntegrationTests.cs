@@ -50,16 +50,17 @@ public sealed class MySqlRealRetryIntegrationTests
             await setupCommand.ExecuteNonQueryAsync();
         }
 
-        await using var blockerConnection = new MySqlIntegrationDbContext(
+        await using var blockerContext = new MySqlIntegrationDbContext(
             options,
             new MySqlTenantContext(tenantId),
             new FixedClock(MySqlIntegrationConstants.FixedNow),
             Mock.Of<IDomainEventDispatcher>());
 
-        await blockerConnection.Database.OpenConnectionAsync();
-        await using DbTransaction blockerTransaction = await blockerConnection.Database.BeginTransactionAsync();
+        await blockerContext.Database.OpenConnectionAsync();
+        DbConnection blockerConnection = blockerContext.Database.GetDbConnection();
+        await using DbTransaction blockerTransaction = await blockerConnection.BeginTransactionAsync();
 
-        await using (DbCommand lockCommand = blockerConnection.Database.GetDbConnection().CreateCommand())
+        await using (DbCommand lockCommand = blockerConnection.CreateCommand())
         {
             lockCommand.Transaction = blockerTransaction;
             lockCommand.CommandText = "UPDATE KukulcanRetryCoverageRows SET Name = Name WHERE Id = 1;";
@@ -83,7 +84,7 @@ public sealed class MySqlRealRetryIntegrationTests
 
         int result = await strategy.ExecuteAsync(async () =>
         {
-            int attempt = Interlocked.Increment(ref attempts);
+            Interlocked.Increment(ref attempts);
 
             await using var victimContext = new MySqlIntegrationDbContext(
                 options,
@@ -103,9 +104,7 @@ public sealed class MySqlRealRetryIntegrationTests
             await using DbCommand updateCommand = victimConnection.CreateCommand();
             updateCommand.CommandText = "UPDATE KukulcanRetryCoverageRows SET Name = CONCAT(Name, ' updated') WHERE Id = 1;";
 
-            int affected = Convert.ToInt32(await updateCommand.ExecuteNonQueryAsync());
-
-            return affected;
+            return Convert.ToInt32(await updateCommand.ExecuteNonQueryAsync());
         });
 
         await releaseBlockerTask;
