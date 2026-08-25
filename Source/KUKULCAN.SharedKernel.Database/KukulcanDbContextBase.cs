@@ -42,15 +42,22 @@ public abstract class KukulcanDbContextBase(
             new DomainEventDispatchInterceptor(_domainEventDispatcher),
             new ImmutableEntityInterceptor());
 
-        if (optionsBuilder.IsConfigured) return;
-
         if (_opts.EnableSensitiveDataLogging)
             optionsBuilder.EnableSensitiveDataLogging();
 
         if (_opts.EnableDetailedErrors)
             optionsBuilder.EnableDetailedErrors();
 
-        ConfigureProvider(optionsBuilder);
+        // DbContextOptionsBuilder.IsConfigured reports whether EF Core has any
+        // configuration extensions, not specifically whether a database provider
+        // has been selected. AddDbContext can legitimately have interceptors and
+        // other options already present while still relying on this base context
+        // to resolve the provider from KukulcanDatabaseOptions.
+        bool databaseProviderConfigured = optionsBuilder.Options.Extensions
+            .Any(extension => extension.Info.IsDatabaseProvider);
+
+        if (!databaseProviderConfigured)
+            ConfigureProvider(optionsBuilder);
     }
 
     /// <summary>
