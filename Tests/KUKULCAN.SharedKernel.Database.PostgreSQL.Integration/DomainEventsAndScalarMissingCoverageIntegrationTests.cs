@@ -115,7 +115,7 @@ public sealed class DomainEventsAndScalarMissingCoverageIntegrationTests
         try
         {
             var logger = new PostgreSqlCapturingLogger<SlowQueryInterceptor>();
-            await using var context = Create(new CapturingDispatcher(), new SlowQueryInterceptor(logger));
+            await using var context = Create(new CapturingDispatcher(), new SlowQueryInterceptor(logger, Options.Create(new KukulcanDatabaseOptions())));
             await context.Database.EnsureCreatedAsync();
             await context.Database.OpenConnectionAsync();
             await using var command = context.Database.GetDbConnection().CreateCommand();
@@ -135,7 +135,7 @@ public sealed class DomainEventsAndScalarMissingCoverageIntegrationTests
         try
         {
             var logger = new PostgreSqlCapturingLogger<SlowQueryInterceptor>();
-            await using var context = Create(new CapturingDispatcher(), new SlowQueryInterceptor(logger));
+            await using var context = Create(new CapturingDispatcher(), new SlowQueryInterceptor(logger, Options.Create(new KukulcanDatabaseOptions())));
             await context.Database.EnsureCreatedAsync();
             await context.Database.OpenConnectionAsync();
             await using var command = context.Database.GetDbConnection().CreateCommand();
