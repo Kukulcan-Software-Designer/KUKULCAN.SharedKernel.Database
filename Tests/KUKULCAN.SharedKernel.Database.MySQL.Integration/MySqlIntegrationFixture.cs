@@ -1,3 +1,4 @@
+using System.Reflection;
 using Testcontainers.MySql;
 
 namespace KUKULCAN.SharedKernel.Database.Integration.MySQL;
@@ -51,6 +52,24 @@ internal static class MySqlIntegrationContextFactory
 
         await context.Database.EnsureCreatedAsync();
         return context;
+    }
+}
+
+internal static class MySqlTenantModelCacheKeyHelper
+{
+    private static readonly Type FactoryType = typeof(KukulcanDbContextBase).Assembly
+        .GetType("KUKULCAN.SharedKernel.Database.TenantModelCacheKeyFactory", throwOnError: true)!;
+
+    private static readonly ConstructorInfo Constructor = FactoryType
+        .GetConstructor(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, [], null, [], null)!;
+
+    private static readonly MethodInfo CreateMethod = FactoryType
+        .GetMethod(nameof(IModelCacheKeyFactory.Create), BindingFlags.Instance | BindingFlags.Public, [typeof(DbContext), typeof(bool)])!;
+
+    public static object Create(DbContext context, bool designTime)
+    {
+        object factory = Constructor.Invoke([]);
+        return CreateMethod.Invoke(factory, [context, designTime])!;
     }
 }
 
