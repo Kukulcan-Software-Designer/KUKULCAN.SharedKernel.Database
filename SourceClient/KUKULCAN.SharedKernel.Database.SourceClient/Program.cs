@@ -122,7 +122,7 @@ try
 }
 catch (OperationCanceledException)
 {
-    AnsiConsole.MarkupLine("[grey]Operación cancelada.[/");
+    AnsiConsole.MarkupLine("[grey]Operación cancelada.[/]");
 }
 catch (Exception ex)
 {
