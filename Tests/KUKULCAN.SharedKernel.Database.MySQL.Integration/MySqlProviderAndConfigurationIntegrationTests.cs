@@ -16,7 +16,7 @@ public sealed class MySqlProviderAndConfigurationIntegrationTests
     public async Task ConfigureProvider_ShouldUseMySqlWhenProviderInstalled()
     {
         await using var context = await MySqlIntegrationContextFactory.CreateAsync(Guid.NewGuid());
-        Assert.That(context.Database.ProviderName, Does.Contain("MySQL"));
+        Assert.That(context.Database.ProviderName, Is.EqualTo("MySql.EntityFrameworkCore"));
     }
 
     [Test]
