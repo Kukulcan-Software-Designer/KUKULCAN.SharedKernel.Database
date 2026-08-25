@@ -17,6 +17,7 @@ public sealed class ReferenceClientScenarioRunner(
     ConsoleCurrentUser currentUser,
     ConsoleTenantContext tenantContext,
     ConsoleDateTimeProvider clock,
+    ConsoleDomainEventDispatcher eventDispatcher,
     KukulcanDatabaseOptions options,
     IServiceScopeFactory scopeFactory)
 {
@@ -282,26 +283,34 @@ public sealed class ReferenceClientScenarioRunner(
         await uow.SaveChangesAsync(ct);
 
         db.Entry(log).State = EntityState.Modified;
+        var blocked = false;
         try
         {
             await uow.SaveChangesAsync(ct);
-            throw new InvalidOperationException("ImmutableEntityInterceptor allowed an update.");
         }
-        catch (InvalidOperationException) when (db.ChangeTracker.Entries().All(e => e.State != EntityState.Modified))
+        catch (InvalidOperationException)
+        {
+            blocked = true;
+        }
+        finally
         {
             db.ChangeTracker.Clear();
         }
+
+        if (!blocked)
+            throw new InvalidOperationException("ImmutableEntityInterceptor allowed an update.");
     }
 
     private async Task DomainEventsScenarioAsync(CancellationToken ct)
     {
+        var before = eventDispatcher.DispatchCount;
         var order = ClientOrder.Create($"REFERENCE-EVENT-{Guid.NewGuid():N}", 299.95m, "Confirmed");
         order.Place();
         db.Orders.Add(order);
         await uow.SaveChangesAsync(ct);
 
-        if (!db.ChangeTracker.Entries<ClientOrder>().Any())
-            return;
+        if (eventDispatcher.DispatchCount <= before)
+            throw new InvalidOperationException("DomainEventDispatchInterceptor did not dispatch the domain event.");
     }
 
     private async Task SlowQueryScenarioAsync(CancellationToken ct)
