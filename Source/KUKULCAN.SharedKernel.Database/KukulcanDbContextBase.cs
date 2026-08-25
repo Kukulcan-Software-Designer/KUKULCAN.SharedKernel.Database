@@ -21,12 +21,46 @@ public abstract class KukulcanDbContextBase(
     private readonly IClock _clock = clock ?? throw new ArgumentNullException(nameof(clock));
     private readonly IDomainEventDispatcher _domainEventDispatcher = domainEventDispatcher ?? throw new ArgumentNullException(nameof(domainEventDispatcher));
     private readonly SlowQueryInterceptor? _slowQueryInterceptor = slowQueryInterceptor;
+    private readonly List<IDomainEvent> _pendingDomainEvents = [];
     private const string _commandTimeoutMethodName = "CommandTimeout";
 
-    /// <summary>
-    /// Gets the current tenant identifier used to build the EF Core model cache key.
-    /// </summary>
+    /// <summary>Gets the current tenant identifier used to build the EF Core model cache key.</summary>
     internal Guid CurrentTenantId => _tenantContext.TenantId;
+
+    /// <summary>Captures pending domain events without clearing them from their aggregates.</summary>
+    internal void CapturePendingDomainEvents()
+    {
+        var events = ChangeTracker.Entries<IHasDomainEvents>()
+            .Select(e => e.Entity)
+            .SelectMany(e => e.DomainEvents)
+            .Where(e => !_pendingDomainEvents.Contains(e))
+            .ToList();
+
+        _pendingDomainEvents.AddRange(events);
+    }
+
+    /// <summary>Dispatches all captured domain events and clears them only after successful dispatch.</summary>
+    internal async Task DispatchPendingDomainEventsAsync(CancellationToken cancellationToken = default)
+    {
+        foreach (IDomainEvent domainEvent in _pendingDomainEvents.ToList())
+            await _domainEventDispatcher.DispatchAsync(domainEvent, cancellationToken).ConfigureAwait(false);
+
+        if (_pendingDomainEvents.Count == 0)
+            return;
+
+        foreach (IHasDomainEvents aggregate in ChangeTracker.Entries<IHasDomainEvents>()
+                     .Select(e => e.Entity)
+                     .Distinct())
+        {
+            foreach (IDomainEvent domainEvent in _pendingDomainEvents)
+                aggregate.DomainEvents.Remove(domainEvent);
+        }
+
+        _pendingDomainEvents.Clear();
+    }
+
+    /// <summary>Discards captured events when the enclosing explicit transaction is abandoned.</summary>
+    internal void DiscardPendingDomainEvents() => _pendingDomainEvents.Clear();
 
     /// <inheritdoc/>
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
@@ -48,11 +82,6 @@ public abstract class KukulcanDbContextBase(
         if (_opts.EnableDetailedErrors)
             optionsBuilder.EnableDetailedErrors();
 
-        // DbContextOptionsBuilder.IsConfigured reports whether EF Core has any
-        // configuration extensions, not specifically whether a database provider
-        // has been selected. AddDbContext can legitimately have interceptors and
-        // other options already present while still relying on this base context
-        // to resolve the provider from KukulcanDatabaseOptions.
         bool databaseProviderConfigured = optionsBuilder.Options.Extensions
             .Any(extension => extension.Info.IsDatabaseProvider);
 
@@ -60,13 +89,10 @@ public abstract class KukulcanDbContextBase(
             ConfigureProvider(optionsBuilder);
     }
 
-    /// <summary>
-    /// Configures the database provider based on <see cref="KukulcanDatabaseOptions.Provider"/>.
-    /// Override in a derived class to customize provider configuration.
-    /// </summary>
+    /// <summary>Configures the database provider based on the configured provider and connection options.</summary>
     protected virtual void ConfigureProvider(DbContextOptionsBuilder optionsBuilder)
     {
-        var connStr = _opts.ConnectionString;
+        var connStr = ConfigureConnectionPool(_opts.Provider, _opts.ConnectionString, _opts.Pool);
         var timeout = _opts.CommandTimeoutSeconds;
         var maxRetry = _opts.Retry.Enabled ? _opts.Retry.MaxRetryCount : 0;
         var maxDelay = TimeSpan.FromSeconds(_opts.Retry.MaxRetryDelaySeconds);
@@ -87,13 +113,47 @@ public abstract class KukulcanDbContextBase(
         }
     }
 
+    private static string ConfigureConnectionPool(DatabaseProvider provider, string connectionString, KukulcanDatabaseOptions.PoolOptions pool)
+    {
+        if (string.IsNullOrWhiteSpace(connectionString))
+            return connectionString;
+
+        var builder = new System.Data.Common.DbConnectionStringBuilder { ConnectionString = connectionString };
+        string poolingKey = "Pooling";
+        builder[poolingKey] = pool.Enabled;
+
+        if (!pool.Enabled)
+            return builder.ConnectionString;
+
+        if (pool.MinSize < 0 || pool.MaxSize <= 0 || pool.MinSize > pool.MaxSize)
+            throw new ArgumentOutOfRangeException(nameof(pool), "Pool MinSize/MaxSize values are invalid.");
+
+        string minKey = provider switch
+        {
+            DatabaseProvider.SqlServer => "Min Pool Size",
+            DatabaseProvider.PostgresSql => "Minimum Pool Size",
+            DatabaseProvider.MySql => "MinimumPoolSize",
+            _ => throw new NotSupportedException($"Database provider '{provider}' is not supported.")
+        };
+
+        string maxKey = provider switch
+        {
+            DatabaseProvider.SqlServer => "Max Pool Size",
+            DatabaseProvider.PostgresSql => "Maximum Pool Size",
+            DatabaseProvider.MySql => "MaximumPoolSize",
+            _ => throw new NotSupportedException($"Database provider '{provider}' is not supported.")
+        };
+
+        builder[minKey] = pool.MinSize;
+        builder[maxKey] = pool.MaxSize;
+        return builder.ConnectionString;
+    }
+
     private static void ConfigureSqlServer(DbContextOptionsBuilder optionsBuilder, string connectionString, int timeoutSec, int maxRetry, TimeSpan maxDelay)
     {
         try
         {
-            Type type = LoadProviderExtensionType(
-                "Microsoft.EntityFrameworkCore.SqlServerDbContextOptionsExtensions",
-                "Microsoft.EntityFrameworkCore.SqlServer");
+            Type type = LoadProviderExtensionType("Microsoft.EntityFrameworkCore.SqlServerDbContextOptionsExtensions", "Microsoft.EntityFrameworkCore.SqlServer");
             InvokeProviderUseMethod(type, "UseSqlServer", optionsBuilder, connectionString, timeoutSec, maxRetry, maxDelay);
         }
         catch (Exception ex) when (ex is not NotSupportedException)
@@ -106,9 +166,7 @@ public abstract class KukulcanDbContextBase(
     {
         try
         {
-            Type type = LoadProviderExtensionType(
-                "Microsoft.EntityFrameworkCore.NpgsqlDbContextOptionsBuilderExtensions",
-                "Npgsql.EntityFrameworkCore.PostgreSQL");
+            Type type = LoadProviderExtensionType("Microsoft.EntityFrameworkCore.NpgsqlDbContextOptionsBuilderExtensions", "Npgsql.EntityFrameworkCore.PostgreSQL");
             InvokeProviderUseMethod(type, "UseNpgsql", optionsBuilder, connectionString, timeoutSec, maxRetry, maxDelay);
         }
         catch (Exception ex) when (ex is not NotSupportedException)
@@ -121,9 +179,7 @@ public abstract class KukulcanDbContextBase(
     {
         try
         {
-            Type type = LoadProviderExtensionType(
-                "Microsoft.EntityFrameworkCore.MySQLDbContextOptionsExtensions",
-                "MySql.EntityFrameworkCore");
+            Type type = LoadProviderExtensionType("Microsoft.EntityFrameworkCore.MySQLDbContextOptionsExtensions", "MySql.EntityFrameworkCore");
             InvokeProviderUseMethod(type, "UseMySQL", optionsBuilder, connectionString, timeoutSec, maxRetry, maxDelay);
         }
         catch (Exception ex) when (ex is not NotSupportedException)
@@ -135,14 +191,8 @@ public abstract class KukulcanDbContextBase(
     private static Type LoadProviderExtensionType(string typeName, string assemblyName)
     {
         Assembly assembly;
-        try
-        {
-            assembly = Assembly.Load(new AssemblyName(assemblyName));
-        }
-        catch (FileNotFoundException ex)
-        {
-            throw NotInstalled(assemblyName, ex);
-        }
+        try { assembly = Assembly.Load(new AssemblyName(assemblyName)); }
+        catch (FileNotFoundException ex) { throw NotInstalled(assemblyName, ex); }
 
         return assembly.GetType(typeName, throwOnError: false)
                ?? throw new NotSupportedException($"Assembly '{assemblyName}' does not expose the expected provider extension type '{typeName}'.");
@@ -150,14 +200,12 @@ public abstract class KukulcanDbContextBase(
 
     private static void InvokeProviderUseMethod(Type extensionType, string methodName, DbContextOptionsBuilder optionsBuilder, string connectionString, int timeoutSec, int maxRetry, TimeSpan maxDelay)
     {
-        MethodInfo? method = extensionType
-            .GetMethods(BindingFlags.Public | BindingFlags.Static)
+        MethodInfo? method = extensionType.GetMethods(BindingFlags.Public | BindingFlags.Static)
             .Where(m => m.Name == methodName && !m.IsGenericMethodDefinition)
             .FirstOrDefault(m =>
             {
                 ParameterInfo[] parameters = m.GetParameters();
-                return parameters.Length == 3
-                       && parameters[0].ParameterType == typeof(DbContextOptionsBuilder)
+                return parameters.Length == 3 && parameters[0].ParameterType == typeof(DbContextOptionsBuilder)
                        && parameters[1].ParameterType == typeof(string)
                        && parameters[2].ParameterType.IsGenericType
                        && parameters[2].ParameterType.GetGenericTypeDefinition() == typeof(Action<>);
@@ -167,9 +215,7 @@ public abstract class KukulcanDbContextBase(
             throw new NotSupportedException($"Provider '{extensionType.Assembly.GetName().Name}' does not expose a compatible {methodName} method.");
 
         Type providerOptionsBuilderType = method.GetParameters()[2].ParameterType.GetGenericArguments()[0];
-
-        typeof(KukulcanDbContextBase)
-            .GetMethod(nameof(InvokeProviderUseMethodGeneric), BindingFlags.NonPublic | BindingFlags.Static)!
+        typeof(KukulcanDbContextBase).GetMethod(nameof(InvokeProviderUseMethodGeneric), BindingFlags.NonPublic | BindingFlags.Static)!
             .MakeGenericMethod(providerOptionsBuilderType)
             .Invoke(null, [method, optionsBuilder, connectionString, timeoutSec, maxRetry, maxDelay]);
     }
@@ -183,8 +229,7 @@ public abstract class KukulcanDbContextBase(
 
             if (maxRetry <= 0) return;
 
-            MethodInfo? retryMethod = providerOptionsType
-                .GetMethods(BindingFlags.Public | BindingFlags.Instance)
+            MethodInfo? retryMethod = providerOptionsType.GetMethods(BindingFlags.Public | BindingFlags.Instance)
                 .FirstOrDefault(m => m.Name == "EnableRetryOnFailure" && m.GetParameters().Length == 3);
 
             if (retryMethod is null)
