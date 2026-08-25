@@ -4,34 +4,24 @@ namespace KUKULCAN.SharedKernel.Database.Integration.SQLServer;
 [NonParallelizable]
 public sealed class DomainEventsAndScalarMissingCoverageIntegrationTests
 {
-    private SqlServerIntegrationDbContext _context = null!;
     private Guid _tenantId;
 
     [SetUp]
-    public async Task SetUp()
-    {
-        _tenantId = Guid.NewGuid();
-        _context = await SqlServerIntegrationContextFactory.CreateAsync(_tenantId);
-        await _context.Entities.IgnoreQueryFilters().ExecuteDeleteAsync();
-        await _context.DomainEventEntities.IgnoreQueryFilters().ExecuteDeleteAsync();
-    }
-
-    [TearDown]
-    public async Task TearDown() => await _context.DisposeAsync();
+    public void SetUp() => _tenantId = Guid.NewGuid();
 
     [Test]
     public async Task CommitTransaction_ShouldPersistAndDispatchDomainEventFromRealSqlServer()
     {
         var dispatcher = new CapturingDispatcher();
         await using var context = await SqlServerIntegrationContextFactory.CreateAsync(_tenantId, dispatcher);
-        await using var verification = await SqlServerIntegrationContextFactory.CreateAsync(Guid.NewGuid());
-        var unit = new UnitOfWork<SqlServerIntegrationDbContext>(context);
-        var domainEvent = new SqlServerTestDomainEvent();
+        await using var verification = await SqlServerIntegrationContextFactory.CreateAsync(_tenantId);
+        await using var unit = new UnitOfWork<SqlServerIntegrationDbContext>(context);
+        var domainEvent = new SqlServerTestDomainEvent(SqlServerIntegrationConstants.FixedNow);
+        var entity = new SqlServerDomainEventEntity { TenantId = _tenantId, Name = "Committed event" };
+        entity.AddDomainEventForTest(domainEvent);
+        context.DomainEventEntities.Add(entity);
 
         await unit.BeginTransactionAsync();
-        var entity = new SqlServerDomainEventEntity { TenantId = _tenantId, Name = "Committed event" };
-        entity.AddDomainEvent(domainEvent);
-        context.DomainEventEntities.Add(entity);
         await context.SaveChangesAsync();
         await unit.CommitTransactionAsync();
 
@@ -51,16 +41,16 @@ public sealed class DomainEventsAndScalarMissingCoverageIntegrationTests
     {
         var dispatcher = new CapturingDispatcher();
         await using var context = await SqlServerIntegrationContextFactory.CreateAsync(_tenantId, dispatcher);
-        var unit = new UnitOfWork<SqlServerIntegrationDbContext>(context);
-        var first = new SqlServerTestDomainEvent();
-        var second = new SqlServerTestDomainEvent();
+        await using var unit = new UnitOfWork<SqlServerIntegrationDbContext>(context);
+        var first = new SqlServerTestDomainEvent(SqlServerIntegrationConstants.FixedNow);
+        var second = new SqlServerTestDomainEvent(SqlServerIntegrationConstants.FixedNow.AddSeconds(1));
+        var firstEntity = new SqlServerDomainEventEntity { TenantId = _tenantId, Name = "Aggregate A" };
+        var secondEntity = new SqlServerDomainEventEntity { TenantId = _tenantId, Name = "Aggregate B" };
+        firstEntity.AddDomainEventForTest(first);
+        secondEntity.AddDomainEventForTest(second);
+        context.DomainEventEntities.AddRange(firstEntity, secondEntity);
 
         await unit.BeginTransactionAsync();
-        var firstEntity = new SqlServerDomainEventEntity { TenantId = _tenantId, Name = "Aggregate A" };
-        firstEntity.AddDomainEvent(first);
-        var secondEntity = new SqlServerDomainEventEntity { TenantId = _tenantId, Name = "Aggregate B" };
-        secondEntity.AddDomainEvent(second);
-        context.DomainEventEntities.AddRange(firstEntity, secondEntity);
         await unit.CommitTransactionAsync();
 
         using (Assert.EnterMultipleScope())
@@ -76,26 +66,19 @@ public sealed class DomainEventsAndScalarMissingCoverageIntegrationTests
     {
         var dispatcher = new CapturingDispatcher();
         await using var context = await SqlServerIntegrationContextFactory.CreateAsync(_tenantId, dispatcher);
-        var unit = new UnitOfWork<SqlServerIntegrationDbContext>(context);
-        var domainEvent = new SqlServerTestDomainEvent();
+        await using var unit = new UnitOfWork<SqlServerIntegrationDbContext>(context);
+        var domainEvent = new SqlServerTestDomainEvent(SqlServerIntegrationConstants.FixedNow);
         var entity = new SqlServerDomainEventEntity { TenantId = _tenantId, Name = "Commit failure" };
-        entity.AddDomainEvent(domainEvent);
+        entity.AddDomainEventForTest(domainEvent);
         context.DomainEventEntities.Add(entity);
+
         await unit.BeginTransactionAsync();
         await context.SaveChangesAsync();
+        await context.Database.CurrentTransaction!.DisposeAsync();
 
-        context.DomainEventEntities.Remove(entity);
-        await context.SaveChangesAsync();
-
-        try
-        {
-            await unit.CommitTransactionAsync();
-            Assert.Fail("CommitTransactionAsync should fail after the transaction state was invalidated.");
-        }
-        catch (Exception)
-        {
-            Assert.That(dispatcher.Events, Is.Empty);
-        }
+        Assert.ThrowsAsync<ObjectDisposedException>(async () => await unit.CommitTransactionAsync());
+        Assert.That(dispatcher.Events, Is.Empty);
+        Assert.That(entity.DomainEvents, Is.Empty);
     }
 
     [Test]
@@ -103,11 +86,12 @@ public sealed class DomainEventsAndScalarMissingCoverageIntegrationTests
     {
         var dispatcher = new CapturingDispatcher();
         await using var context = await SqlServerIntegrationContextFactory.CreateAsync(_tenantId, dispatcher);
-        var unit = new UnitOfWork<SqlServerIntegrationDbContext>(context);
-        var domainEvent = new SqlServerTestDomainEvent();
+        await using var unit = new UnitOfWork<SqlServerIntegrationDbContext>(context);
+        var domainEvent = new SqlServerTestDomainEvent(SqlServerIntegrationConstants.FixedNow);
         var entity = new SqlServerDomainEventEntity { TenantId = _tenantId, Name = "Rollback event" };
-        entity.AddDomainEvent(domainEvent);
+        entity.AddDomainEventForTest(domainEvent);
         context.DomainEventEntities.Add(entity);
+
         await unit.BeginTransactionAsync();
         await context.SaveChangesAsync();
         await unit.RollbackTransactionAsync();
@@ -124,11 +108,11 @@ public sealed class DomainEventsAndScalarMissingCoverageIntegrationTests
     {
         var dispatcher = new ThrowingDispatcher();
         await using var context = await SqlServerIntegrationContextFactory.CreateAsync(_tenantId, dispatcher);
-        await using var verification = await SqlServerIntegrationContextFactory.CreateAsync(Guid.NewGuid());
-        var unit = new UnitOfWork<SqlServerIntegrationDbContext>(context);
-        var domainEvent = new SqlServerTestDomainEvent();
+        await using var verification = await SqlServerIntegrationContextFactory.CreateAsync(_tenantId);
+        await using var unit = new UnitOfWork<SqlServerIntegrationDbContext>(context);
+        var domainEvent = new SqlServerTestDomainEvent(SqlServerIntegrationConstants.FixedNow);
         var entity = new SqlServerDomainEventEntity { TenantId = _tenantId, Name = "Dispatcher failure" };
-        entity.AddDomainEvent(domainEvent);
+        entity.AddDomainEventForTest(domainEvent);
         context.DomainEventEntities.Add(entity);
 
         await unit.BeginTransactionAsync();
@@ -151,9 +135,37 @@ public sealed class DomainEventsAndScalarMissingCoverageIntegrationTests
         SlowQueryInterceptor.SlowQueryThresholdMs = 0;
         try
         {
-            var logger = new CapturingLogger<SlowQueryInterceptor>();
-            await using var context = await SqlServerIntegrationContextFactory.CreateAsync(_tenantId, logger);
-            _ = await context.Database.SqlQuery<int>($"SELECT 1 AS Value").SingleAsync();
+            var logger = new SqlServerCapturingLogger<SlowQueryInterceptor>();
+            var interceptor = new SlowQueryInterceptor(logger);
+            await using var context = await SqlServerIntegrationContextFactory.CreateAsync(_tenantId, slowQueryInterceptor: interceptor);
+            await context.Database.OpenConnectionAsync();
+            await using var command = context.Database.GetDbConnection().CreateCommand();
+            command.CommandText = "SELECT 1";
+            _ = await command.ExecuteScalarAsync();
+            await context.Database.CloseConnectionAsync();
+            Assert.That(logger.WarningMessages, Has.Some.Contains("[SlowQuery]"));
+        }
+        finally
+        {
+            SlowQueryInterceptor.SlowQueryThresholdMs = previousThreshold;
+        }
+    }
+
+    [Test]
+    public async Task SlowQueryInterceptor_ScalarExecuted_ShouldLogRealScalarQueryAgainstSqlServer()
+    {
+        int previousThreshold = SlowQueryInterceptor.SlowQueryThresholdMs;
+        SlowQueryInterceptor.SlowQueryThresholdMs = 0;
+        try
+        {
+            var logger = new SqlServerCapturingLogger<SlowQueryInterceptor>();
+            var interceptor = new SlowQueryInterceptor(logger);
+            await using var context = await SqlServerIntegrationContextFactory.CreateAsync(_tenantId, slowQueryInterceptor: interceptor);
+            await context.Database.OpenConnectionAsync();
+            await using var command = context.Database.GetDbConnection().CreateCommand();
+            command.CommandText = "SELECT 1";
+            _ = command.ExecuteScalar();
+            await context.Database.CloseConnectionAsync();
             Assert.That(logger.WarningMessages, Has.Some.Contains("[SlowQuery]"));
         }
         finally
@@ -165,7 +177,6 @@ public sealed class DomainEventsAndScalarMissingCoverageIntegrationTests
     private sealed class CapturingDispatcher : IDomainEventDispatcher
     {
         public List<IDomainEvent> Events { get; } = [];
-
         public Task DispatchAsync(IDomainEvent domainEvent, CancellationToken cancellationToken = default)
         {
             Events.Add(domainEvent);
@@ -177,10 +188,5 @@ public sealed class DomainEventsAndScalarMissingCoverageIntegrationTests
     {
         public Task DispatchAsync(IDomainEvent domainEvent, CancellationToken cancellationToken = default)
             => throw new InvalidOperationException("Dispatcher failure");
-    }
-
-    private sealed record SqlServerTestDomainEvent : IDomainEvent
-    {
-        public DateTimeOffset OccurredOn { get; } = DateTimeOffset.UtcNow;
     }
 }
