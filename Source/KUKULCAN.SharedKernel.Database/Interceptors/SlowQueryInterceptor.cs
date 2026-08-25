@@ -38,10 +38,10 @@ public sealed class SlowQueryInterceptor(ILogger<SlowQueryInterceptor> logger, I
     }
 
     /// <inheritdoc/>
-    public override async ValueTask<object> ScalarExecutedAsync(DbCommand command, CommandExecutedEventData eventData, object? result, CancellationToken cancellationToken = default)
+    public override ValueTask<object?> ScalarExecutedAsync(DbCommand command, CommandExecutedEventData eventData, object? result, CancellationToken cancellationToken = default)
     {
         LogIfSlow(command, eventData.Duration);
-        return (await base.ScalarExecutedAsync(command, eventData, result, cancellationToken).ConfigureAwait(false))!;
+        return base.ScalarExecutedAsync(command, eventData, result, cancellationToken);
     }
 
     /// <inheritdoc/>
