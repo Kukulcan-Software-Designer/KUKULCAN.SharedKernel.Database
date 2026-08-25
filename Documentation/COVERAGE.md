@@ -18,42 +18,51 @@ The supported providers are:
 
 ## Current Unit-Test Coverage
 
-The successful `Code Coverage` workflow run on `main` after merging `TEST/CoverageCompleted` generated the following Cobertura report:
+The current `Code Coverage` workflow on `main` completed successfully after merging `TEST/Coverage`. The report was generated from **132/132 passing unit tests** on commit `59f0e1b6460d436e51e48cc3c585e5ad3975f724`.
 
 | Metric | Result |
 |---|---:|
-| Line coverage | **99.13% (228/230)** |
-| Branch coverage | **100% (74/74)** |
+| Line coverage | **96.68% (292/302)** |
+| Branch coverage | **92.70% (89/96)** |
 
-The branch-coverage target is therefore complete. Two production lines remain uncovered, both in `KukulcanDbContextBase`.
+This is the current authoritative unit-coverage measurement for the production assembly.
 
-The report identifies `KukulcanDbContextBase` at **98.26% line coverage** and **100% branch coverage**. Every other production class in the report has 100% line and branch coverage.
+### Class-level coverage
 
-The remaining two lines are defensive provider-resolution lines. They do not represent an uncovered logical branch: the corresponding branches are fully covered, but the line-level report does not execute both sides of the defensive provider-type resolution in the same way as the other paths.
+| Production class | Line coverage | Branch coverage |
+|---|---:|---:|
+| `KukulcanDbContextBase` | **95.42%** | **91.30%** |
+| `SlowQueryInterceptor` | **92.00%** | **100%** |
+| `DomainEventDispatchInterceptor` | **100%** | **50%** |
+| `KukulcanDatabaseStartupInitializer<TContext>` | **100%** | **50%** |
+| All remaining production classes | **100%** | **100%** |
 
-No further unit tests are currently justified solely to force the line metric to 100% if doing so would require artificial assembly-loading conditions.
+The ten uncovered production lines are concentrated in two areas:
+
+- `KukulcanDbContextBase`: lines **142, 166, 225, 227, 242-245**. These are provider-resolution/configuration defensive paths.
+- `SlowQueryInterceptor`: lines **43-44**.
+
+The branch report also contains partially covered decision points in `DomainEventDispatchInterceptor` and `KukulcanDatabaseStartupInitializer<TContext>`. Their executable lines are covered, but not every branch is exercised by the deterministic unit suite.
+
+The coverage result should therefore not be interpreted as "100% API behavior covered". Integration tests remain necessary to validate provider-backed behavior, especially for SQL Server, PostgreSQL and MySQL.
+
+No tests should be added solely to manufacture a 100% line or branch percentage through artificial reflection or assembly-loading scenarios unless those paths correspond to meaningful supported behavior.
 
 ## Integration-Test Coverage
 
-Integration coverage must be measured independently for each real DBMS. The repository workflow is configured to run all three suites with `XPlat Code Coverage` and upload independent Cobertura artifacts:
+Integration coverage must be measured independently for each real DBMS. The provider-specific integration workflows execute against real database engines and should be considered the authoritative source for provider-backed execution coverage.
 
-- `kukulcan-sharedkernel-database-postgresql-coverage`
-- `kukulcan-sharedkernel-database-sqlserver-coverage`
-- `kukulcan-sharedkernel-database-mysql-coverage`
-
-The integration workflow uses real provider-specific Testcontainers environments and is the authoritative source for the percentages below.
+At present, the repository does **not** publish consolidated provider-specific line/branch percentages in `COVERAGE.md`. Successful integration-test execution demonstrates behavioral coverage but is not itself a numerical coverage measurement.
 
 | DBMS | Integration coverage |
 |---|---:|
-| Microsoft SQL Server | **Pending CI measurement** |
-| PostgreSQL | **Pending CI measurement** |
-| MySQL | **Pending CI measurement** |
-
-The percentages must be taken from the generated Cobertura artifacts; successful integration-test execution alone is not a coverage measurement.
+| Microsoft SQL Server | **Not currently published** |
+| PostgreSQL | **Not currently published** |
+| MySQL | **Not currently published** |
 
 ## Integration-Test Scope
 
-The three provider suites cover the following responsibilities:
+The provider suites cover the following responsibilities:
 
 | Responsibility | SQL Server | PostgreSQL | MySQL |
 |---|:---:|:---:|:---:|
@@ -70,15 +79,22 @@ The three provider suites cover the following responsibilities:
 | Synchronous persistence paths | Yes | Yes | Yes |
 | Asynchronous persistence paths | Yes | Yes | Yes |
 | Provider-specific configuration | Yes | Yes | Yes |
+| Real retry behavior | Yes | Yes | Yes |
+| Real transaction commit/rollback/end semantics | Yes | Yes | Yes |
+| Real migration/seed pipeline | Yes | Yes | Yes |
 
 Tests are duplicated between providers only where provider-specific execution can change the result. Provider-independent behavior remains primarily covered by the deterministic unit suite.
 
 ## Test Adequacy Decision
 
-The current unit-test suite does not require additional tests for the already fully covered interceptors, filters, tenant model cache, service registration or Unit of Work paths.
+The current unit suite provides high production-code coverage, but it does not replace integration verification. The combination of deterministic unit tests and real-provider integration tests is the intended coverage model for this project.
 
-The current provider-specific integration suites cover the important database boundary behaviors for SQL Server, PostgreSQL and MySQL. Additional integration tests should be added only when a provider-specific behavior is introduced or a provider-specific regression is discovered.
+The remaining unit uncovered lines are mostly defensive provider-resolution and interceptor paths. They should only be targeted when a test can represent a meaningful supported scenario rather than merely increasing a percentage.
+
+The provider-specific integration suites are particularly important for provider behavior that cannot be inferred from the unit suite, including real transactions, cancellation, retry execution, migrations/seed, tenant model-cache isolation and provider-specific command interception.
 
 ## CI Coverage Artifacts
 
-The unit coverage artifact is generated by the `Code Coverage` workflow. The integration workflow generates one Cobertura artifact per DBMS so that provider-specific coverage can be reviewed independently.
+The unit `Code Coverage` workflow generates a Cobertura artifact named `kukulcan-sharedkernel-database-coverage`.
+
+Provider-specific integration workflows may generate their own test and coverage artifacts; those results should be reported separately by provider rather than merged into the deterministic unit-coverage percentage.
