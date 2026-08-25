@@ -1,5 +1,4 @@
 using KUKULCAN.SharedKernel.Database.Extensions;
-using KUKULCAN.SharedKernel.Database.Integration;
 using Microsoft.EntityFrameworkCore.Metadata;
 using NUnit.Framework;
 
