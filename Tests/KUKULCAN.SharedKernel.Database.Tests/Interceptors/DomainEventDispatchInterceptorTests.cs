@@ -74,7 +74,6 @@ public sealed class DomainEventDispatchInterceptorTests
     [Test]
     public async Task CaptureAndDispatchIfCommittedAsync_WithNullContext_ShouldReturnWithoutDispatching()
     {
-        var dispatcher = new Mock<IDomainEventDispatcher>();
         var method = typeof(DomainEventDispatchInterceptor).GetMethod(
             "CaptureAndDispatchIfCommittedAsync",
             BindingFlags.Static | BindingFlags.NonPublic);
@@ -85,10 +84,7 @@ public sealed class DomainEventDispatchInterceptorTests
             null,
             [null, CancellationToken.None])!;
 
+        Assert.That(task, Is.Not.Null);
         await task;
-
-        dispatcher.Verify(
-            x => x.DispatchAsync(It.IsAny<IDomainEvent>(), It.IsAny<CancellationToken>()),
-            Times.Never);
     }
 }
