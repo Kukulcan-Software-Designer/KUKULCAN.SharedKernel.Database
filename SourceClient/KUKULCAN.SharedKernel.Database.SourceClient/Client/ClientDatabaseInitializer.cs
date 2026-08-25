@@ -14,7 +14,7 @@ public sealed class ClientDatabaseInitializer(ClientDbContext db)
     /// <param name="cancellationToken">Cancellation token for database operations.</param>
     public async Task InitializeAsync(CancellationToken cancellationToken)
     {
-        var migrations = await db.Database.GetMigrationsAsync(cancellationToken);
+        var migrations = db.Database.GetMigrations();
 
         if (migrations.Any())
         {
