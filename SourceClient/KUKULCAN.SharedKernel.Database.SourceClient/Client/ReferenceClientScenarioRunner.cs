@@ -1,15 +1,7 @@
 using KUKULCAN.SharedKernel.Database.Client.UI;
-using KUKULCAN.SharedKernel.Database.Client.Client;
-using KUKULCAN.SharedKernel.Database.Client.Client.Models;
-using KUKULCAN.SharedKernel.Database.Client.Client.Tenants;
-using KUKULCAN.SharedKernel.Database.Client.Client.Events;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 using KUKULCAN.SharedKernel.Database.Abstractions;
-using KUKULCAN.SharedKernel.Database.Configuration;
-using KUKULCAN.SharedKernel.Database.Results;
-using KUKULCAN.SharedKernel.Database.UnitOfWork;
 
 namespace KUKULCAN.SharedKernel.Database.Client.Client;
 
