@@ -74,7 +74,13 @@ public sealed class DomainEventsAndScalarMissingCoverageIntegrationTests
 
         await unit.BeginTransactionAsync();
         await context.SaveChangesAsync();
-        await context.Database.CurrentTransaction!.DisposeAsync();
+
+        await using (var rollbackCommand = context.Database.GetDbConnection().CreateCommand())
+        {
+            rollbackCommand.Transaction = context.Database.CurrentTransaction!.GetDbTransaction();
+            rollbackCommand.CommandText = "ROLLBACK TRANSACTION";
+            await rollbackCommand.ExecuteNonQueryAsync();
+        }
 
         Exception? caughtException = null;
         try
