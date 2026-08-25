@@ -13,8 +13,7 @@ public sealed class MySqlIntegrationDatabase
     [OneTimeSetUp]
     public async Task StartAsync()
     {
-        _container = new MySqlBuilder()
-            .WithImage("mysql:8.4")
+        _container = new MySqlBuilder("mysql:8.4")
             .WithDatabase("kukulcan_test")
             .WithUsername("root")
             .WithPassword("Kukulcan1!")
