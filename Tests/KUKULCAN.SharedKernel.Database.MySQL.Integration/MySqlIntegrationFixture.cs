@@ -1,4 +1,5 @@
 using System.Reflection;
+using System.Runtime.ExceptionServices;
 using Testcontainers.MySql;
 
 namespace KUKULCAN.SharedKernel.Database.Integration.MySQL;
@@ -78,7 +79,16 @@ internal static class MySqlTenantModelCacheKeyHelper
     public static object Create(DbContext context, bool designTime)
     {
         object factory = Constructor.Invoke(null);
-        return CreateMethod.Invoke(factory, [context, designTime])!;
+
+        try
+        {
+            return CreateMethod.Invoke(factory, [context, designTime])!;
+        }
+        catch (TargetInvocationException ex) when (ex.InnerException is not null)
+        {
+            ExceptionDispatchInfo.Capture(ex.InnerException).Throw();
+            throw;
+        }
     }
 }
 
