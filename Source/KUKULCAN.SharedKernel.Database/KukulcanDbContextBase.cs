@@ -22,6 +22,7 @@ public abstract class KukulcanDbContextBase(
     private readonly IDomainEventDispatcher _domainEventDispatcher = domainEventDispatcher ?? throw new ArgumentNullException(nameof(domainEventDispatcher));
     private readonly SlowQueryInterceptor? _slowQueryInterceptor = slowQueryInterceptor;
     private readonly List<IDomainEvent> _pendingDomainEvents = [];
+    private readonly HashSet<IDomainEvent> _acknowledgedDomainEvents = [];
     private const string _commandTimeoutMethodName = "CommandTimeout";
 
     /// <summary>Gets the current tenant identifier used to build the EF Core model cache key.</summary>
@@ -33,19 +34,25 @@ public abstract class KukulcanDbContextBase(
         var events = ChangeTracker.Entries<IHasDomainEvents>()
             .Select(e => e.Entity)
             .SelectMany(e => e.DomainEvents)
-            .Where(e => !_pendingDomainEvents.Contains(e))
+            .Where(e => !_acknowledgedDomainEvents.Contains(e) && !_pendingDomainEvents.Contains(e))
             .ToList();
 
         _pendingDomainEvents.AddRange(events);
     }
 
-    /// <summary>Dispatches all captured domain events and clears them only after successful dispatch.</summary>
+    /// <summary>
+    /// Dispatches all captured domain events and acknowledges each event individually after successful dispatch.
+    /// </summary>
     internal async Task DispatchPendingDomainEventsAsync(CancellationToken cancellationToken = default)
     {
         foreach (IDomainEvent domainEvent in _pendingDomainEvents.ToList())
+        {
             await _domainEventDispatcher.DispatchAsync(domainEvent, cancellationToken).ConfigureAwait(false);
+            _pendingDomainEvents.Remove(domainEvent);
+            _acknowledgedDomainEvents.Add(domainEvent);
+        }
 
-        if (_pendingDomainEvents.Count == 0)
+        if (_pendingDomainEvents.Count != 0)
             return;
 
         foreach (IHasDomainEvents aggregate in ChangeTracker.Entries<IHasDomainEvents>()
@@ -55,11 +62,15 @@ public abstract class KukulcanDbContextBase(
             aggregate.ClearDomainEvents();
         }
 
-        _pendingDomainEvents.Clear();
+        _acknowledgedDomainEvents.Clear();
     }
 
-    /// <summary>Discards captured events when the enclosing explicit transaction is abandoned.</summary>
-    internal void DiscardPendingDomainEvents() => _pendingDomainEvents.Clear();
+    /// <summary>Discards captured and acknowledged events when the enclosing explicit transaction is abandoned.</summary>
+    internal void DiscardPendingDomainEvents()
+    {
+        _pendingDomainEvents.Clear();
+        _acknowledgedDomainEvents.Clear();
+    }
 
     /// <inheritdoc/>
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
