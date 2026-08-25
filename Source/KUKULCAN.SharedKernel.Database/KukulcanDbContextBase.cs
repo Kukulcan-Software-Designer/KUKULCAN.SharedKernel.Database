@@ -66,7 +66,6 @@ public abstract class KukulcanDbContextBase(
         _acknowledgedDomainEvents.Clear();
     }
 
-    /// <inheritdoc/>
     /// <summary>Configures the EF Core model, interceptors, diagnostics, and database provider.</summary>
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
@@ -227,7 +226,24 @@ public abstract class KukulcanDbContextBase(
             throw NotInstalled(assemblyName, ex);
         }
 
-        return assembly.GetType(typeName, throwOnError: false)
+        Type? type = assembly.GetType(typeName, throwOnError: false);
+        if (type is not null)
+            return type;
+
+        string shortTypeName = typeName[(typeName.LastIndexOf('.') + 1)..];
+        try
+        {
+            type = assembly.GetTypes()
+                .FirstOrDefault(candidate => string.Equals(candidate.Name, shortTypeName, StringComparison.Ordinal));
+        }
+        catch (ReflectionTypeLoadException ex)
+        {
+            type = ex.Types.FirstOrDefault(candidate =>
+                candidate is not null &&
+                string.Equals(candidate.Name, shortTypeName, StringComparison.Ordinal));
+        }
+
+        return type
                ?? throw new NotSupportedException($"Assembly '{assemblyName}' does not expose the expected provider extension type '{typeName}'.");
     }
 
