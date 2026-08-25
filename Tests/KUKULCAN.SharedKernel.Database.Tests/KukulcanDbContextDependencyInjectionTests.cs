@@ -1,5 +1,3 @@
-using KUKULCAN.SharedKernel.Database.TestInfrastructure.internals;
-
 namespace KUKULCAN.SharedKernel.Database.Tests;
 
 [TestFixture]
