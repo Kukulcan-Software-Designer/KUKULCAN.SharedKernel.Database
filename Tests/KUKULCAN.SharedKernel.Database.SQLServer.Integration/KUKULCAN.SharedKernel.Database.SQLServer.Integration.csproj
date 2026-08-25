@@ -25,4 +25,8 @@
     <PackageReference Include="coverlet.collector" Version="6.*" />
     <PackageReference Include="Microsoft.Extensions.Logging" Version="10.*" />
   </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="TestResults\" />
+  </ItemGroup>
 </Project>
