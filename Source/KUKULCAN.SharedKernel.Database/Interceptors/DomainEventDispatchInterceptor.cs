@@ -1,48 +1,45 @@
 namespace KUKULCAN.SharedKernel.Database.Interceptors;
 
 /// <summary>
-/// Dispatches pending SharedKernel domain events after a successful save operation.
+/// Captures pending SharedKernel domain events after a successful save operation.
+/// Events are dispatched immediately when no explicit transaction is active and are
+/// deferred until <see cref="UnitOfWork.UnitOfWork{TContext}"/> commits an explicit transaction.
 /// </summary>
-/// <param name="dispatcher">Dispatcher used to publish pending domain events.</param>
+/// <param name="dispatcher">Dispatcher used by the owning DbContext when events are published.</param>
 public sealed class DomainEventDispatchInterceptor(IDomainEventDispatcher dispatcher) : SaveChangesInterceptor
 {
+    private readonly IDomainEventDispatcher _dispatcher = dispatcher ?? throw new ArgumentNullException(nameof(dispatcher));
+
     /// <inheritdoc/>
     public override async ValueTask<int> SavedChangesAsync(
         SaveChangesCompletedEventData eventData,
         int result,
         CancellationToken cancellationToken = default)
     {
-        await DispatchDomainEventsAsync(eventData.Context, cancellationToken).ConfigureAwait(false);
+        await CaptureAndDispatchIfCommittedAsync(eventData.Context, cancellationToken).ConfigureAwait(false);
         return await base.SavedChangesAsync(eventData, result, cancellationToken).ConfigureAwait(false);
     }
 
     /// <inheritdoc/>
     public override int SavedChanges(SaveChangesCompletedEventData eventData, int result)
     {
-        DispatchDomainEventsAsync(eventData.Context, CancellationToken.None)
+        CaptureAndDispatchIfCommittedAsync(eventData.Context, CancellationToken.None)
             .GetAwaiter()
             .GetResult();
         return base.SavedChanges(eventData, result);
     }
 
-    private async Task DispatchDomainEventsAsync(DbContext? context, CancellationToken cancellationToken)
+    private static async Task CaptureAndDispatchIfCommittedAsync(DbContext? context, CancellationToken cancellationToken)
     {
-        if (context is null) return;
+        if (context is not KukulcanDbContextBase kukulcanContext)
+            return;
 
-        List<IHasDomainEvents> aggregates = context.ChangeTracker
-            .Entries<IHasDomainEvents>()
-            .Select(e => e.Entity)
-            .Where(e => e.DomainEvents.Count > 0)
-            .ToList();
+        kukulcanContext.CapturePendingDomainEvents();
 
-        List<IDomainEvent> events = aggregates
-            .SelectMany(a => a.DomainEvents)
-            .ToList();
-
-        foreach (IHasDomainEvents aggregate in aggregates)
-            aggregate.ClearDomainEvents();
-
-        foreach (IDomainEvent domainEvent in events)
-            await dispatcher.DispatchAsync(domainEvent, cancellationToken).ConfigureAwait(false);
+        // When EF Core is using an implicit transaction, SavedChanges is reached after
+        // the database operation has committed. Explicit transactions are dispatched
+        // by UnitOfWork only after CommitAsync succeeds.
+        if (context.Database.CurrentTransaction is null)
+            await kukulcanContext.DispatchPendingDomainEventsAsync(cancellationToken).ConfigureAwait(false);
     }
 }

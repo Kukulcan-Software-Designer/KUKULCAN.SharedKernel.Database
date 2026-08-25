@@ -21,12 +21,45 @@ public abstract class KukulcanDbContextBase(
     private readonly IClock _clock = clock ?? throw new ArgumentNullException(nameof(clock));
     private readonly IDomainEventDispatcher _domainEventDispatcher = domainEventDispatcher ?? throw new ArgumentNullException(nameof(domainEventDispatcher));
     private readonly SlowQueryInterceptor? _slowQueryInterceptor = slowQueryInterceptor;
+    private readonly List<IDomainEvent> _pendingDomainEvents = [];
     private const string _commandTimeoutMethodName = "CommandTimeout";
 
-    /// <summary>
-    /// Gets the current tenant identifier used to build the EF Core model cache key.
-    /// </summary>
+    /// <summary>Gets the current tenant identifier used to build the EF Core model cache key.</summary>
     internal Guid CurrentTenantId => _tenantContext.TenantId;
+
+    /// <summary>Captures pending domain events without clearing them from their aggregates.</summary>
+    internal void CapturePendingDomainEvents()
+    {
+        var events = ChangeTracker.Entries<IHasDomainEvents>()
+            .Select(e => e.Entity)
+            .SelectMany(e => e.DomainEvents)
+            .Where(e => !_pendingDomainEvents.Contains(e))
+            .ToList();
+
+        _pendingDomainEvents.AddRange(events);
+    }
+
+    /// <summary>Dispatches all captured domain events and clears them only after successful dispatch.</summary>
+    internal async Task DispatchPendingDomainEventsAsync(CancellationToken cancellationToken = default)
+    {
+        foreach (IDomainEvent domainEvent in _pendingDomainEvents.ToList())
+            await _domainEventDispatcher.DispatchAsync(domainEvent, cancellationToken).ConfigureAwait(false);
+
+        if (_pendingDomainEvents.Count == 0)
+            return;
+
+        foreach (IHasDomainEvents aggregate in ChangeTracker.Entries<IHasDomainEvents>()
+                     .Select(e => e.Entity)
+                     .Distinct())
+        {
+            aggregate.ClearDomainEvents();
+        }
+
+        _pendingDomainEvents.Clear();
+    }
+
+    /// <summary>Discards captured events when the enclosing explicit transaction is abandoned.</summary>
+    internal void DiscardPendingDomainEvents() => _pendingDomainEvents.Clear();
 
     /// <inheritdoc/>
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
@@ -48,11 +81,6 @@ public abstract class KukulcanDbContextBase(
         if (_opts.EnableDetailedErrors)
             optionsBuilder.EnableDetailedErrors();
 
-        // DbContextOptionsBuilder.IsConfigured reports whether EF Core has any
-        // configuration extensions, not specifically whether a database provider
-        // has been selected. AddDbContext can legitimately have interceptors and
-        // other options already present while still relying on this base context
-        // to resolve the provider from KukulcanDatabaseOptions.
         bool databaseProviderConfigured = optionsBuilder.Options.Extensions
             .Any(extension => extension.Info.IsDatabaseProvider);
 
@@ -67,6 +95,8 @@ public abstract class KukulcanDbContextBase(
     protected virtual void ConfigureProvider(DbContextOptionsBuilder optionsBuilder)
     {
         var connStr = _opts.ConnectionString;
+        var pool = _opts.Pool;
+        var connStringWithPool = BuildProviderConnectionString(_opts.Provider, connStr, pool);
         var timeout = _opts.CommandTimeoutSeconds;
         var maxRetry = _opts.Retry.Enabled ? _opts.Retry.MaxRetryCount : 0;
         var maxDelay = TimeSpan.FromSeconds(_opts.Retry.MaxRetryDelaySeconds);
@@ -74,17 +104,65 @@ public abstract class KukulcanDbContextBase(
         switch (_opts.Provider)
         {
             case DatabaseProvider.SqlServer:
-                ConfigureSqlServer(optionsBuilder, connStr, timeout, maxRetry, maxDelay);
+                ConfigureSqlServer(optionsBuilder, connStringWithPool, timeout, maxRetry, maxDelay);
                 break;
             case DatabaseProvider.PostgresSql:
-                ConfigurePostgresSql(optionsBuilder, connStr, timeout, maxRetry, maxDelay);
+                ConfigurePostgresSql(optionsBuilder, connStringWithPool, timeout, maxRetry, maxDelay);
                 break;
             case DatabaseProvider.MySql:
-                ConfigureMySql(optionsBuilder, connStr, timeout, maxRetry, maxDelay);
+                ConfigureMySql(optionsBuilder, connStringWithPool, timeout, maxRetry, maxDelay);
                 break;
             default:
                 throw new NotSupportedException($"Database provider '{_opts.Provider}' is not supported.");
         }
+    }
+
+    private static string BuildProviderConnectionString(
+        DatabaseProvider provider,
+        string connectionString,
+        KukulcanDatabaseOptions.PoolOptions pool)
+    {
+        if (!pool.Enabled)
+        {
+            return provider switch
+            {
+                DatabaseProvider.SqlServer => RemoveConnectionStringKeys(connectionString, "Pooling", "Min Pool Size", "Max Pool Size"),
+                DatabaseProvider.PostgresSql => RemoveConnectionStringKeys(connectionString, "Pooling", "Minimum Pool Size", "Maximum Pool Size"),
+                DatabaseProvider.MySql => RemoveConnectionStringKeys(connectionString, "Pooling", "MinimumPoolSize", "MaximumPoolSize"),
+                _ => connectionString
+            };
+        }
+
+        return provider switch
+        {
+            DatabaseProvider.SqlServer => AppendConnectionStringOptions(connectionString,
+                $"Pooling=true;Min Pool Size={pool.MinSize};Max Pool Size={pool.MaxSize}"),
+            DatabaseProvider.PostgresSql => AppendConnectionStringOptions(connectionString,
+                $"Pooling=true;Minimum Pool Size={pool.MinSize};Maximum Pool Size={pool.MaxSize}"),
+            DatabaseProvider.MySql => AppendConnectionStringOptions(connectionString,
+                $"Pooling=true;MinimumPoolSize={pool.MinSize};MaximumPoolSize={pool.MaxSize}"),
+            _ => connectionString
+        };
+    }
+
+    private static string AppendConnectionStringOptions(string connectionString, string options)
+        => string.IsNullOrWhiteSpace(connectionString)
+            ? options
+            : $"{connectionString.TrimEnd(';')};{options};";
+
+    private static string RemoveConnectionStringKeys(string connectionString, params string[] keys)
+    {
+        if (string.IsNullOrWhiteSpace(connectionString))
+            return connectionString;
+
+        string[] segments = connectionString.Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        return string.Join(';', segments.Where(segment =>
+        {
+            int separator = segment.IndexOf('=');
+            if (separator <= 0) return true;
+            string key = segment[..separator].Trim();
+            return !keys.Any(candidate => string.Equals(candidate, key, StringComparison.OrdinalIgnoreCase));
+        }));
     }
 
     private static void ConfigureSqlServer(DbContextOptionsBuilder optionsBuilder, string connectionString, int timeoutSec, int maxRetry, TimeSpan maxDelay)

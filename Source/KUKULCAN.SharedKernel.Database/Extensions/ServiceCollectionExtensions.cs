@@ -7,55 +7,19 @@ using Microsoft.Extensions.DependencyInjection;
 namespace KUKULCAN.SharedKernel.Database.Extensions;
 
 /// <summary>
-/// Extension methods for <see cref="IServiceCollection"/> that register an KUKULCAN
-/// module's DbContext together with all required infrastructure services.
+/// Extension methods for registering the KUKULCAN database infrastructure.
 /// </summary>
-/// <example>
-/// <code>
-/// // In a module's Infrastructure DependencyInjection.cs:
-/// public static IServiceCollection AddCrmInfrastructure(
-///     this IServiceCollection services,
-///     IConfiguration          configuration)
-/// {
-///     services.AddKukulcanDbContext&lt;CrmDbContext&gt;(configuration);
-///     services.AddScoped&lt;ICustomerRepository, CustomerRepository&gt;();
-///     return services;
-/// }
-/// </code>
-/// </example>
 public static class ServiceCollectionExtensions
 {
     /// <summary>
-    /// Registers a module's <typeparamref name="TContext"/> together with
-    /// <see cref="KukulcanDatabaseOptions"/>, <see cref="IUnitOfWork"/>, and
-    /// all required database infrastructure services.
+    /// Registers a module's database context together with options, unit of work,
+    /// interceptors, and the configured startup migration/seed policy.
     /// </summary>
-    /// <typeparam name="TContext">
-    /// The module's DbContext type. Must inherit from <see cref="KukulcanDbContextBase"/>.
-    /// </typeparam>
-    /// <param name="services">The DI service collection.</param>
-    /// <param name="configuration">
-    /// The application configuration. The <c>Kukulcan:Database</c> section
-    /// (<see cref="KukulcanDatabaseOptions.SectionKey"/>) is read to configure the
-    /// provider, connection string, and all options.
-    /// </param>
-    /// <returns>The <paramref name="services"/> for chaining.</returns>
-    /// <exception cref="InvalidOperationException">
-    /// Thrown when <c>Kukulcan:Database:ConnectionString</c> is missing or empty.
-    /// </exception>
-    /// <remarks>
-    /// This single call registers:
-    /// <list type="bullet">
-    ///   <item><see cref="KukulcanDatabaseOptions"/> via <c>IOptions&lt;KukulcanDatabaseOptions&gt;</c></item>
-    ///   <item><typeparamref name="TContext"/> (scoped)</item>
-    ///   <item><see cref="IUnitOfWork"/> → <see cref="UnitOfWork{TContext}"/> (scoped)</item>
-    ///   <item><see cref="SlowQueryInterceptor"/> (singleton)</item>
-    /// </list>
-    /// </remarks>
-    public static IServiceCollection AddKukulcanDbContext<TContext>(this IServiceCollection services,
-        IConfiguration configuration) where TContext : KukulcanDbContextBase
+    public static IServiceCollection AddKukulcanDbContext<TContext>(
+        this IServiceCollection services,
+        IConfiguration configuration)
+        where TContext : KukulcanDbContextBase
     {
-        // ① Bind and validate options
         IConfigurationSection section = configuration.GetSection(KukulcanDatabaseOptions.SectionKey);
         services.Configure<KukulcanDatabaseOptions>(section);
 
@@ -64,18 +28,16 @@ public static class ServiceCollectionExtensions
         if (string.IsNullOrWhiteSpace(opts.ConnectionString))
             throw new InvalidOperationException(
                 $"Missing required configuration: {KukulcanDatabaseOptions.SectionKey}:ConnectionString. " +
-                $"Ensure it is set in app-settings.json or environment variables.");
+                "Ensure it is set in appsettings.json or environment variables.");
 
-        // ② Register the slow-query interceptor once. It must be attached from
-        // the AddDbContext options callback so that the DbContext registration
-        // cannot replace the previously composed options.
         services.AddSingleton<SlowQueryInterceptor>();
         services.AddDbContext<TContext>((serviceProvider, optionsBuilder) =>
             optionsBuilder.AddInterceptors(
                 serviceProvider.GetRequiredService<SlowQueryInterceptor>()));
 
-        // ③ Register IUnitOfWork backed by this specific module's context
         services.AddScoped<IUnitOfWork, UnitOfWork<TContext>>();
+        services.AddScoped<KukulcanDatabaseStartupInitializer<TContext>>();
+        services.AddHostedService<KukulcanDatabaseStartupHostedService<TContext>>();
 
         return services;
     }
