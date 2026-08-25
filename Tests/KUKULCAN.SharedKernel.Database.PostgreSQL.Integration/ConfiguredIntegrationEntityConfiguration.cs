@@ -1,4 +1,3 @@
-using KUKULCAN.SharedKernel.Database.Integration;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace KUKULCAN.SharedKernel.Database.PostgreSQL.Integration;
