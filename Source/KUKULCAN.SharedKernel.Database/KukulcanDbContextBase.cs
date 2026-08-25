@@ -123,6 +123,9 @@ public abstract class KukulcanDbContextBase(
             case DatabaseProvider.PostgresSql:
                 ConfigurePostgresSql(optionsBuilder, connStr, timeout, maxRetry, maxDelay);
                 break;
+            case DatabaseProvider.MySql:
+                ConfigureMySql(optionsBuilder, connStr, timeout, maxRetry, maxDelay);
+                break;
             default:
                 throw new NotSupportedException(
                     $"Database provider '{_opts.Provider}' is not supported.");
@@ -139,7 +142,7 @@ public abstract class KukulcanDbContextBase(
         try
         {
             Type type = Type.GetType(
-                "Microsoft.EntityFrameworkCore.SqlServerDbContextOptionsExtensions, " +
+                "Microsoft.EntityFrameworkCore.SqlServerDbContextOptionsBuilderExtensions, " +
                 "Microsoft.EntityFrameworkCore.SqlServer") ?? throw NotInstalled("Microsoft.EntityFrameworkCore.SqlServer");
 
             InvokeProviderUseMethod(type, "UseSqlServer", optionsBuilder, connectionString, timeoutSec, maxRetry, maxDelay);
@@ -168,6 +171,62 @@ public abstract class KukulcanDbContextBase(
         catch (Exception ex) when (ex is not NotSupportedException)
         {
             throw NotInstalled("Npgsql.EntityFrameworkCore.PostgreSQL", ex);
+        }
+    }
+
+    private static void ConfigureMySql(
+        DbContextOptionsBuilder optionsBuilder,
+        string connectionString,
+        int timeoutSec,
+        int maxRetry,
+        TimeSpan maxDelay)
+    {
+        try
+        {
+            Type extensionType = Type.GetType(
+                "Microsoft.EntityFrameworkCore.MySqlDbContextOptionsBuilderExtensions, " +
+                "Pomelo.EntityFrameworkCore.MySql") ?? throw NotInstalled("Pomelo.EntityFrameworkCore.MySql");
+
+            Type serverVersionType = Type.GetType(
+                "Pomelo.EntityFrameworkCore.MySql.Infrastructure.ServerVersion, " +
+                "Pomelo.EntityFrameworkCore.MySql") ?? throw NotInstalled("Pomelo.EntityFrameworkCore.MySql");
+
+            MethodInfo parseMethod = serverVersionType.GetMethod(
+                "Parse",
+                BindingFlags.Public | BindingFlags.Static,
+                [typeof(string)]) ?? throw new NotSupportedException(
+                    "Pomelo.EntityFrameworkCore.MySql does not expose ServerVersion.Parse(string).");
+
+            object serverVersion = parseMethod.Invoke(null, ["8.4.0-mysql"])
+                ?? throw new NotSupportedException("Unable to create the MySQL server version descriptor.");
+
+            MethodInfo? method = extensionType
+                .GetMethods(BindingFlags.Public | BindingFlags.Static)
+                .Where(m => m.Name == "UseMySql" && !m.IsGenericMethodDefinition)
+                .FirstOrDefault(m =>
+                {
+                    ParameterInfo[] parameters = m.GetParameters();
+                    return parameters.Length == 4
+                           && parameters[0].ParameterType == typeof(DbContextOptionsBuilder)
+                           && parameters[1].ParameterType == typeof(string)
+                           && parameters[2].ParameterType == serverVersionType
+                           && parameters[3].ParameterType.IsGenericType
+                           && parameters[3].ParameterType.GetGenericTypeDefinition() == typeof(Action<>);
+                });
+
+            if (method is null)
+                throw new NotSupportedException("Pomelo.EntityFrameworkCore.MySql does not expose a compatible UseMySql overload.");
+
+            Type providerOptionsBuilderType = method.GetParameters()[3].ParameterType.GetGenericArguments()[0];
+
+            typeof(KukulcanDbContextBase)
+                .GetMethod(nameof(InvokeMySqlUseMethodGeneric), BindingFlags.NonPublic | BindingFlags.Static)!
+                .MakeGenericMethod(providerOptionsBuilderType)
+                .Invoke(null, [method, optionsBuilder, connectionString, serverVersion, timeoutSec, maxRetry, maxDelay]);
+        }
+        catch (Exception ex) when (ex is not NotSupportedException)
+        {
+            throw NotInstalled("Pomelo.EntityFrameworkCore.MySql", ex);
         }
     }
 
@@ -232,6 +291,36 @@ public abstract class KukulcanDbContextBase(
         };
 
         method.Invoke(null, [optionsBuilder, connectionString, configure]);
+    }
+
+    private static void InvokeMySqlUseMethodGeneric<TProviderOptionsBuilder>(
+        MethodInfo method,
+        DbContextOptionsBuilder optionsBuilder,
+        string connectionString,
+        object serverVersion,
+        int timeoutSec,
+        int maxRetry,
+        TimeSpan maxDelay)
+    {
+        Action<TProviderOptionsBuilder> configure = providerOptions =>
+        {
+            Type providerOptionsType = providerOptions!.GetType();
+            providerOptionsType.GetMethod(_commandTimeoutMethodName)?.Invoke(providerOptions, [timeoutSec]);
+
+            if (maxRetry <= 0) return;
+
+            MethodInfo? retryMethod = providerOptionsType
+                .GetMethods(BindingFlags.Public | BindingFlags.Instance)
+                .FirstOrDefault(m => m.Name == "EnableRetryOnFailure" && m.GetParameters().Length == 3);
+
+            if (retryMethod is null)
+                throw new NotSupportedException(
+                    $"Provider '{providerOptionsType.FullName}' does not expose a compatible EnableRetryOnFailure method.");
+
+            retryMethod.Invoke(providerOptions, [maxRetry, maxDelay, null]);
+        };
+
+        method.Invoke(null, [optionsBuilder, connectionString, serverVersion, configure]);
     }
 
     private static NotSupportedException NotInstalled(string package, Exception? inner = null)
