@@ -20,10 +20,11 @@ public sealed class KukulcanDatabaseStartupInitializerTests
             }
         });
 
-        var initializer = provider.GetRequiredService<KukulcanDatabaseStartupInitializer<StartupTestDbContext>>();
+        await using var scope = provider.CreateAsyncScope();
+        var initializer = scope.ServiceProvider.GetRequiredService<KukulcanDatabaseStartupInitializer<StartupTestDbContext>>();
         await initializer.InitializeAsync();
 
-        await using var context = provider.GetRequiredService<StartupTestDbContext>();
+        await using var context = scope.ServiceProvider.GetRequiredService<StartupTestDbContext>();
         Assert.That(await context.Database.ExecuteSqlRawAsync("SELECT COUNT(*) FROM StartupInitializedRows"), Is.EqualTo(0));
     }
 
@@ -41,7 +42,8 @@ public sealed class KukulcanDatabaseStartupInitializerTests
             }
         }, seeder);
 
-        var initializer = provider.GetRequiredService<KukulcanDatabaseStartupInitializer<StartupTestDbContext>>();
+        await using var scope = provider.CreateAsyncScope();
+        var initializer = scope.ServiceProvider.GetRequiredService<KukulcanDatabaseStartupInitializer<StartupTestDbContext>>();
         await initializer.InitializeAsync();
 
         using (Assert.EnterMultipleScope())
@@ -84,7 +86,8 @@ public sealed class KukulcanDatabaseStartupInitializerTests
             }
         });
 
-        var initializer = provider.GetRequiredService<KukulcanDatabaseStartupInitializer<StartupTestDbContext>>();
+        await using var scope = provider.CreateAsyncScope();
+        var initializer = scope.ServiceProvider.GetRequiredService<KukulcanDatabaseStartupInitializer<StartupTestDbContext>>();
 
         Assert.DoesNotThrowAsync(async () => await initializer.InitializeAsync());
     }
@@ -103,7 +106,8 @@ public sealed class KukulcanDatabaseStartupInitializerTests
             }
         }, seeder);
 
-        var initializer = provider.GetRequiredService<KukulcanDatabaseStartupInitializer<StartupTestDbContext>>();
+        await using var scope = provider.CreateAsyncScope();
+        var initializer = scope.ServiceProvider.GetRequiredService<KukulcanDatabaseStartupInitializer<StartupTestDbContext>>();
         var hostedService = new KukulcanDatabaseStartupHostedService<StartupTestDbContext>(initializer);
 
         await hostedService.StartAsync(CancellationToken.None);
@@ -116,7 +120,8 @@ public sealed class KukulcanDatabaseStartupInitializerTests
     {
         await using var database = new StartupTestDatabase();
         await using var provider = BuildProvider(database, new KukulcanDatabaseOptions());
-        var initializer = provider.GetRequiredService<KukulcanDatabaseStartupInitializer<StartupTestDbContext>>();
+        await using var scope = provider.CreateAsyncScope();
+        var initializer = scope.ServiceProvider.GetRequiredService<KukulcanDatabaseStartupInitializer<StartupTestDbContext>>();
         var hostedService = new KukulcanDatabaseStartupHostedService<StartupTestDbContext>(initializer);
 
         await hostedService.StopAsync(CancellationToken.None);
