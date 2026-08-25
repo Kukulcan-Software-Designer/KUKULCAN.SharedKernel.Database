@@ -57,22 +57,36 @@ public sealed class SqlServerRealRetryIntegrationTests
         await blockerConnection.OpenAsync();
         await using SqlTransaction blockerTransaction = (SqlTransaction)await blockerConnection.BeginTransactionAsync();
 
-        await using (SqlCommand command = blockerConnection.CreateCommand())
+        await using SqlConnection victimConnection = new(connectionString);
+        await victimConnection.OpenAsync();
+        await using SqlTransaction victimTransaction = (SqlTransaction)await victimConnection.BeginTransactionAsync();
+
+        await SetDeadlockPriorityAsync(victimConnection, victimTransaction, "LOW");
+
+        await using (SqlCommand blockerFirstLock = blockerConnection.CreateCommand())
         {
-            command.Transaction = blockerTransaction;
-            command.CommandText = "UPDATE dbo.KukulcanRetryCoverageRows SET Name = Name WHERE Id = 2;";
-            await command.ExecuteNonQueryAsync();
+            blockerFirstLock.Transaction = blockerTransaction;
+            blockerFirstLock.CommandText = "UPDATE dbo.KukulcanRetryCoverageRows SET Name = Name WHERE Id = 2;";
+            await blockerFirstLock.ExecuteNonQueryAsync();
         }
 
-        var blockerAttempting = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
-        Task blockerTask = Task.Run(async () =>
+        await using (SqlCommand victimFirstLock = victimConnection.CreateCommand())
         {
+            victimFirstLock.Transaction = victimTransaction;
+            victimFirstLock.CommandText = "UPDATE dbo.KukulcanRetryCoverageRows SET Name = Name WHERE Id = 1;";
+            await victimFirstLock.ExecuteNonQueryAsync();
+        }
+
+        int attempts = 0;
+        IExecutionStrategy executionStrategy = context.Database.CreateExecutionStrategy();
+
+        Task blockerSecondLock = Task.Run(async () =>
+        {
+            await using SqlCommand command = blockerConnection.CreateCommand();
+            command.Transaction = blockerTransaction;
+            command.CommandText = "UPDATE dbo.KukulcanRetryCoverageRows SET Name = Name WHERE Id = 1;";
             try
             {
-                await using SqlCommand command = blockerConnection.CreateCommand();
-                command.Transaction = blockerTransaction;
-                command.CommandText = "UPDATE dbo.KukulcanRetryCoverageRows SET Name = Name WHERE Id = 1;";
-                blockerAttempting.TrySetResult();
                 await command.ExecuteNonQueryAsync();
                 await blockerTransaction.CommitAsync();
             }
@@ -84,15 +98,12 @@ public sealed class SqlServerRealRetryIntegrationTests
                 }
                 catch
                 {
-                    // The deadlock can terminate either transaction first; cleanup is best effort.
+                    // Best effort cleanup after SQL Server has selected a deadlock victim.
                 }
-
-                throw;
             }
         });
 
-        int attempts = 0;
-        IExecutionStrategy executionStrategy = context.Database.CreateExecutionStrategy();
+        await Task.Delay(250);
 
         int result = await executionStrategy.ExecuteAsync(async () =>
         {
@@ -100,27 +111,6 @@ public sealed class SqlServerRealRetryIntegrationTests
 
             if (currentAttempt == 1)
             {
-                await using SqlConnection victimConnection = new(connectionString);
-                await victimConnection.OpenAsync();
-                await using SqlTransaction victimTransaction = (SqlTransaction)await victimConnection.BeginTransactionAsync();
-
-                await using (SqlCommand priorityCommand = victimConnection.CreateCommand())
-                {
-                    priorityCommand.Transaction = victimTransaction;
-                    priorityCommand.CommandText = "SET DEADLOCK_PRIORITY LOW;";
-                    await priorityCommand.ExecuteNonQueryAsync();
-                }
-
-                await using (SqlCommand firstLockCommand = victimConnection.CreateCommand())
-                {
-                    firstLockCommand.Transaction = victimTransaction;
-                    firstLockCommand.CommandText = "UPDATE dbo.KukulcanRetryCoverageRows SET Name = Name WHERE Id = 1;";
-                    await firstLockCommand.ExecuteNonQueryAsync();
-                }
-
-                await blockerAttempting.Task.WaitAsync(TimeSpan.FromSeconds(5));
-                await Task.Delay(100);
-
                 await using SqlCommand secondLockCommand = victimConnection.CreateCommand();
                 secondLockCommand.Transaction = victimTransaction;
                 secondLockCommand.CommandText = "UPDATE dbo.KukulcanRetryCoverageRows SET Name = Name WHERE Id = 2;";
@@ -136,12 +126,23 @@ public sealed class SqlServerRealRetryIntegrationTests
             return Convert.ToInt32(await verificationCommand.ExecuteScalarAsync());
         });
 
-        await blockerTask;
+        await blockerSecondLock;
 
         using (Assert.EnterMultipleScope())
         {
             Assert.That(attempts, Is.EqualTo(2));
             Assert.That(result, Is.EqualTo(2));
         }
+    }
+
+    private static async Task SetDeadlockPriorityAsync(
+        SqlConnection connection,
+        SqlTransaction transaction,
+        string priority)
+    {
+        await using SqlCommand command = connection.CreateCommand();
+        command.Transaction = transaction;
+        command.CommandText = $"SET DEADLOCK_PRIORITY {priority};";
+        await command.ExecuteNonQueryAsync();
     }
 }
