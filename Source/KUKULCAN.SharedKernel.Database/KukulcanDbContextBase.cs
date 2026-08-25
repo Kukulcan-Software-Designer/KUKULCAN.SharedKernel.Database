@@ -84,8 +84,9 @@ public abstract class KukulcanDbContextBase(
     {
         try
         {
-            Type type = Type.GetType("Microsoft.EntityFrameworkCore.SqlServerDbContextOptionsBuilderExtensions, Microsoft.EntityFrameworkCore.SqlServer")
-                        ?? throw NotInstalled("Microsoft.EntityFrameworkCore.SqlServer");
+            Type type = LoadProviderExtensionType(
+                "Microsoft.EntityFrameworkCore.SqlServerDbContextOptionsBuilderExtensions",
+                "Microsoft.EntityFrameworkCore.SqlServer");
             InvokeProviderUseMethod(type, "UseSqlServer", optionsBuilder, connectionString, timeoutSec, maxRetry, maxDelay);
         }
         catch (Exception ex) when (ex is not NotSupportedException)
@@ -98,8 +99,9 @@ public abstract class KukulcanDbContextBase(
     {
         try
         {
-            Type type = Type.GetType("Microsoft.EntityFrameworkCore.NpgsqlDbContextOptionsBuilderExtensions, Npgsql.EntityFrameworkCore.PostgreSQL")
-                        ?? throw NotInstalled("Npgsql.EntityFrameworkCore.PostgreSQL");
+            Type type = LoadProviderExtensionType(
+                "Microsoft.EntityFrameworkCore.NpgsqlDbContextOptionsBuilderExtensions",
+                "Npgsql.EntityFrameworkCore.PostgreSQL");
             InvokeProviderUseMethod(type, "UseNpgsql", optionsBuilder, connectionString, timeoutSec, maxRetry, maxDelay);
         }
         catch (Exception ex) when (ex is not NotSupportedException)
@@ -112,9 +114,9 @@ public abstract class KukulcanDbContextBase(
     {
         try
         {
-            Type type = Type.GetType(
-                "MySQL.Data.EntityFrameworkCore.Extensions.MySQLDbContextOptionsBuilderExtensions, MySql.EntityFrameworkCore")
-                ?? throw NotInstalled("MySql.EntityFrameworkCore");
+            Type type = LoadProviderExtensionType(
+                "MySQL.Data.EntityFrameworkCore.Extensions.MySQLDbContextOptionsBuilderExtensions",
+                "MySql.EntityFrameworkCore");
 
             MethodInfo? method = type
                 .GetMethods(BindingFlags.Public | BindingFlags.Static)
@@ -136,6 +138,22 @@ public abstract class KukulcanDbContextBase(
         {
             throw NotInstalled("MySql.EntityFrameworkCore", ex);
         }
+    }
+
+    private static Type LoadProviderExtensionType(string typeName, string assemblyName)
+    {
+        Assembly assembly;
+        try
+        {
+            assembly = Assembly.Load(new AssemblyName(assemblyName));
+        }
+        catch (FileNotFoundException ex)
+        {
+            throw NotInstalled(assemblyName, ex);
+        }
+
+        return assembly.GetType(typeName, throwOnError: false)
+               ?? throw new NotSupportedException($"Assembly '{assemblyName}' does not expose the expected provider extension type '{typeName}'.");
     }
 
     private static void InvokeProviderUseMethod(Type extensionType, string methodName, DbContextOptionsBuilder optionsBuilder, string connectionString, int timeoutSec, int maxRetry, TimeSpan maxDelay)
