@@ -192,7 +192,7 @@ public abstract class KukulcanDbContextBase(
     {
         try
         {
-            Type type = LoadProviderExtensionType("Microsoft.EntityFrameworkCore.NpgsqlDbContextOptionsExtensions", "Npgsql.EntityFrameworkCore.PostgreSQL");
+            Type type = LoadProviderExtensionType("Microsoft.EntityFrameworkCore.NpgsqlDbContextOptionsBuilderExtensions", "Npgsql.EntityFrameworkCore.PostgreSQL");
             InvokeProviderUseMethod(type, "UseNpgsql", optionsBuilder, connectionString, timeoutSec, maxRetry, maxDelay);
         }
         catch (Exception ex) when (ex is not NotSupportedException)
