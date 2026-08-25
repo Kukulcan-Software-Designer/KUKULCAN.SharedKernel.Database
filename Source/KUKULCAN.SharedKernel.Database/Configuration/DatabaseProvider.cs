@@ -10,7 +10,8 @@ namespace KUKULCAN.SharedKernel.Database.Configuration;
 /// <list type="table">
 ///   <listheader><term>Value</term><description>Required package</description></listheader>
 ///   <item><term>SqlServer</term> <description>Microsoft.EntityFrameworkCore.SqlServer</description></item>
-///   <item><term>PostgresSql</term><description>Npgsql.EntityFrameworkCore.PostgresSQL</description></item>
+///   <item><term>PostgresSql</term><description>Npgsql.EntityFrameworkCore.PostgreSQL</description></item>
+///   <item><term>MySql</term><description>Pomelo.EntityFrameworkCore.MySql</description></item>
 /// </list>
 /// </remarks>
 /// <example>
@@ -18,7 +19,7 @@ namespace KUKULCAN.SharedKernel.Database.Configuration;
 /// // app-settings.json
 /// {
 ///   "Kukulcan": {
-///     "Database": { "Provider": "PostgresSql" }
+///     "Database": { "Provider": "MySql" }
 ///   }
 /// }
 /// </code>
@@ -38,4 +39,9 @@ public enum DatabaseProvider
     /// Recommended for Linux / cloud-neutral deployments.
     /// </summary>
     PostgresSql = 1,
+
+    /// <summary>
+    /// MySQL 8+ via the Pomelo Entity Framework Core provider.
+    /// </summary>
+    MySql = 2,
 }
