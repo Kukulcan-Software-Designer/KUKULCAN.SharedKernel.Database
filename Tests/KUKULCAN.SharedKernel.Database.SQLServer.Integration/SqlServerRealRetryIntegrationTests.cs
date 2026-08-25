@@ -1,4 +1,5 @@
 using Microsoft.Data.SqlClient;
+using Microsoft.EntityFrameworkCore.Storage;
 
 namespace KUKULCAN.SharedKernel.Database.SQLServer.Integration;
 
