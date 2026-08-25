@@ -85,7 +85,7 @@ public abstract class KukulcanDbContextBase(
         try
         {
             Type type = LoadProviderExtensionType(
-                "Microsoft.EntityFrameworkCore.SqlServerDbContextOptionsBuilderExtensions",
+                "Microsoft.EntityFrameworkCore.SqlServerDbContextOptionsExtensions",
                 "Microsoft.EntityFrameworkCore.SqlServer");
             InvokeProviderUseMethod(type, "UseSqlServer", optionsBuilder, connectionString, timeoutSec, maxRetry, maxDelay);
         }
