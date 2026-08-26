@@ -13,6 +13,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\Source\KUKULCAN.SharedKernel.Database\KUKULCAN.SharedKernel.Database.csproj" />
+    <ProjectReference Include="Coverage\PartiallyLoadableProvider\PartiallyLoadableProvider.csproj" />
   </ItemGroup>
 
   <ItemGroup>
