@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <LangVersion>latestmajor</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>PartiallyLoadableProvider</RootNamespace>
+    <AssemblyName>Microsoft.EntityFrameworkCore.SqlServer</AssemblyName>
+    <AssemblyVersion>99.0.0.0</AssemblyVersion>
+    <FileVersion>99.0.0.0</FileVersion>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\PartiallyLoadableProvider.MissingDependency\PartiallyLoadableProvider.MissingDependency.csproj">
+      <Private>false</Private>
+    </ProjectReference>
+  </ItemGroup>
+</Project>
