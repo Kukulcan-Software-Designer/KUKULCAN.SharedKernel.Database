@@ -85,6 +85,33 @@ public sealed class RemainingExecutableCoverageTests
     }
 
     [Test]
+    public void LoadProviderExtensionType_WhenAssemblyGetTypesPartiallyFails_ShouldUseValidTypeFromException()
+    {
+        const string assemblyName = "Microsoft.EntityFrameworkCore.SqlServer";
+        const string expectedTypeName = "SqlServerDbContextOptionsExtensions";
+
+        Assembly assembly = Assembly.Load(new AssemblyName(assemblyName));
+
+        ReflectionTypeLoadException reflectionException = Assert.Throws<ReflectionTypeLoadException>(
+            () => assembly.GetTypes())!;
+
+        Assert.That(
+            reflectionException.Types,
+            Has.Some.Matches<Type?>(type =>
+                type is not null &&
+                string.Equals(type.Name, expectedTypeName, StringComparison.Ordinal)));
+        Assert.That(reflectionException.Types, Has.Some.Null);
+
+        MethodInfo method = typeof(KukulcanDbContextBase).GetMethod(
+            "LoadProviderExtensionType", BindingFlags.Static | BindingFlags.NonPublic)!;
+
+        Type loadedType = (Type)method.Invoke(null, [expectedTypeName, assemblyName])!;
+
+        Assert.That(loadedType.Name, Is.EqualTo(expectedTypeName));
+        Assert.That(loadedType.Assembly, Is.SameAs(assembly));
+    }
+
+    [Test]
     public void InvokeProviderUseMethod_WhenNoCompatibleMethodExists_ShouldThrow()
     {
         MethodInfo method = typeof(KukulcanDbContextBase).GetMethod(
