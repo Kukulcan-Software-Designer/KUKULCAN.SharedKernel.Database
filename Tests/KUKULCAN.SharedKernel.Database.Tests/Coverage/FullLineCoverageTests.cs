@@ -48,7 +48,8 @@ public sealed class FullLineCoverageTests
                 ["Missing.Provider.Extensions", "KUKULCAN.SharedKernel.Database.Tests.Missing.Provider.Assembly"]))!;
 
         Assert.That(exception.InnerException, Is.TypeOf<NotSupportedException>());
-        Assert.That(exception.InnerException!.Message, Does.Contain("is not installed"));
+        Assert.That(exception.InnerException!.Message, Does.Contain("Failed to configure provider"));
+        Assert.That(exception.InnerException.InnerException, Is.TypeOf<FileNotFoundException>());
     }
 
     [Test]
