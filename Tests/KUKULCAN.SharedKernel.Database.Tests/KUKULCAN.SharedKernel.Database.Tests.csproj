@@ -17,6 +17,13 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- The dependency fixture source belongs exclusively to its own project.
+         Exclude it from the test project so the fixture assembly can later be
+         loaded without its dependency and produce ReflectionTypeLoadException. -->
+    <Compile Remove="Coverage\PartiallyLoadableProvider.MissingDependency\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.*" />
     <PackageReference Include="NUnit" Version="4.*" />
     <PackageReference Include="NUnit3TestAdapter" Version="5.*" />
