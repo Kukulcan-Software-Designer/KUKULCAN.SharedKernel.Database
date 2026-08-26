@@ -76,6 +76,49 @@ public sealed class DomainEventDispatchInterceptorTests
     }
 
     [Test]
+    public async Task SavedChangesAsync_WhenDispatcherCreatesPendingEvent_ShouldLeavePendingEventsForLaterDispatch()
+    {
+        var result = DatabaseTestContextFactory.Create();
+        await using var context = result.Context;
+        var aggregate = new DomainEventEntityForTests();
+        var first = new TestDomainEvent();
+        var second = new TestDomainEvent();
+        var secondEventCreated = false;
+
+        aggregate.AddDomainEvent(first);
+        context.Add(aggregate);
+
+        result.Dispatcher
+            .Setup(x => x.DispatchAsync(It.IsAny<IDomainEvent>(), It.IsAny<CancellationToken>()))
+            .Callback<IDomainEvent, CancellationToken>((domainEvent, _) =>
+            {
+                if (!ReferenceEquals(domainEvent, first) || secondEventCreated)
+                    return;
+
+                secondEventCreated = true;
+                aggregate.AddDomainEvent(second);
+                context.CapturePendingDomainEvents();
+            })
+            .Returns(Task.CompletedTask);
+
+        context.CapturePendingDomainEvents();
+        await context.DispatchPendingDomainEventsAsync();
+
+        Assert.Multiple(() =>
+        {
+            result.Dispatcher.Verify(
+                x => x.DispatchAsync(first, It.IsAny<CancellationToken>()),
+                Times.Once);
+            result.Dispatcher.Verify(
+                x => x.DispatchAsync(second, It.IsAny<CancellationToken>()),
+                Times.Never);
+            Assert.That(aggregate.DomainEvents, Has.Count.EqualTo(2));
+            Assert.That(aggregate.DomainEvents, Does.Contain(first));
+            Assert.That(aggregate.DomainEvents, Does.Contain(second));
+        });
+    }
+
+    [Test]
     public void SavedChanges_ShouldDispatchEventsAndClearAggregate()
     {
         var result = DatabaseTestContextFactory.Create();

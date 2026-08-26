@@ -13,6 +13,15 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\Source\KUKULCAN.SharedKernel.Database\KUKULCAN.SharedKernel.Database.csproj" />
+    <ProjectReference Include="Coverage\PartiallyLoadableProvider\PartiallyLoadableProvider.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- The fixture project is built independently. Its source and generated files
+         must not be included by the SDK default Compile glob of this test project. -->
+    <Compile Remove="Coverage\PartiallyLoadableProvider\**" />
+    <!-- The dependency fixture source belongs exclusively to its own project. -->
+    <Compile Remove="Coverage\PartiallyLoadableProvider.MissingDependency\**" />
   </ItemGroup>
 
   <ItemGroup>
