@@ -227,6 +227,11 @@ public abstract class KukulcanDbContextBase(
             throw NotInstalled(assemblyName, ex);
         }
 
+        return FindProviderExtensionType(assembly, typeName, assemblyName);
+    }
+
+    private static Type FindProviderExtensionType(Assembly assembly, string typeName, string assemblyName)
+    {
         Type? type = assembly.GetType(typeName, throwOnError: false);
         if (type is not null)
             return type;
