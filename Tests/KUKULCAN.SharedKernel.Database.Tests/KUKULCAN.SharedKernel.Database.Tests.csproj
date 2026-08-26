@@ -17,9 +17,10 @@
   </ItemGroup>
 
   <ItemGroup>
-    <!-- The dependency fixture source belongs exclusively to its own project.
-         Exclude it from the test project so the fixture assembly can later be
-         loaded without its dependency and produce ReflectionTypeLoadException. -->
+    <!-- The fixture project is built independently. Its source and generated files
+         must not be included by the SDK default Compile glob of this test project. -->
+    <Compile Remove="Coverage\PartiallyLoadableProvider\**" />
+    <!-- The dependency fixture source belongs exclusively to its own project. -->
     <Compile Remove="Coverage\PartiallyLoadableProvider.MissingDependency\**" />
   </ItemGroup>
 
