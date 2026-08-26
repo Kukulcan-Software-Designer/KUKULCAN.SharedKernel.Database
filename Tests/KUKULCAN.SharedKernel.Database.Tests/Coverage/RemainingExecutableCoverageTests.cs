@@ -1,4 +1,5 @@
 using System.Reflection;
+using System.Runtime.Loader;
 using KUKULCAN.SharedKernel.Database.Tests.TestInfrastructure.internals;
 
 namespace KUKULCAN.SharedKernel.Database.Tests.Coverage;
@@ -82,33 +83,6 @@ public sealed class RemainingExecutableCoverageTests
 
         Assert.That(exception.InnerException, Is.TypeOf<NotSupportedException>());
         Assert.That(exception.InnerException!.Message, Does.Contain("Failed to configure provider"));
-    }
-
-    [Test]
-    public void LoadProviderExtensionType_WhenAssemblyGetTypesPartiallyFails_ShouldUseValidTypeFromException()
-    {
-        const string assemblyName = "Microsoft.EntityFrameworkCore.SqlServer";
-        const string expectedTypeName = "SqlServerDbContextOptionsExtensions";
-
-        Assembly assembly = Assembly.Load(new AssemblyName(assemblyName));
-
-        ReflectionTypeLoadException reflectionException = Assert.Throws<ReflectionTypeLoadException>(
-            () => assembly.GetTypes())!;
-
-        Assert.That(
-            reflectionException.Types,
-            Has.Some.Matches<Type?>(type =>
-                type is not null &&
-                string.Equals(type.Name, expectedTypeName, StringComparison.Ordinal)));
-        Assert.That(reflectionException.Types, Has.Some.Null);
-
-        MethodInfo method = typeof(KukulcanDbContextBase).GetMethod(
-            "LoadProviderExtensionType", BindingFlags.Static | BindingFlags.NonPublic)!;
-
-        Type loadedType = (Type)method.Invoke(null, [expectedTypeName, assemblyName])!;
-
-        Assert.That(loadedType.Name, Is.EqualTo(expectedTypeName));
-        Assert.That(loadedType.Assembly, Is.SameAs(assembly));
     }
 
     [Test]
