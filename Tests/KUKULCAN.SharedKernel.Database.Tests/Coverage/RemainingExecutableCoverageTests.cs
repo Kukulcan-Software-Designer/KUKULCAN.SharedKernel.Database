@@ -1,4 +1,5 @@
 using System.Reflection;
+using System.Runtime.Loader;
 using KUKULCAN.SharedKernel.Database.Tests.TestInfrastructure.internals;
 
 namespace KUKULCAN.SharedKernel.Database.Tests.Coverage;
@@ -90,7 +91,9 @@ public sealed class RemainingExecutableCoverageTests
         const string assemblyName = "Microsoft.EntityFrameworkCore.SqlServer";
         const string expectedTypeName = "SqlServerDbContextOptionsExtensions";
 
-        Assembly assembly = Assembly.Load(new AssemblyName(assemblyName));
+        Assembly assembly = AssemblyLoadContext.Default.Assemblies
+            .Single(assembly =>
+                string.Equals(assembly.GetName().Name, assemblyName, StringComparison.Ordinal));
 
         ReflectionTypeLoadException reflectionException = Assert.Throws<ReflectionTypeLoadException>(
             () => assembly.GetTypes())!;
