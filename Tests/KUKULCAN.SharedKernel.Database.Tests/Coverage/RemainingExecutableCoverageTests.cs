@@ -95,7 +95,8 @@ public sealed class RemainingExecutableCoverageTests
             "PartiallyLoadableProvider.SqlServerDbContextOptionsExtensions", throwOnError: true)!;
 
         object result = method.Invoke(null,
-            [assembly, "Some.Unrelated.Namespace.SqlServerDbContextOptionsExtensions", assembly.GetName().Name!])!;
+            [assembly, "Some.Unrelated.Namespace.SqlSe3>Microsoft.PackageDependencyResolution.targets(266,5): Error NETSDK1004 : No se encuentra el archivo de recursos '/home/juan.pardogarcia/Proyectos/NETCore/KUKULCAN.SharedKernel.Database/Tests/KUKULCAN.SharedKernel.Database.Tests/Coverage/PartiallyLoadableProvider/obj/project.assets.json'. Ejecute una restauración de paquetes de NuGet para generar el archivo.
+rverDbContextOptionsExtensions", assembly.GetName().Name!])!;
 
         Assert.That(result, Is.EqualTo(expectedType));
     }
