@@ -6,7 +6,6 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <RootNamespace>PartiallyLoadableProvider</RootNamespace>
     <AssemblyName>Microsoft.EntityFrameworkCore.SqlServer</AssemblyName>
-    <TargetName>SqlServerCoverageFixture</TargetName>
     <AssemblyVersion>99.0.0.0</AssemblyVersion>
     <FileVersion>99.0.0.0</FileVersion>
   </PropertyGroup>
@@ -15,5 +14,6 @@
     <ProjectReference Include="..\PartiallyLoadableProvider.MissingDependency\PartiallyLoadableProvider.MissingDependency.csproj">
       <Private>false</Private>
     </ProjectReference>
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.*" />
   </ItemGroup>
 </Project>
