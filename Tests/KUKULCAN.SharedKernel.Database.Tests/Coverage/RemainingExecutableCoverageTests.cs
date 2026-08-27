@@ -90,12 +90,14 @@ public sealed class RemainingExecutableCoverageTests
     {
         MethodInfo method = typeof(KukulcanDbContextBase).GetMethod(
             "FindProviderExtensionType", BindingFlags.Static | BindingFlags.NonPublic)!;
-        Assembly assembly = typeof(Microsoft.EntityFrameworkCore.SqlServerDbContextOptionsExtensions).Assembly;
+        Assembly assembly = Assembly.Load(new AssemblyName("Microsoft.EntityFrameworkCore.SqlServer"));
+        Type expectedType = assembly.GetType(
+            "Microsoft.EntityFrameworkCore.SqlServerDbContextOptionsExtensions", throwOnError: true)!;
 
         object result = method.Invoke(null,
             [assembly, "Some.Unrelated.Namespace.SqlServerDbContextOptionsExtensions", assembly.GetName().Name!])!;
 
-        Assert.That(result, Is.EqualTo(typeof(Microsoft.EntityFrameworkCore.SqlServerDbContextOptionsExtensions)));
+        Assert.That(result, Is.EqualTo(expectedType));
     }
 
     [Test]
@@ -103,7 +105,7 @@ public sealed class RemainingExecutableCoverageTests
     {
         MethodInfo method = typeof(KukulcanDbContextBase).GetMethod(
             "FindProviderExtensionType", BindingFlags.Static | BindingFlags.NonPublic)!;
-        Assembly assembly = typeof(Microsoft.EntityFrameworkCore.SqlServerDbContextOptionsExtensions).Assembly;
+        Assembly assembly = Assembly.Load(new AssemblyName("Microsoft.EntityFrameworkCore.SqlServer"));
 
         TargetInvocationException exception = Assert.Throws<TargetInvocationException>(() =>
             method.Invoke(null,
