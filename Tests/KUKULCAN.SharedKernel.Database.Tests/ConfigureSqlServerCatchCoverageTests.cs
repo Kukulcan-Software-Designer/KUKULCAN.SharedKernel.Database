@@ -52,7 +52,12 @@ public sealed class ConfigureSqlServerCatchCoverageTests
                 Assert.That(invocation.InnerException!.Message, Does.Contain("Failed to configure provider."));
                 Assert.That(invocation.InnerException.Message, Does.Contain("Microsoft.EntityFrameworkCore.SqlServer"));
                 Assert.That(invocation.InnerException.InnerException, Is.TypeOf<TargetInvocationException>());
-                Assert.That(invocation.InnerException.InnerException!.InnerException, Is.TypeOf<ArgumentNullException>());
+                Assert.That(
+                    invocation.InnerException.InnerException!.InnerException,
+                    Is.TypeOf<TargetInvocationException>());
+                Assert.That(
+                    invocation.InnerException.InnerException!.InnerException!.InnerException,
+                    Is.TypeOf<ArgumentNullException>());
             }
         }
         finally
