@@ -16,10 +16,4 @@
     </ProjectReference>
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.*" />
   </ItemGroup>
-
-  <Target Name="CopyCoverageFixtureToTestOutput" AfterTargets="Build">
-    <Copy SourceFiles="$(TargetPath)"
-          DestinationFiles="$(MSBuildProjectDirectory)\..\..\bin\$(Configuration)\net10.0\SqlServerCoverageFixture.dll"
-          SkipUnchangedFiles="true" />
-  </Target>
 </Project>
