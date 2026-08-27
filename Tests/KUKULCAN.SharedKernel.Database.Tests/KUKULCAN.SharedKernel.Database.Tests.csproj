@@ -15,6 +15,13 @@
     <ProjectReference Include="..\..\Source\KUKULCAN.SharedKernel.Database\KUKULCAN.SharedKernel.Database.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <!-- The fixture projects live directly under Tests/. The historical copies under Coverage/
+         are intentionally excluded so their generated obj files can never become test sources. -->
+    <Compile Remove="Coverage\PartiallyLoadableProvider\**\*.cs" />
+    <Compile Remove="Coverage\PartiallyLoadableProvider.MissingDependency\**\*.cs" />
+  </ItemGroup>
+
   <Target Name="BuildSqlServerCoverageFixture" BeforeTargets="Build">
     <MSBuild
       Projects="$(MSBuildProjectDirectory)\..\PartiallyLoadableProvider\PartiallyLoadableProvider.csproj"
