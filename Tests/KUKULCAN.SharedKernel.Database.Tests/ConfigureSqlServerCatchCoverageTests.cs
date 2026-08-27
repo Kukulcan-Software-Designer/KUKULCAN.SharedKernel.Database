@@ -1,5 +1,4 @@
 using System.Reflection;
-using System.Runtime.Loader;
 
 namespace KUKULCAN.SharedKernel.Database.Tests;
 
@@ -13,56 +12,40 @@ public sealed class ConfigureSqlServerCatchCoverageTests
             "ConfigureSqlServer",
             BindingFlags.NonPublic | BindingFlags.Static)!;
 
-        // The coverage fixture has the real provider assembly identity but a different
-        // physical file name. ConfigureSqlServer uses Assembly.Load by simple assembly name,
-        // so explicitly resolve that identity to the fixture for this test.
-        string providerAssemblyPath = typeof(PartiallyLoadableProvider.SqlServerDbContextOptionsExtensions)
-            .Assembly
-            .Location;
+        // ReflectionCoverageAssemblyBootstrap loads the fixture under the real
+        // Microsoft.EntityFrameworkCore.SqlServer assembly identity. The fixture is a
+        // build dependency of this project and is copied deterministically as
+        // SqlServerCoverageFixture.dll, so this test never loads the real provider.
+        string fixturePath = Path.Combine(AppContext.BaseDirectory, "SqlServerCoverageFixture.dll");
+        Assert.That(File.Exists(fixturePath), Is.True,
+            $"Expected SQL Server coverage fixture at '{fixturePath}'.");
 
-        Assert.That(providerAssemblyPath, Is.Not.Null.And.Not.Empty);
-        Assert.That(File.Exists(providerAssemblyPath), Is.True,
-            $"Expected SQL Server coverage fixture assembly at '{providerAssemblyPath}'.");
+        // Passing null as the DbContextOptionsBuilder makes the reflected provider
+        // invocation fail deterministically with ArgumentNullException. ConfigureSqlServer
+        // must catch that non-NotSupportedException and wrap it in NotSupportedException.
+        var invocation = Assert.Throws<TargetInvocationException>(() => method.Invoke(
+            null,
+            [
+                null!,
+                "Server=localhost;Database=KukulcanCoverage;Integrated Security=true;TrustServerCertificate=true",
+                30,
+                0,
+                TimeSpan.Zero
+            ]));
 
-        Assembly? ResolveProvider(AssemblyLoadContext context, AssemblyName assemblyName)
-            => string.Equals(assemblyName.Name, "Microsoft.EntityFrameworkCore.SqlServer", StringComparison.Ordinal)
-                ? context.LoadFromAssemblyPath(providerAssemblyPath)
-                : null;
+        Assert.That(invocation!.InnerException, Is.TypeOf<NotSupportedException>());
 
-        AssemblyLoadContext.Default.Resolving += ResolveProvider;
-        try
+        using (Assert.EnterMultipleScope())
         {
-            // Passing null as the DbContextOptionsBuilder makes the reflected provider
-            // invocation fail deterministically with ArgumentNullException. ConfigureSqlServer
-            // must catch that non-NotSupportedException and wrap it in NotSupportedException.
-            var invocation = Assert.Throws<TargetInvocationException>(() => method.Invoke(
-                null,
-                [
-                    null!,
-                    "Server=localhost;Database=KukulcanCoverage;Integrated Security=true;TrustServerCertificate=true",
-                    30,
-                    0,
-                    TimeSpan.Zero
-                ]));
-
-            Assert.That(invocation!.InnerException, Is.TypeOf<NotSupportedException>());
-
-            using (Assert.EnterMultipleScope())
-            {
-                Assert.That(invocation.InnerException!.Message, Does.Contain("Failed to configure provider."));
-                Assert.That(invocation.InnerException.Message, Does.Contain("Microsoft.EntityFrameworkCore.SqlServer"));
-                Assert.That(invocation.InnerException.InnerException, Is.TypeOf<TargetInvocationException>());
-                Assert.That(
-                    invocation.InnerException.InnerException!.InnerException,
-                    Is.TypeOf<TargetInvocationException>());
-                Assert.That(
-                    invocation.InnerException.InnerException!.InnerException!.InnerException,
-                    Is.TypeOf<ArgumentNullException>());
-            }
-        }
-        finally
-        {
-            AssemblyLoadContext.Default.Resolving -= ResolveProvider;
+            Assert.That(invocation.InnerException!.Message, Does.Contain("Failed to configure provider."));
+            Assert.That(invocation.InnerException.Message, Does.Contain("Microsoft.EntityFrameworkCore.SqlServer"));
+            Assert.That(invocation.InnerException.InnerException, Is.TypeOf<TargetInvocationException>());
+            Assert.That(
+                invocation.InnerException.InnerException!.InnerException,
+                Is.TypeOf<TargetInvocationException>());
+            Assert.That(
+                invocation.InnerException.InnerException!.InnerException!.InnerException,
+                Is.TypeOf<ArgumentNullException>());
         }
     }
 }
