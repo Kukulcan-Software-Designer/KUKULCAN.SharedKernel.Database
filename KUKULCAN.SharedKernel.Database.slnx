@@ -69,7 +69,5 @@
     <Project Path="Tests/KUKULCAN.SharedKernel.Database.PostgreSQL.Integration/KUKULCAN.SharedKernel.Database.PostgreSQL.Integration.csproj" />
     <Project Path="Tests/KUKULCAN.SharedKernel.Database.SQLServer.Integration/KUKULCAN.SharedKernel.Database.SQLServer.Integration.csproj" />
     <Project Path="Tests/KUKULCAN.SharedKernel.Database.Tests/KUKULCAN.SharedKernel.Database.Tests.csproj" />
-    <Project Path="Tests/KUKULCAN.SharedKernel.Database.Tests/Coverage/PartiallyLoadableProvider.MissingDependency/PartiallyLoadableProvider.MissingDependency.csproj" />
-    <Project Path="Tests/KUKULCAN.SharedKernel.Database.Tests/Coverage/PartiallyLoadableProvider/PartiallyLoadableProvider.csproj" />
   </Folder>
 </Solution>
