@@ -1,4 +1,5 @@
 using System.Reflection;
+using System.Runtime.Loader;
 
 namespace KUKULCAN.SharedKernel.Database.Tests;
 
@@ -13,8 +14,9 @@ public sealed class ConfigureSqlServerCatchCoverageTests
             BindingFlags.NonPublic | BindingFlags.Static)!;
 
         // The coverage fixture intentionally uses the SQL Server provider assembly identity
-        // while being emitted as SqlServerCoverageFixture.dll. Resolve the exact fixture
-        // assembly through its known test type instead of relying on the runtime probing path.
+        // while being emitted as SqlServerCoverageFixture.dll. Load it into the default
+        // AssemblyLoadContext because production code uses Assembly.Load(AssemblyName), which
+        // resolves assemblies registered in that context.
         string providerAssemblyPath = typeof(PartiallyLoadableProvider.SqlServerDbContextOptionsExtensions)
             .Assembly
             .Location;
@@ -23,7 +25,7 @@ public sealed class ConfigureSqlServerCatchCoverageTests
         Assert.That(File.Exists(providerAssemblyPath), Is.True,
             $"Expected SQL Server coverage fixture assembly at '{providerAssemblyPath}'.");
 
-        _ = Assembly.LoadFrom(providerAssemblyPath);
+        _ = AssemblyLoadContext.Default.LoadFromAssemblyPath(providerAssemblyPath);
 
         // Passing null as the DbContextOptionsBuilder makes the reflected provider
         // invocation fail deterministically with ArgumentNullException. ConfigureSqlServer
