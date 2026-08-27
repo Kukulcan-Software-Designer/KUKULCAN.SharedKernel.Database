@@ -6,23 +6,21 @@ namespace KUKULCAN.SharedKernel.Database.Tests;
 public sealed class ConfigureSqlServerCatchCoverageTests
 {
     [Test]
-    public void ConfigureSqlServer_WhenProviderUseMethodThrowsNonNotSupportedException_ShouldWrapFailure()
+    public void ConfigureSqlServer_WhenProviderConfigurationThrowsNonNotSupportedException_ShouldWrapFailure()
     {
         MethodInfo method = typeof(KukulcanDbContextBase).GetMethod(
             "ConfigureSqlServer",
             BindingFlags.NonPublic | BindingFlags.Static)!;
 
-        var optionsBuilder = new DbContextOptionsBuilder();
-
-        // CommandTimeout receives a negative value and the real SQL Server provider
-        // throws a non-NotSupportedException while executing the configuration action.
-        // This must execute ConfigureSqlServer's catch body.
+        // UseSqlServer validates its DbContextOptionsBuilder during the provider
+        // invocation. Passing null makes that invocation fail deterministically
+        // with an ArgumentNullException, which is then wrapped by ConfigureSqlServer.
         var invocation = Assert.Throws<TargetInvocationException>(() => method.Invoke(
             null,
             [
-                optionsBuilder,
+                null!,
                 "Server=localhost;Database=KukulcanCoverage;Integrated Security=true;TrustServerCertificate=true",
-                -1,
+                30,
                 0,
                 TimeSpan.Zero
             ]));
@@ -34,7 +32,8 @@ public sealed class ConfigureSqlServerCatchCoverageTests
             Assert.That(invocation.InnerException!.Message, Does.Contain("Failed to configure provider."));
             Assert.That(invocation.InnerException.Message, Does.Contain("Microsoft.EntityFrameworkCore.SqlServer"));
             Assert.That(invocation.InnerException.InnerException, Is.Not.Null);
-            Assert.That(invocation.InnerException.InnerException, Is.Not.TypeOf<NotSupportedException>());
+            Assert.That(invocation.InnerException.InnerException, Is.TypeOf<TargetInvocationException>());
+            Assert.That(invocation.InnerException.InnerException!.InnerException, Is.TypeOf<ArgumentNullException>());
         }
     }
 }
