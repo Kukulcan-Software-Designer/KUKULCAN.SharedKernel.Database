@@ -129,7 +129,7 @@ public sealed class KukulcanDbContextBaseUnitTests
     [TestCase(DatabaseProvider.SqlServer,
         "Server=localhost;Database=Coverage;Pooling=true;Min Pool Size=2;Max Pool Size=9;")]
     [TestCase(DatabaseProvider.PostgresSql,
-        "Host=localhost;Database=Coverage;Pooling=true;Minimum Pool Size=2;Maximum Pool Size=9;")]
+        "Server=localhost;Database=Coverage;Pooling=true;Minimum Pool Size=2;Maximum Pool Size=9;")]
     [TestCase(DatabaseProvider.MySql,
         "Server=localhost;Database=Coverage;Pooling=true;MinimumPoolSize=2;MaximumPoolSize=9;")]
     public void BuildProviderConnectionString_WithPoolingEnabled_ShouldAppendProviderSpecificKeys(
@@ -259,6 +259,48 @@ public sealed class KukulcanDbContextBaseUnitTests
             new[] { "Pooling" });
 
         Assert.That(result, Is.Empty);
+    }
+
+    [Test]
+    public void RemoveConnectionStringKeys_WithSegmentsWithoutEquals_ShouldPreserveThemAndMatchKeysCaseInsensitively()
+    {
+        string result = InvokePrivate<string>(
+            "RemoveConnectionStringKeys",
+            "Server=localhost;POOLING=true;MalformedSegment;Database=Coverage;",
+            new[] { "Pooling" });
+
+        Assert.That(result, Is.EqualTo("Server=localhost;MalformedSegment;Database=Coverage"));
+    }
+
+    [Test]
+    public void FindProviderExtensionType_WithFullyQualifiedTypeMissing_ShouldUseShortNameFallback()
+    {
+        Assembly assembly = typeof(KukulcanDbContextBaseUnitTests).Assembly;
+
+        Type result = InvokePrivate<Type>(
+            "FindProviderExtensionType",
+            assembly,
+            "Missing.Namespace.UnitTestDbContext",
+            "TestAssembly");
+
+        Assert.That(result, Is.EqualTo(typeof(UnitTestDbContext)));
+    }
+
+    [Test]
+    public void FindProviderExtensionType_WhenExpectedTypeDoesNotExist_ShouldThrowNotSupportedException()
+    {
+        Assembly assembly = typeof(KukulcanDbContextBaseUnitTests).Assembly;
+
+        TargetInvocationException exception = Assert.Throws<TargetInvocationException>(() =>
+            InvokePrivate<Type>(
+                "FindProviderExtensionType",
+                assembly,
+                "Missing.Namespace.DoesNotExist",
+                "TestAssembly"))!;
+
+        Assert.That(exception.InnerException, Is.TypeOf<NotSupportedException>());
+        Assert.That(exception.InnerException!.Message,
+            Does.Contain("does not expose the expected provider extension type"));
     }
 
     private static IOptions<KukulcanDatabaseOptions> CreateOptions()
