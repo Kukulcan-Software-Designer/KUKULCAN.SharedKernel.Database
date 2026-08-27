@@ -86,6 +86,84 @@ public sealed class RemainingExecutableCoverageTests
     }
 
     [Test]
+    public void LoadProviderExtensionType_WhenExactTypeIsMissing_ShouldFindTypeByShortName()
+    {
+        MethodInfo method = typeof(KukulcanDbContextBase).GetMethod(
+            "FindProviderExtensionType", BindingFlags.Static | BindingFlags.NonPublic)!;
+        Assembly assembly = LoadSqlServerCoverageFixture();
+        Type expectedType = assembly.GetType(
+            "PartiallyLoadableProvider.SqlServerDbContextOptionsExtensions", throwOnError: true)!;
+
+        object result = method.Invoke(null,
+            [assembly, "Some.Unrelated.Namespace.SqlServerDbContextOptionsExtensions", assembly.GetName().Name!])!;
+
+        Assert.That(result, Is.EqualTo(expectedType));
+    }
+
+    [Test]
+    public void LoadProviderExtensionType_WhenTypeCannotBeFound_ShouldThrowNotSupportedException()
+    {
+        MethodInfo method = typeof(KukulcanDbContextBase).GetMethod(
+            "FindProviderExtensionType", BindingFlags.Static | BindingFlags.NonPublic)!;
+        Assembly assembly = LoadSqlServerCoverageFixture();
+
+        TargetInvocationException exception = Assert.Throws<TargetInvocationException>(() =>
+            method.Invoke(null,
+                [assembly, "Some.Unrelated.Namespace.TypeThatDoesNotExist", assembly.GetName().Name!]))!;
+
+        Assert.That(exception.InnerException, Is.TypeOf<NotSupportedException>());
+        Assert.That(exception.InnerException!.Message, Does.Contain("does not expose the expected provider extension type"));
+    }
+
+    [Test]
+    public void LoadProviderExtensionType_WhenAssemblyTypesPartiallyFail_ShouldUseLoadableTypes()
+    {
+        MethodInfo method = typeof(KukulcanDbContextBase).GetMethod(
+            "FindProviderExtensionType", BindingFlags.Static | BindingFlags.NonPublic)!;
+        string assemblyPath = typeof(PartiallyLoadableProvider.SqlServerDbContextOptionsExtensions).Assembly.Location;
+        var loadContext = new AssemblyLoadContext("Coverage.PartiallyLoadableProvider", isCollectible: true);
+        Assembly assembly = loadContext.LoadFromAssemblyPath(assemblyPath);
+
+        try
+        {
+            object result = method.Invoke(null,
+                [assembly, "Some.Unrelated.Namespace.SqlServerDbContextOptionsExtensions", assembly.GetName().Name!])!;
+
+            Type expectedType = assembly.GetType(
+                "PartiallyLoadableProvider.SqlServerDbContextOptionsExtensions", throwOnError: true)!;
+
+            Assert.That(result, Is.EqualTo(expectedType));
+        }
+        finally
+        {
+            loadContext.Unload();
+        }
+    }
+
+    [Test]
+    public void AppendConnectionStringOptions_WithEmptyConnectionString_ShouldReturnOptions()
+    {
+        MethodInfo method = typeof(KukulcanDbContextBase).GetMethod(
+            "AppendConnectionStringOptions", BindingFlags.Static | BindingFlags.NonPublic)!;
+
+        const string options = "Pooling=true;Min Pool Size=1;Max Pool Size=10";
+        object result = method.Invoke(null, [string.Empty, options])!;
+
+        Assert.That(result, Is.EqualTo(options));
+    }
+
+    [Test]
+    public void RemoveConnectionStringKeys_WithEmptyConnectionString_ShouldReturnEmpty()
+    {
+        MethodInfo method = typeof(KukulcanDbContextBase).GetMethod(
+            "RemoveConnectionStringKeys", BindingFlags.Static | BindingFlags.NonPublic)!;
+
+        object result = method.Invoke(null, [string.Empty, new[] { "Pooling" }])!;
+
+        Assert.That(result, Is.EqualTo(string.Empty));
+    }
+
+    [Test]
     public void InvokeProviderUseMethod_WhenNoCompatibleMethodExists_ShouldThrow()
     {
         MethodInfo method = typeof(KukulcanDbContextBase).GetMethod(
@@ -169,6 +247,18 @@ public sealed class RemainingExecutableCoverageTests
             Assert.That(values, Is.EqualTo([654]));
             Assert.That(messages, Has.Some.Contains("SELECT 654"));
         }
+    }
+
+    private static Assembly LoadSqlServerCoverageFixture()
+    {
+        string path = Path.Combine(
+            AppContext.BaseDirectory,
+            "SqlServerCoverageFixture.dll");
+
+        Assert.That(File.Exists(path), Is.True,
+            $"SQL Server coverage fixture was not found at '{path}'.");
+
+        return Assembly.LoadFrom(path);
     }
 
     private sealed class PlainDbContext : DbContext

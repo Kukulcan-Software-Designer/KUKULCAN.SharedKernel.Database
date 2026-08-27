@@ -76,6 +76,21 @@ public sealed class KukulcanDbContextProviderConfigurationTests
         Assert.That(exception.InnerException!.Message, Does.Contain("Failed to configure provider"));
     }
 
+    [Test]
+    public void ConfigureProvider_WithSqlServer_WhenProviderThrows_ShouldWrapFailure()
+    {
+        MethodInfo method = typeof(KukulcanDbContextBase).GetMethod(
+            "ConfigureSqlServer", BindingFlags.Static | BindingFlags.NonPublic)!;
+
+        TargetInvocationException exception = Assert.Throws<TargetInvocationException>(() =>
+            method.Invoke(null,
+                [null, "ignored", 30, 0, TimeSpan.FromSeconds(5)]))!;
+
+        Assert.That(exception.InnerException, Is.TypeOf<NotSupportedException>());
+        Assert.That(exception.InnerException!.Message, Does.Contain("Failed to configure provider"));
+        Assert.That(exception.InnerException!.InnerException, Is.Not.Null);
+    }
+
     private sealed class ProviderTestDbContext(
         IOptions<KukulcanDatabaseOptions> options,
         ITenantContext tenantContext,
