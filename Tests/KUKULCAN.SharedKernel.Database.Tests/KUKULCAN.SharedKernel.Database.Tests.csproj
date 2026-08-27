@@ -28,6 +28,14 @@
     <Compile Remove="Coverage\PartiallyLoadableProvider.MissingDependency\**" />
   </ItemGroup>
 
+  <Target Name="BuildSqlServerCoverageFixture" BeforeTargets="CopySqlServerCoverageFixture">
+    <MSBuild
+      Projects="$(MSBuildProjectDirectory)\Coverage\PartiallyLoadableProvider\PartiallyLoadableProvider.csproj"
+      Targets="Build"
+      Properties="Configuration=$(Configuration);TargetFramework=$(TargetFramework)"
+      BuildInParallel="false" />
+  </Target>
+
   <Target Name="CopySqlServerCoverageFixture" AfterTargets="Build">
     <Copy
       SourceFiles="$(MSBuildProjectDirectory)\Coverage\PartiallyLoadableProvider\bin\$(Configuration)\$(TargetFramework)\Microsoft.EntityFrameworkCore.SqlServer.dll"
