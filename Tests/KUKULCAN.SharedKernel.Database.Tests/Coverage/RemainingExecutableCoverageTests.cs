@@ -90,9 +90,9 @@ public sealed class RemainingExecutableCoverageTests
     {
         MethodInfo method = typeof(KukulcanDbContextBase).GetMethod(
             "FindProviderExtensionType", BindingFlags.Static | BindingFlags.NonPublic)!;
-        Assembly assembly = Assembly.Load(new AssemblyName("Microsoft.EntityFrameworkCore.SqlServer"));
+        Assembly assembly = LoadSqlServerCoverageFixture();
         Type expectedType = assembly.GetType(
-            "Microsoft.EntityFrameworkCore.SqlServerDbContextOptionsExtensions", throwOnError: true)!;
+            "PartiallyLoadableProvider.SqlServerDbContextOptionsExtensions", throwOnError: true)!;
 
         object result = method.Invoke(null,
             [assembly, "Some.Unrelated.Namespace.SqlServerDbContextOptionsExtensions", assembly.GetName().Name!])!;
@@ -105,7 +105,7 @@ public sealed class RemainingExecutableCoverageTests
     {
         MethodInfo method = typeof(KukulcanDbContextBase).GetMethod(
             "FindProviderExtensionType", BindingFlags.Static | BindingFlags.NonPublic)!;
-        Assembly assembly = Assembly.Load(new AssemblyName("Microsoft.EntityFrameworkCore.SqlServer"));
+        Assembly assembly = LoadSqlServerCoverageFixture();
 
         TargetInvocationException exception = Assert.Throws<TargetInvocationException>(() =>
             method.Invoke(null,
@@ -126,12 +126,13 @@ public sealed class RemainingExecutableCoverageTests
 
         try
         {
-            TargetInvocationException exception = Assert.Throws<TargetInvocationException>(() =>
-                method.Invoke(null,
-                    [assembly, "PartiallyLoadableProvider.BrokenProviderType", assembly.GetName().Name!]))!;
+            object result = method.Invoke(null,
+                [assembly, "Some.Unrelated.Namespace.SqlServerDbContextOptionsExtensions", assembly.GetName().Name!])!;
 
-            Assert.That(exception.InnerException, Is.TypeOf<NotSupportedException>());
-            Assert.That(exception.InnerException!.Message, Does.Contain("does not expose the expected provider extension type"));
+            Type expectedType = assembly.GetType(
+                "PartiallyLoadableProvider.SqlServerDbContextOptionsExtensions", throwOnError: true)!;
+
+            Assert.That(result, Is.EqualTo(expectedType));
         }
         finally
         {
@@ -246,6 +247,18 @@ public sealed class RemainingExecutableCoverageTests
             Assert.That(values, Is.EqualTo([654]));
             Assert.That(messages, Has.Some.Contains("SELECT 654"));
         }
+    }
+
+    private static Assembly LoadSqlServerCoverageFixture()
+    {
+        string path = Path.Combine(
+            AppContext.BaseDirectory,
+            "SqlServerCoverageFixture.dll");
+
+        Assert.That(File.Exists(path), Is.True,
+            $"SQL Server coverage fixture was not found at '{path}'.");
+
+        return Assembly.LoadFrom(path);
     }
 
     private sealed class PlainDbContext : DbContext
