@@ -26,6 +26,9 @@ jobs:
       - name: Restore
         run: dotnet restore Tests/KUKULCAN.SharedKernel.Database.Tests/KUKULCAN.SharedKernel.Database.Tests.csproj
 
+      - name: Restore SQL Server coverage fixture
+        run: dotnet restore Tests/PartiallyLoadableProvider/PartiallyLoadableProvider.csproj
+
       - name: Test with coverage
         run: >-
           dotnet test
