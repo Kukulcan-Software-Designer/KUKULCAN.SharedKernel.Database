@@ -8,6 +8,13 @@ namespace KUKULCAN.SharedKernel.Database.Tests.Interceptors;
 public sealed class DomainEventDispatchInterceptorTests
 {
     [Test]
+    public void Constructor_WithNullDispatcher_ShouldThrowArgumentNullException()
+    {
+        Assert.Throws<ArgumentNullException>(
+            () => new DomainEventDispatchInterceptor(null!));
+    }
+
+    [Test]
     public async Task SavedChangesAsync_ShouldDispatchEventsAndClearAggregate()
     {
         var result = DatabaseTestContextFactory.Create();
