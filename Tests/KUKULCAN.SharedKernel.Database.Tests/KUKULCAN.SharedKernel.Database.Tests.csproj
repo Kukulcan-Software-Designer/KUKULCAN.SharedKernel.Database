@@ -13,21 +13,11 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\Source\KUKULCAN.SharedKernel.Database\KUKULCAN.SharedKernel.Database.csproj" />
-    <ProjectReference Include="..\PartiallyLoadableProvider.MissingDependency\PartiallyLoadableProvider.MissingDependency.csproj" />
-    <ProjectReference Include="..\PartiallyLoadableProvider\PartiallyLoadableProvider.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <!-- Coverage fixture sources are not part of the test assembly. The fixture is
-         built explicitly below so neither it nor its deliberately separate missing
-         dependency becomes a compiler reference of this project. -->
-    <Compile Remove="Coverage\PartiallyLoadableProvider\**" />
-    <Compile Remove="Coverage\PartiallyLoadableProvider.MissingDependency\**" />
-  </ItemGroup>
-
-  <Target Name="BuildSqlServerCoverageFixture" BeforeTargets="CopySqlServerCoverageFixture">
+  <Target Name="BuildSqlServerCoverageFixture" BeforeTargets="Build">
     <MSBuild
-      Projects="$(MSBuildProjectDirectory)\Coverage\PartiallyLoadableProvider\PartiallyLoadableProvider.csproj"
+      Projects="$(MSBuildProjectDirectory)\..\PartiallyLoadableProvider\PartiallyLoadableProvider.csproj"
       Targets="Build"
       Properties="Configuration=$(Configuration);TargetFramework=$(TargetFramework)"
       BuildInParallel="false" />
@@ -35,7 +25,7 @@
 
   <Target Name="CopySqlServerCoverageFixture" AfterTargets="Build">
     <Copy
-      SourceFiles="$(MSBuildProjectDirectory)\Coverage\PartiallyLoadableProvider\bin\$(Configuration)\$(TargetFramework)\Microsoft.EntityFrameworkCore.SqlServer.dll"
+      SourceFiles="$(MSBuildProjectDirectory)\..\PartiallyLoadableProvider\bin\$(Configuration)\$(TargetFramework)\Microsoft.EntityFrameworkCore.SqlServer.dll"
       DestinationFiles="$(TargetDir)SqlServerCoverageFixture.dll"
       SkipUnchangedFiles="true" />
   </Target>
