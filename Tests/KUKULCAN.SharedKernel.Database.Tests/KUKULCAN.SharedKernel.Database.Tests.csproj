@@ -15,15 +15,12 @@
     <ProjectReference Include="..\..\Source\KUKULCAN.SharedKernel.Database\KUKULCAN.SharedKernel.Database.csproj" />
     <ProjectReference Include="..\PartiallyLoadableProvider.MissingDependency\PartiallyLoadableProvider.MissingDependency.csproj" />
     <ProjectReference Include="..\PartiallyLoadableProvider\PartiallyLoadableProvider.csproj" />
-    <ProjectReference Include="Coverage\PartiallyLoadableProvider\PartiallyLoadableProvider.csproj">
-      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
-    </ProjectReference>
   </ItemGroup>
 
   <ItemGroup>
-    <!-- The fixture project is a build dependency only. Its output deliberately has
-         the real SQL Server assembly identity and must be copied under the filename
-         expected by ReflectionCoverageAssemblyBootstrap. -->
+    <!-- Coverage fixture sources are not part of the test assembly. The fixture is
+         built explicitly below so neither it nor its deliberately separate missing
+         dependency becomes a compiler reference of this project. -->
     <Compile Remove="Coverage\PartiallyLoadableProvider\**" />
     <Compile Remove="Coverage\PartiallyLoadableProvider.MissingDependency\**" />
   </ItemGroup>
