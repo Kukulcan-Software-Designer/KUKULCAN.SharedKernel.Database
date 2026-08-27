@@ -10,7 +10,8 @@ namespace PartiallyLoadableProvider;
 public static class SqlServerDbContextOptionsExtensions
 {
     /// <summary>
-    /// Mimics the SQL Server provider entry point and throws when the options builder is null.
+    /// Mimics the SQL Server provider entry point and invokes the provider configuration callback.
+    /// A null options builder fails before the callback, while an invalid timeout fails inside it.
     /// </summary>
     public static void UseSqlServer(
         DbContextOptionsBuilder optionsBuilder,
@@ -18,6 +19,9 @@ public static class SqlServerDbContextOptionsExtensions
         Action<SqlServerOptions> configure)
     {
         ArgumentNullException.ThrowIfNull(optionsBuilder);
+        ArgumentNullException.ThrowIfNull(configure);
+
+        configure(new SqlServerOptions());
     }
 
     /// <summary>
@@ -30,6 +34,7 @@ public static class SqlServerDbContextOptionsExtensions
         /// </summary>
         public void CommandTimeout(int timeout)
         {
+            ArgumentOutOfRangeException.ThrowIfNegative(timeout);
         }
     }
 }
