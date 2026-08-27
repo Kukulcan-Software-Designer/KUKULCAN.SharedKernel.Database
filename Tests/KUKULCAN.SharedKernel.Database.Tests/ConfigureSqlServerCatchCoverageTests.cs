@@ -1,4 +1,5 @@
 using System.Reflection;
+using Microsoft.EntityFrameworkCore;
 
 namespace KUKULCAN.SharedKernel.Database.Tests;
 
@@ -12,14 +13,13 @@ public sealed class ConfigureSqlServerCatchCoverageTests
             "ConfigureSqlServer",
             BindingFlags.NonPublic | BindingFlags.Static)!;
 
-        // The SQL Server provider is an optional runtime dependency of the production
-        // assembly. Load the actual provider assembly from the test output directory
-        // before invoking ConfigureSqlServer so LoadProviderExtensionType can resolve
-        // it deterministically without depending on AssemblyLoadContext probing.
-        string providerAssemblyPath = Path.Combine(
-            AppContext.BaseDirectory,
-            "Microsoft.EntityFrameworkCore.SqlServer.dll");
+        // Resolve the provider assembly from the package reference itself rather than
+        // assuming that NuGet copied the optional provider DLL to the test output root.
+        // Referencing the public EF Core SQL Server extension type gives us the exact
+        // assembly that ConfigureSqlServer must load and invoke.
+        string providerAssemblyPath = typeof(SqlServerDbContextOptionsBuilderExtensions).Assembly.Location;
 
+        Assert.That(providerAssemblyPath, Is.Not.Null.And.Not.Empty);
         Assert.That(File.Exists(providerAssemblyPath), Is.True,
             $"Expected SQL Server provider assembly at '{providerAssemblyPath}'.");
 
