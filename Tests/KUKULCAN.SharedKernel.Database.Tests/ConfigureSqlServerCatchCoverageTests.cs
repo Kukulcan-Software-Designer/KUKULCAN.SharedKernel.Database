@@ -12,6 +12,12 @@ public sealed class ConfigureSqlServerCatchCoverageTests
             "ConfigureSqlServer",
             BindingFlags.NonPublic | BindingFlags.Static)!;
 
+        // The provider is an optional runtime dependency of the production assembly.
+        // Load it explicitly from the test project's package reference so that the
+        // test deterministically reaches UseSqlServer instead of failing in
+        // LoadProviderExtensionType with FileNotFoundException.
+        _ = typeof(Microsoft.EntityFrameworkCore.SqlServerDbContextOptionsExtensions).Assembly;
+
         // UseSqlServer validates its DbContextOptionsBuilder during the provider
         // invocation. Passing null makes that invocation fail deterministically
         // with an ArgumentNullException, which is then wrapped by ConfigureSqlServer.
@@ -31,7 +37,6 @@ public sealed class ConfigureSqlServerCatchCoverageTests
         {
             Assert.That(invocation.InnerException!.Message, Does.Contain("Failed to configure provider."));
             Assert.That(invocation.InnerException.Message, Does.Contain("Microsoft.EntityFrameworkCore.SqlServer"));
-            Assert.That(invocation.InnerException.InnerException, Is.Not.Null);
             Assert.That(invocation.InnerException.InnerException, Is.TypeOf<TargetInvocationException>());
             Assert.That(invocation.InnerException.InnerException!.InnerException, Is.TypeOf<ArgumentNullException>());
         }
