@@ -1,5 +1,4 @@
 using System.Reflection;
-using Microsoft.EntityFrameworkCore;
 
 namespace KUKULCAN.SharedKernel.Database.Tests;
 
@@ -13,15 +12,16 @@ public sealed class ConfigureSqlServerCatchCoverageTests
             "ConfigureSqlServer",
             BindingFlags.NonPublic | BindingFlags.Static)!;
 
-        // Resolve the provider assembly from the package reference itself rather than
-        // assuming that NuGet copied the optional provider DLL to the test output root.
-        // Referencing the public EF Core SQL Server extension type gives us the exact
-        // assembly that ConfigureSqlServer must load and invoke.
-        string providerAssemblyPath = typeof(SqlServerDbContextOptionsBuilderExtensions).Assembly.Location;
+        // The coverage fixture intentionally uses the SQL Server provider assembly identity
+        // while being emitted as SqlServerCoverageFixture.dll. Resolve the exact fixture
+        // assembly through its known test type instead of relying on the runtime probing path.
+        string providerAssemblyPath = typeof(PartiallyLoadableProvider.SqlServerDbContextOptionsExtensions)
+            .Assembly
+            .Location;
 
         Assert.That(providerAssemblyPath, Is.Not.Null.And.Not.Empty);
         Assert.That(File.Exists(providerAssemblyPath), Is.True,
-            $"Expected SQL Server provider assembly at '{providerAssemblyPath}'.");
+            $"Expected SQL Server coverage fixture assembly at '{providerAssemblyPath}'.");
 
         _ = Assembly.LoadFrom(providerAssemblyPath);
 
