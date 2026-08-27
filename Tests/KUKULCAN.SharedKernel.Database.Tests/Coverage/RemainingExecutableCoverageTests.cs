@@ -120,7 +120,7 @@ public sealed class RemainingExecutableCoverageTests
     {
         MethodInfo method = typeof(KukulcanDbContextBase).GetMethod(
             "FindProviderExtensionType", BindingFlags.Static | BindingFlags.NonPublic)!;
-        string assemblyPath = typeof(PartiallyLoadableProvider.SqlServerDbContextOptionsExtensions).Assembly.Location;
+        string assemblyPath = GetSqlServerCoverageFixturePath();
         var loadContext = new AssemblyLoadContext("Coverage.PartiallyLoadableProvider", isCollectible: true);
         Assembly assembly = loadContext.LoadFromAssemblyPath(assemblyPath);
 
@@ -249,7 +249,7 @@ public sealed class RemainingExecutableCoverageTests
         }
     }
 
-    private static Assembly LoadSqlServerCoverageFixture()
+    private static string GetSqlServerCoverageFixturePath()
     {
         string path = Path.Combine(
             AppContext.BaseDirectory,
@@ -258,8 +258,11 @@ public sealed class RemainingExecutableCoverageTests
         Assert.That(File.Exists(path), Is.True,
             $"SQL Server coverage fixture was not found at '{path}'.");
 
-        return Assembly.LoadFrom(path);
+        return path;
     }
+
+    private static Assembly LoadSqlServerCoverageFixture()
+        => AssemblyLoadContext.Default.LoadFromAssemblyPath(GetSqlServerCoverageFixturePath());
 
     private sealed class PlainDbContext : DbContext
     {
