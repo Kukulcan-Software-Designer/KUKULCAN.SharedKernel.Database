@@ -14,9 +14,9 @@
         <PackageLicenseFile>LICENSE</PackageLicenseFile>
         <PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
         <PackageReleaseNotes>
-            This hotfix fixes the following:
+            This update addresses the following:
 
-            - In the ASP.NET Core DI container, the correct thing to do is to request ILogger&lt;T&gt;, not the concrete Logger&lt;T&gt; implementation.
+            - We added a new database provider, MySQL, configuring it with the Oracle libraries (MySql.Entityframework.Core).
         </PackageReleaseNotes>
         <RepositoryUrl>https://github.com/Kukulcan-Software-Designer/KUKULCAN.SharedKernel.Database</RepositoryUrl>
         <RepositoryType>git</RepositoryType>
