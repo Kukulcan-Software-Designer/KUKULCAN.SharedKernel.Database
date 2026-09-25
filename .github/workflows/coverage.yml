@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - main
+  pull_request:
+    branches:
+      - main
   workflow_dispatch:
 
 permissions:
@@ -11,36 +14,92 @@ permissions:
 
 jobs:
   coverage:
+    name: Measure and publish Database code coverage
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v5
 
-      - name: Setup .NET 10
-        uses: actions/setup-dotnet@v4
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v5
         with:
           dotnet-version: '10.0.x'
 
-      - name: Restore
-        run: dotnet restore Tests/KUKULCAN.SharedKernel.Database.Tests/KUKULCAN.SharedKernel.Database.Tests.csproj
+      - name: Verify Docker runtime
+        run: docker info
 
-      - name: Restore SQL Server coverage fixture
-        run: dotnet restore Tests/PartiallyLoadableProvider/PartiallyLoadableProvider.csproj
+      - name: Prepare solution for coverage
+        run: dotnet restore KUKULCAN.SharedKernel.Database.slnx
 
-      - name: Test with coverage
+      - name: Build solution for coverage
+        run: dotnet build KUKULCAN.SharedKernel.Database.slnx --no-restore --configuration Release
+
+      - name: Run unit tests with coverage
         run: >-
           dotnet test
           Tests/KUKULCAN.SharedKernel.Database.Tests/KUKULCAN.SharedKernel.Database.Tests.csproj
+          --no-build
           --configuration Release
           --settings Tests/KUKULCAN.SharedKernel.Database.Tests/coverage.runsettings
           --logger "console;verbosity=normal"
           --collect:"XPlat Code Coverage"
 
-      - name: Upload Cobertura report
+      - name: Run PostgreSQL integration tests with coverage
+        run: >-
+          dotnet test
+          Tests/KUKULCAN.SharedKernel.Database.PostgreSQL.Integration/KUKULCAN.SharedKernel.Database.PostgreSQL.Integration.csproj
+          --no-build
+          --configuration Release
+          --settings Tests/KUKULCAN.SharedKernel.Database.PostgreSQL.Integration/coverage.runsettings
+          --logger "console;verbosity=normal"
+          --collect:"XPlat Code Coverage"
+
+      - name: Run SQL Server integration tests with coverage
+        run: >-
+          dotnet test
+          Tests/KUKULCAN.SharedKernel.Database.SQLServer.Integration/KUKULCAN.SharedKernel.Database.SQLServer.Integration.csproj
+          --no-build
+          --configuration Release
+          --settings Tests/KUKULCAN.SharedKernel.Database.SQLServer.Integration/coverage.runsettings
+          --logger "console;verbosity=normal"
+          --collect:"XPlat Code Coverage"
+
+      - name: Run MySQL integration tests with coverage
+        run: >-
+          dotnet test
+          Tests/KUKULCAN.SharedKernel.Database.MySQL.Integration/KUKULCAN.SharedKernel.Database.MySQL.Integration.csproj
+          --no-build
+          --configuration Release
+          --settings Tests/KUKULCAN.SharedKernel.Database.MySQL.Integration/coverage.runsettings
+          --logger "console;verbosity=normal"
+          --collect:"XPlat Code Coverage"
+
+      - name: Upload unit coverage
         uses: actions/upload-artifact@v4
         with:
-          name: kukulcan-sharedkernel-database-coverage
+          name: kukulcan-sharedkernel-database-unit-coverage
           path: Tests/KUKULCAN.SharedKernel.Database.Tests/TestResults/**/coverage.cobertura.xml
+          if-no-files-found: error
+
+      - name: Upload PostgreSQL coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: kukulcan-sharedkernel-database-postgresql-coverage
+          path: Tests/KUKULCAN.SharedKernel.Database.PostgreSQL.Integration/TestResults/**/coverage.cobertura.xml
+          if-no-files-found: error
+
+      - name: Upload SQL Server coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: kukulcan-sharedkernel-database-sqlserver-coverage
+          path: Tests/KUKULCAN.SharedKernel.Database.SQLServer.Integration/TestResults/**/coverage.cobertura.xml
+          if-no-files-found: error
+
+      - name: Upload MySQL coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: kukulcan-sharedkernel-database-mysql-coverage
+          path: Tests/KUKULCAN.SharedKernel.Database.MySQL.Integration/TestResults/**/coverage.cobertura.xml
           if-no-files-found: error
