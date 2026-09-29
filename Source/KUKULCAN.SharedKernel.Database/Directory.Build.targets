@@ -26,7 +26,7 @@ This project acts as part of the SharedKernel, enabling consistency, reuse, and 
     </PropertyGroup>
 
     <ItemGroup Condition="'$(Configuration)' == 'Release'">
-        <None Include="$(SolutionDir)LICENSE" Pack="true" PackagePath="\" />
-        <None Include="$(SolutionDir)README.md" Pack="true" PackagePath="\" />
+        <None Include="$(MSBuildThisFileDirectory)..\..\LICENSE" Pack="true" PackagePath="\" />
+        <None Include="$(MSBuildThisFileDirectory)..\..\README.md" Pack="true" PackagePath="\" />
     </ItemGroup>
 </Project>
