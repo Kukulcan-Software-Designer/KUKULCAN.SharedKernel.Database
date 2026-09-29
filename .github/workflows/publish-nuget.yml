@@ -23,13 +23,13 @@ jobs:
           dotnet-version: '10.0.x'
 
       - name: Restore
-        run: dotnet restore "Source/KUKULCAN.SharedKernel.Database/KUKULCAN.SharedKernel.Database.csproj"
+        run: dotnet restore "KUKULCAN.SharedKernel.Database.slnx"
 
       - name: Build
-        run: dotnet build "Source/KUKULCAN.SharedKernel.Database/KUKULCAN.SharedKernel.Database.csproj" --configuration Release --no-restore
+        run: dotnet build "KUKULCAN.SharedKernel.Database.slnx" --configuration Release --no-restore
 
       - name: Test
-        run: dotnet test --configuration Release --no-build
+        run: dotnet test "KUKULCAN.SharedKernel.Database.slnx" --configuration Release --no-build --logger "console;verbosity=normal"
 
       - name: Determine package version
         id: version
