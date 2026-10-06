@@ -14,14 +14,19 @@
         <PackageLicenseFile>LICENSE</PackageLicenseFile>
         <PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
         <PackageReleaseNotes>
-            This update addresses the following:
+            This release includes the following changes:
 
-            - We added a new database provider, MySQL, configuring it with the Oracle libraries (MySql.Entityframework.Core).
+            - Added Docker Compose documentation for running PostgreSQL 16 for the local ATLAS database environment.
+            - Added the PostgreSQL Docker configuration under Documentation/Docker/PostgreSQL/compose.yml.
+            - Added the solution entry required to include the Docker documentation.
+            - Updated the Directory.Build.props version information.
+            - Added the XML AssemblyVersion and FileVersion assembly metadata fields.
         </PackageReleaseNotes>
         <RepositoryUrl>https://github.com/Kukulcan-Software-Designer/KUKULCAN.SharedKernel.Database</RepositoryUrl>
         <RepositoryType>git</RepositoryType>
-        <Description>KUKULCAN.SharedKernel.Database is a foundational library designed to provide shared database abstractions and infrastructure components across multiple modules and bounded contexts.
-This project acts as part of the SharedKernel, enabling consistency, reuse, and standardization of database-related concerns across multiple modules and bounded contexts.
+        <Description>KUKULCAN.SharedKernel.Database is a reusable database infrastructure library for the KUKULCAN architecture. It provides Entity Framework Core integration, database context abstractions, entity persistence support, interceptors, transaction handling, database provider integration, and cross-cutting database behaviors, enabling consistent and standardized database access across applications, modules, and bounded contexts.
+
+        This release extends the repository with Docker-based PostgreSQL documentation and configuration for the local ATLAS database environment. It also updates the project version information in Directory.Build.props and adds the XML AssemblyVersion and FileVersion assembly metadata fields, improving local development setup and assembly version identification.
         </Description>
     </PropertyGroup>
 
