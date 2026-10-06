@@ -14,6 +14,11 @@
     <File Path="Documentation\TESTING.md" />
     <File Path="Documentation\UNIT_OF_WORK.md" />
   </Folder>
+  <Folder Name="/Documentation/Docker/" />
+  <Folder Name="/Documentation/Docker/PostgreSQL/">
+    <File Path="Documentation\Docker\PostgreSQL\.env" />
+    <File Path="Documentation\Docker\PostgreSQL\compose.yml" />
+  </Folder>
   <!--
     KUKULCAN.SharedKernel.Database
     Database infrastructure library for Kukulcán Software Designer applications.

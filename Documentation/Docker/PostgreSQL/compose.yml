@@ -1,0 +1,52 @@
+services:
+
+  mypostgres:
+    image: postgres:16
+    container_name: ${POSTGRES_HOST}
+    restart: unless-stopped
+
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d ATLAS"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+    ports:
+      - "5432:5432"
+
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+    networks:
+      - kukulcan-local
+
+  kukulcan-i18n:
+    image: kukulcan-i18n:local
+    container_name: kukulcan-i18n
+    restart: unless-stopped
+
+    depends_on:
+      mypostgres:
+        condition: service_healthy
+
+    environment:
+      KUKULCAN_DATABASE_PROVIDER: PostgresSql
+      KUKULCAN_DATABASE_CONNECTION_STRING: Host=${POSTGRES_HOST};Port=5432;Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
+
+    ports:
+      - "8080:8080"
+
+    networks:
+      - kukulcan-local
+
+networks:
+  kukulcan-local:
+    name: kukulcan-local
+
+volumes:
+  postgres_data:
