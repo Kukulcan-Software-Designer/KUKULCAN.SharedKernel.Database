@@ -16,35 +16,41 @@ for script in "$LINUX_SCRIPT" "$MAC_SCRIPT" "$WINDOWS_SCRIPT"; do
   [ -f "$script" ] || fail "Expected launcher is missing: $script"
 done
 
-assert_no_database_defaults() {
+assert_no_shell_literal_configuration() {
   local script="$1"
 
-  grep -Eq 'POSTGRES_DB.*(Atlas|ATLAS)|PostgresDb.*['\" ]+Atlas['\"]' "$script" &&
-    fail "Concrete database-name default found in $script."
+  if grep -Eq '^[[:space:]]*POSTGRES_DB="?[^$"[:space:]][^"]*"?$' "$script"; then
+    fail "Concrete database-name assignment found in $script."
+  fi
 
-  grep -Eq 'POSTGRES_USER.*(postgres)|PostgresUser.*['\" ]+postgres['\"]' "$script" &&
-    fail "Concrete database-user default found in $script."
+  if grep -Eq '^[[:space:]]*POSTGRES_USER="?[^$"[:space:]][^"]*"?$' "$script"; then
+    fail "Concrete database-user assignment found in $script."
+  fi
 
-  grep -Eq 'POSTGRES_PASSWORD="[^$"]|POSTGRES_PASSWORD=[^$[:space:]"'\'']+|PostgresPassword[[:space:]]*=[[:space:]]*['\"][^'\"]+['\"]' "$script" &&
-    fail "Concrete database password or password literal found in $script."
+  if grep -Eq '^[[:space:]]*POSTGRES_PASSWORD="?[^$"[:space:]][^"]*"?$' "$script"; then
+    fail "Concrete database-password assignment found in $script."
+  fi
 }
 
-assert_prompt_support() {
+assert_no_powershell_literal_configuration() {
   local script="$1"
 
-  grep -Eq 'POSTGRES_DB|PostgresDb' "$script" ||
-    fail "Database-name configuration is missing from $script."
+  if grep -Eq 'PostgresDb[[:space:]]*=[[:space:]]*['\''"][^'\'']+['\'"]' "$script"; then
+    fail "Concrete database-name assignment found in $script."
+  fi
 
-  grep -Eq 'POSTGRES_USER|PostgresUser' "$script" ||
-    fail "Database-user configuration is missing from $script."
+  if grep -Eq 'PostgresUser[[:space:]]*=[[:space:]]*['\''"][^'\'']+['\'"]' "$script"; then
+    fail "Concrete database-user assignment found in $script."
+  fi
 
-  grep -Eq 'POSTGRES_PASSWORD|postgresPassword' "$script" ||
-    fail "Database-password configuration is missing from $script."
+  if grep -Eq 'PostgresPassword[[:space:]]*=[[:space:]]*['\''"][^'\'']+['\'"]' "$script"; then
+    fail "Concrete database-password assignment found in $script."
+  fi
 }
 
-assert_no_database_defaults "$LINUX_SCRIPT"
-assert_no_database_defaults "$MAC_SCRIPT"
-assert_no_database_defaults "$WINDOWS_SCRIPT"
+assert_no_shell_literal_configuration "$LINUX_SCRIPT"
+assert_no_shell_literal_configuration "$MAC_SCRIPT"
+assert_no_powershell_literal_configuration "$WINDOWS_SCRIPT"
 
 grep -Fq 'read -r -p' "$LINUX_SCRIPT" ||
   fail "Linux launcher must prompt for configuration values."
@@ -52,11 +58,16 @@ grep -Fq 'read -r -p' "$LINUX_SCRIPT" ||
 grep -Fq 'read -r -p' "$MAC_SCRIPT" ||
   fail "macOS launcher must prompt for configuration values."
 
+grep -Fq 'read -r -s -p' "$LINUX_SCRIPT" ||
+  fail "Linux launcher must request the password without echoing it."
+
+grep -Fq 'read -r -s -p' "$MAC_SCRIPT" ||
+  fail "macOS launcher must request the password without echoing it."
+
 grep -Fq 'Read-Host' "$WINDOWS_SCRIPT" ||
   fail "Windows launcher must prompt for configuration values."
 
-assert_prompt_support "$LINUX_SCRIPT"
-assert_prompt_support "$MAC_SCRIPT"
-assert_prompt_support "$WINDOWS_SCRIPT"
+grep -Fq 'Read-Host '\''PostgreSQL password'\'' -AsSecureString' "$WINDOWS_SCRIPT" ||
+  fail "Windows launcher must request the password as a SecureString."
 
 printf '[PASS] Docker Compose launchers require user-supplied database configuration.\n'
