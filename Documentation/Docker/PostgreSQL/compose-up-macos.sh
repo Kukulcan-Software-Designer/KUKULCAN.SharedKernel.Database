@@ -3,7 +3,7 @@ set -Eeuo pipefail
 
 SCRIPT_DIR="$(cd -- "$(dirname -- "$BASH_SOURCE")" && pwd)"
 COMPOSE_FILE="$SCRIPT_DIR/compose.yml"
-ENV_FILE="$KUKULCAN_POSTGRES_ENV_FILE"
+ENV_FILE="${KUKULCAN_POSTGRES_ENV_FILE:-}"
 if [ -z "$ENV_FILE" ]; then ENV_FILE="$SCRIPT_DIR/.env"; fi
 
 NETWORK_NAME="kukulcan-local"
@@ -31,6 +31,7 @@ POSTGRES_CONTAINER="$(env_value POSTGRES_HOST mypostgres)"
 POSTGRES_DB="$(env_value POSTGRES_DB Atlas)"
 POSTGRES_USER="$(env_value POSTGRES_USER postgres)"
 HTTP_PORT="$(env_value KUKULCAN_I18N_HTTP_PORT 8080)"
+POSTGRES_PASSWORD="$(env_value POSTGRES_PASSWORD "")"
 
 ensure_network() {
   if docker network inspect "$NETWORK_NAME" >/dev/null 2>&1; then return; fi
@@ -91,7 +92,7 @@ ensure_i18n_service() {
     return
   fi
 
-  if [ -z "$KUKULCAN_I18N_JWT_SECRET" ]; then
+  if [ -z "${KUKULCAN_I18N_JWT_SECRET:-}" ]; then
     if command -v openssl >/dev/null 2>&1; then
       export KUKULCAN_I18N_JWT_SECRET="$(openssl rand -base64 48 | tr -d '\n')"
     else
