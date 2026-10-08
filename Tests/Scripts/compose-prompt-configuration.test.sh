@@ -31,8 +31,9 @@ assert_no_shell_literals() {
 assert_no_powershell_literals() {
   local script="$1"
 
-  grep -Eq "Postgres(Db|User|Password)[[:space:]]*=[[:space:]]*[\"'][^\"']+[\"']" "$script" &&
+  if grep -Eq "Postgres(Db|User|Password)[[:space:]]*=[[:space:]]*[\"'][^\"']+[\"']" "$script"; then
     fail "Concrete PostgreSQL configuration literal found in $script."
+  fi
 }
 
 assert_no_shell_literals "$LINUX_SCRIPT"
