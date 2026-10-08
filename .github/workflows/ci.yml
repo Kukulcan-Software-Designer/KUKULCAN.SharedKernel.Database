@@ -30,6 +30,9 @@ jobs:
       - name: Verify Docker runtime for integration tests
         run: docker info
 
+      - name: Run Docker Compose contract test
+        run: bash Tests/Scripts/compose-reuse.test.sh
+
       - name: Restore solution
         run: dotnet restore KUKULCAN.SharedKernel.Database.slnx
 
@@ -47,6 +50,3 @@ jobs:
 
       - name: Run MySQL integration tests
         run: dotnet test Tests/KUKULCAN.SharedKernel.Database.MySQL.Integration/KUKULCAN.SharedKernel.Database.MySQL.Integration.csproj --no-build --configuration Release --logger "console;verbosity=normal"
-
-      - name: Run Docker Compose contract test
-        run: bash Tests/Scripts/compose-reuse.test.sh
