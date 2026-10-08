@@ -168,9 +168,9 @@ $envValues = LoadDotEnv $script:EnvFile
 $script:NetworkName = EnvValue 'KUKULCAN_I18N_NETWORK_NAME' 'kukulcan-local'
 $script:I18nContainer = EnvValue 'KUKULCAN_I18N_CONTAINER_NAME' 'kukulcan-i18n'
 $script:PostgresContainer = if ($envValues.ContainsKey('POSTGRES_HOST')) { $envValues['POSTGRES_HOST'] } else { 'mypostgres' }
-$script:PostgresDb = ''
-$script:PostgresUser = ''
-$script:PostgresPassword = ''
+$script:PostgresDb = if ([string]::IsNullOrWhiteSpace($env:POSTGRES_DB)) { '' } else { $env:POSTGRES_DB }
+$script:PostgresUser = if ([string]::IsNullOrWhiteSpace($env:POSTGRES_USER)) { '' } else { $env:POSTGRES_USER }
+$script:PostgresPassword = if ([string]::IsNullOrWhiteSpace($env:POSTGRES_PASSWORD)) { '' } else { $env:POSTGRES_PASSWORD }
 $script:HttpPort = EnvValue 'KUKULCAN_I18N_HTTP_PORT' '8080'
 
 EnsureNetwork
