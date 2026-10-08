@@ -143,13 +143,13 @@ reset_case() {
 reset_case
 printf 'stopped\n' > "$STATE_DIR/container.mypostgres"
 printf 'stopped\n' > "$STATE_DIR/container.kukulcan-i18n"
-"$LAUNCHER" >/dev/null
+bash "$LAUNCHER" >/dev/null
 grep -Fxq "start mypostgres" "$LOG_FILE" || fail "Existing PostgreSQL container was not started."
 grep -Fxq "start kukulcan-i18n" "$LOG_FILE" || fail "Existing i18n container was not started."
 ! grep -Fq "compose" "$LOG_FILE" || fail "Existing containers were recreated through Compose."
 
 reset_case
-"$LAUNCHER" >/dev/null
+bash "$LAUNCHER" >/dev/null
 grep -Fxq "running" "$STATE_DIR/container.mypostgres" || fail "Missing PostgreSQL container was not created."
 grep -Fxq "running" "$STATE_DIR/container.kukulcan-i18n" || fail "Missing i18n container was not created."
 grep -Fxq "mypostgres" "$STATE_DIR/compose-created" || fail "PostgreSQL service was not created through Compose."
@@ -157,14 +157,14 @@ grep -Fxq "kukulcan-i18n" "$STATE_DIR/compose-created" || fail "i18n service was
 
 reset_case
 printf 'running\n' > "$STATE_DIR/container.mypostgres"
-"$LAUNCHER" >/dev/null
+bash "$LAUNCHER" >/dev/null
 grep -Fxq "running" "$STATE_DIR/container.kukulcan-i18n" || fail "Missing i18n container was not created."
 grep -Fxq "kukulcan-i18n" "$STATE_DIR/compose-created" || fail "i18n service was not created through Compose."
 
 reset_case
 printf 'running\n' > "$STATE_DIR/container.mypostgres"
 printf 'running\n' > "$STATE_DIR/container.kukulcan-i18n"
-"$LAUNCHER" >/dev/null
+bash "$LAUNCHER" >/dev/null
 ! grep -Fq "compose" "$LOG_FILE" || fail "Running containers were recreated through Compose."
 
 printf '[PASS] Docker Compose reuse/create behavior validated.\n'
