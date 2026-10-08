@@ -14,13 +14,16 @@
         <PackageLicenseFile>LICENSE</PackageLicenseFile>
         <PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
         <PackageReleaseNotes>
-            This release includes the following changes:
+            This release includes the following changes since v1.0.4:
 
-            - Added Docker Compose documentation for running PostgreSQL 16 for the local ATLAS database environment.
-            - Added the PostgreSQL Docker configuration under Documentation/Docker/PostgreSQL/compose.yml.
-            - Added the solution entry required to include the Docker documentation.
-            - Updated the Directory.Build.props version information.
-            - Added the XML AssemblyVersion and FileVersion assembly metadata fields.
+            - Added idempotent Docker Compose launchers that reuse existing PostgreSQL and i18n containers when available.
+            - Added support for an alternate Docker Compose environment file.
+            - Added cross-platform Docker Compose launchers for macOS and Windows, alongside the Linux launcher.
+            - Aligned the i18n Docker Compose configuration with the runtime database settings using Kukulcan__Database__Provider and Kukulcan__Database__ConnectionString.
+            - Reused the PostgreSQL connection settings already present in an existing PostgreSQL container.
+            - Added interactive PostgreSQL configuration prompts for missing database name, username, and password values, with password input hidden.
+            - Added local JWT generation when creating the kukulcan-i18n service.
+            - Added automated contract validation covering Docker Compose reuse, cross-platform launchers, and interactive database configuration.
         </PackageReleaseNotes>
         <RepositoryUrl>https://github.com/Kukulcan-Software-Designer/KUKULCAN.SharedKernel.Database</RepositoryUrl>
         <RepositoryType>git</RepositoryType>
