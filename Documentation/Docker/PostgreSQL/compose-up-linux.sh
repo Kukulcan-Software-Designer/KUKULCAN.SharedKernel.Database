@@ -3,7 +3,8 @@ set -Eeuo pipefail
 
 SCRIPT_DIR="$(cd -- "$(dirname -- "$BASH_SOURCE")" && pwd)"
 COMPOSE_FILE="$SCRIPT_DIR/compose.yml"
-ENV_FILE="$SCRIPT_DIR/.env"
+ENV_FILE="$KUKULCAN_POSTGRES_ENV_FILE"
+if [ -z "$ENV_FILE" ]; then ENV_FILE="$SCRIPT_DIR/.env"; fi
 
 NETWORK_NAME="kukulcan-local"
 I18N_CONTAINER="kukulcan-i18n"
