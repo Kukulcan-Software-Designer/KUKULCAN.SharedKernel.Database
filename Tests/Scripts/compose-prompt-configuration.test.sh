@@ -19,17 +19,14 @@ done
 assert_no_database_defaults() {
   local script="$1"
 
-  if grep -Eq "POSTGRES_DB.*(Atlas|ATLAS)|PostgresDb.*['\" ]+Atlas['\"]" "$script"; then
+  grep -Eq 'POSTGRES_DB.*(Atlas|ATLAS)|PostgresDb.*['\" ]+Atlas['\"]' "$script" &&
     fail "Concrete database-name default found in $script."
-  fi
 
-  if grep -Eq "POSTGRES_USER.*(postgres)|PostgresUser.*['\" ]+postgres['\"]" "$script"; then
+  grep -Eq 'POSTGRES_USER.*(postgres)|PostgresUser.*['\" ]+postgres['\"]' "$script" &&
     fail "Concrete database-user default found in $script."
-  fi
 
-  if grep -Eq "POSTGRES_PASSWORD.*(vcl5nht4HtCkm5nJ|['\"][^'\"]{8,}['\"])" "$script"; then
+  grep -Eq 'POSTGRES_PASSWORD="[^$"]|POSTGRES_PASSWORD=[^$[:space:]"'\'']+|PostgresPassword[[:space:]]*=[[:space:]]*['\"][^'\"]+['\"]' "$script" &&
     fail "Concrete database password or password literal found in $script."
-  fi
 }
 
 assert_prompt_support() {
