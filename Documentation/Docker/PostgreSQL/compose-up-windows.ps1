@@ -176,15 +176,14 @@ $script:HttpPort = EnvValue 'KUKULCAN_I18N_HTTP_PORT' '8080'
 EnsureNetwork
 
 if (ContainerExists $script:PostgresContainer) {
-    $script:PostgresDb = ContainerEnvValue $script:PostgresContainer 'POSTGRES_DB' ''
-    $script:PostgresUser = ContainerEnvValue $script:PostgresContainer 'POSTGRES_USER' ''
-    $script:PostgresPassword = ContainerEnvValue $script:PostgresContainer 'POSTGRES_PASSWORD' ''
-
-    if ([string]::IsNullOrWhiteSpace($script:PostgresDb)) { Fail 'Existing PostgreSQL container does not expose POSTGRES_DB.' }
-    if ([string]::IsNullOrWhiteSpace($script:PostgresUser)) { Fail 'Existing PostgreSQL container does not expose POSTGRES_USER.' }
-    if ([string]::IsNullOrWhiteSpace($script:PostgresPassword)) { Fail 'Existing PostgreSQL container does not expose POSTGRES_PASSWORD.' }
+    $script:PostgresDb = ContainerEnvValue $script:PostgresContainer 'POSTGRES_DB' $script:PostgresDb
+    $script:PostgresUser = ContainerEnvValue $script:PostgresContainer 'POSTGRES_USER' $script:PostgresUser
+    $script:PostgresPassword = ContainerEnvValue $script:PostgresContainer 'POSTGRES_PASSWORD' $script:PostgresPassword
 }
-else {
+
+if ([string]::IsNullOrWhiteSpace($script:PostgresDb) -or
+    [string]::IsNullOrWhiteSpace($script:PostgresUser) -or
+    [string]::IsNullOrWhiteSpace($script:PostgresPassword)) {
     PromptPostgreSqlConfiguration
 }
 
