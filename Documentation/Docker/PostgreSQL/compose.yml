@@ -11,7 +11,7 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
 
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d ATLAS"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
       interval: 5s
       timeout: 5s
       retries: 10
@@ -35,8 +35,15 @@ services:
         condition: service_healthy
 
     environment:
-      KUKULCAN_DATABASE_PROVIDER: PostgresSql
-      KUKULCAN_DATABASE_CONNECTION_STRING: Host=${POSTGRES_HOST};Port=5432;Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
+      ASPNETCORE_HTTP_PORTS: "8080"
+      Kukulcan__Database__Provider: "PostgresSql"
+      Kukulcan__Database__ConnectionString: "Host=${POSTGRES_HOST};Port=5432;Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}"
+      Kukulcan__Database__Migration__AutoMigrateOnStartup: "true"
+      Kukulcan__Database__Migration__SeedDataOnStartup: "true"
+      Jwt__SecretKey: "${KUKULCAN_I18N_JWT_SECRET:?KUKULCAN_I18N_JWT_SECRET must be set when Compose creates kukulcan-i18n}"
+      Jwt__Issuer: "ATLAS"
+      Jwt__Audience: "ATLAS.i18n"
+      ConnectionStrings__Redis: ""
 
     ports:
       - "8080:8080"
@@ -46,6 +53,7 @@ services:
 
 networks:
   kukulcan-local:
+    external: true
     name: kukulcan-local
 
 volumes:
