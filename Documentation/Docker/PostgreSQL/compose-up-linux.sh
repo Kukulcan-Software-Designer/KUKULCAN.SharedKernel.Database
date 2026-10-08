@@ -51,6 +51,19 @@ container_running() {
   [ "$(docker inspect -f '{{.State.Running}}' "$1")" = "true" ]
 }
 
+container_env_value() {
+  local container="$1"
+  local key="$2"
+  local default_value="$3"
+  local value
+
+  value="$(docker inspect -f '{{range .Config.Env}}{{println .}}{{end}}' "$container"     | awk -v key="$key" -F= '$1 == key { sub(/^[^=]*=/, ""); print; exit }')"
+  if [ -z "$value" ]; then
+    value="$default_value"
+  fi
+  printf '%s' "$value"
+}
+
 container_on_network() {
   docker network inspect "$NETWORK_NAME" \
     --format '{{range .Containers}}{{.Name}}{{"\n"}}{{end}}' \
@@ -126,10 +139,20 @@ wait_for_http() {
 }
 
 ensure_network
+if container_exists "$POSTGRES_CONTAINER"; then
+  POSTGRES_HOST="$POSTGRES_CONTAINER"
+  POSTGRES_DB="$(container_env_value "$POSTGRES_CONTAINER" POSTGRES_DB "$POSTGRES_DB")"
+  POSTGRES_USER="$(container_env_value "$POSTGRES_CONTAINER" POSTGRES_USER "$POSTGRES_USER")"
+  POSTGRES_PASSWORD="$(container_env_value "$POSTGRES_CONTAINER" POSTGRES_PASSWORD "$(env_value POSTGRES_PASSWORD "")")"
+fi
+
+export POSTGRES_HOST POSTGRES_DB POSTGRES_USER POSTGRES_PASSWORD
+
 ensure_service mypostgres "$POSTGRES_CONTAINER"
 ensure_network_membership "$POSTGRES_CONTAINER"
 wait_for_postgres
 
+export POSTGRES_HOST POSTGRES_DB POSTGRES_USER POSTGRES_PASSWORD
 ensure_service kukulcan-i18n "$I18N_CONTAINER"
 ensure_network_membership "$I18N_CONTAINER"
 
