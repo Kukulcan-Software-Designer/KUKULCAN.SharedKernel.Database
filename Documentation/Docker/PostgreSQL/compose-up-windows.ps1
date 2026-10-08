@@ -106,6 +106,25 @@ function EnsureI18nService() {
     EnsureService 'kukulcan-i18n' $script:I18nContainer
 }
 
+function PromptPostgreSqlConfiguration() {
+    Write-Host "[INFO] PostgreSQL container $script:PostgresContainer does not exist."
+    Write-Host '[INFO] Database access values must be supplied interactively.'
+
+    do { $script:PostgresDb = Read-Host 'PostgreSQL database name' } while ([string]::IsNullOrWhiteSpace($script:PostgresDb))
+    do { $script:PostgresUser = Read-Host 'PostgreSQL username' } while ([string]::IsNullOrWhiteSpace($script:PostgresUser))
+
+    do {
+        $securePassword = Read-Host 'PostgreSQL password' -AsSecureString
+        $bstr = [Runtime.InteropServices.Marshal]::SecureStringToBSTR($securePassword)
+        try {
+            $script:PostgresPassword = [Runtime.InteropServices.Marshal]::PtrToStringBSTR($bstr)
+        }
+        finally {
+            [Runtime.InteropServices.Marshal]::ZeroFreeBSTR($bstr)
+        }
+    } while ([string]::IsNullOrWhiteSpace($script:PostgresPassword))
+}
+
 function WaitForPostgreSql() {
     for ($attempt = 1; $attempt -le 30; $attempt++) {
         & docker exec $script:PostgresContainer pg_isready -U $script:PostgresUser -d $script:PostgresDb *> $null
@@ -149,8 +168,9 @@ $envValues = LoadDotEnv $script:EnvFile
 $script:NetworkName = EnvValue 'KUKULCAN_I18N_NETWORK_NAME' 'kukulcan-local'
 $script:I18nContainer = EnvValue 'KUKULCAN_I18N_CONTAINER_NAME' 'kukulcan-i18n'
 $script:PostgresContainer = if ($envValues.ContainsKey('POSTGRES_HOST')) { $envValues['POSTGRES_HOST'] } else { 'mypostgres' }
-$script:PostgresDb = if ($envValues.ContainsKey('POSTGRES_DB')) { $envValues['POSTGRES_DB'] } else { 'Atlas' }
-$script:PostgresUser = if ($envValues.ContainsKey('POSTGRES_USER')) { $envValues['POSTGRES_USER'] } else { 'postgres' }
+$script:PostgresDb = if ([string]::IsNullOrWhiteSpace($env:POSTGRES_DB)) { '' } else { $env:POSTGRES_DB }
+$script:PostgresUser = if ([string]::IsNullOrWhiteSpace($env:POSTGRES_USER)) { '' } else { $env:POSTGRES_USER }
+$script:PostgresPassword = if ([string]::IsNullOrWhiteSpace($env:POSTGRES_PASSWORD)) { '' } else { $env:POSTGRES_PASSWORD }
 $script:HttpPort = EnvValue 'KUKULCAN_I18N_HTTP_PORT' '8080'
 
 EnsureNetwork
@@ -158,13 +178,19 @@ EnsureNetwork
 if (ContainerExists $script:PostgresContainer) {
     $script:PostgresDb = ContainerEnvValue $script:PostgresContainer 'POSTGRES_DB' $script:PostgresDb
     $script:PostgresUser = ContainerEnvValue $script:PostgresContainer 'POSTGRES_USER' $script:PostgresUser
-    $fallbackPassword = if ($envValues.ContainsKey('POSTGRES_PASSWORD')) { $envValues['POSTGRES_PASSWORD'] } else { '' }
-    $postgresPassword = ContainerEnvValue $script:PostgresContainer 'POSTGRES_PASSWORD' $fallbackPassword
-    $env:POSTGRES_HOST = $script:PostgresContainer
-    $env:POSTGRES_DB = $script:PostgresDb
-    $env:POSTGRES_USER = $script:PostgresUser
-    $env:POSTGRES_PASSWORD = $postgresPassword
+    $script:PostgresPassword = ContainerEnvValue $script:PostgresContainer 'POSTGRES_PASSWORD' $script:PostgresPassword
 }
+
+if ([string]::IsNullOrWhiteSpace($script:PostgresDb) -or
+    [string]::IsNullOrWhiteSpace($script:PostgresUser) -or
+    [string]::IsNullOrWhiteSpace($script:PostgresPassword)) {
+    PromptPostgreSqlConfiguration
+}
+
+$env:POSTGRES_HOST = $script:PostgresContainer
+$env:POSTGRES_DB = $script:PostgresDb
+$env:POSTGRES_USER = $script:PostgresUser
+$env:POSTGRES_PASSWORD = $script:PostgresPassword
 
 EnsureService 'mypostgres' $script:PostgresContainer
 EnsureNetworkMembership $script:PostgresContainer

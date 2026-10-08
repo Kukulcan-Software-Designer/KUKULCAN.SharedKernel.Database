@@ -30,8 +30,9 @@ mkdir -p "$FAKE_BIN" "$STATE_DIR"
 
 cat > "$STATE_DIR/.env" <<'ENV'
 POSTGRES_HOST=mypostgres
-POSTGRES_DB=Atlas
-POSTGRES_USER=postgres
+POSTGRES_DB=TEST_DATABASE_NAME
+POSTGRES_USER=TEST_DATABASE_USER
+POSTGRES_PASSWORD=TEST_DATABASE_PASSWORD
 KUKULCAN_I18N_HTTP_PORT=8080
 ENV
 
@@ -85,11 +86,16 @@ case "$cmd" in
     state_file="$STATE_DIR/container.$name"
     [ -f "$state_file" ]
     state="$(cat "$state_file")"
-    if [ "$1" = "$name" ]; then
-      shift
-    fi
+    shift
     if [ "$1" = "-f" ]; then
-      printf '%s\n' "$([ "$state" = "running" ] && echo true || echo false)"
+      format="$2"
+      if [[ "$format" == *".Config.Env"* ]]; then
+        if [ "$name" = "mypostgres" ]; then
+          printf '%s\n' "POSTGRES_DB=TEST_DATABASE_NAME" "POSTGRES_USER=TEST_DATABASE_USER" "POSTGRES_PASSWORD=TEST_DATABASE_PASSWORD"
+        fi
+      else
+        printf '%s\n' "$([ "$state" = "running" ] && echo true || echo false)"
+      fi
     fi
     ;;
   start)
@@ -132,6 +138,9 @@ export PATH="$FAKE_BIN:$PATH"
 export FAKE_DOCKER_STATE_DIR="$STATE_DIR"
 export FAKE_DOCKER_LOG="$LOG_FILE"
 export KUKULCAN_POSTGRES_ENV_FILE="$STATE_DIR/.env"
+export POSTGRES_DB=TEST_DATABASE_NAME
+export POSTGRES_USER=TEST_DATABASE_USER
+export POSTGRES_PASSWORD=TEST_DATABASE_PASSWORD
 
 reset_case() {
   rm -f "$STATE_DIR"/container.* "$STATE_DIR/compose-created" "$STATE_DIR/network" "$STATE_DIR/network-containers" "$LOG_FILE"

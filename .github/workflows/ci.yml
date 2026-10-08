@@ -36,6 +36,9 @@ jobs:
       - name: Run cross-platform Docker Compose launcher contract test
         run: bash Tests/Scripts/compose-cross-platform.test.sh
 
+      - name: Run Docker Compose configuration prompt contract test
+        run: bash Tests/Scripts/compose-prompt-configuration.test.sh
+
       - name: Restore solution
         run: dotnet restore KUKULCAN.SharedKernel.Database.slnx
 
