@@ -30,6 +30,9 @@ jobs:
       - name: Verify Docker runtime for integration tests
         run: docker info
 
+      - name: Run Docker Compose contract test
+        run: bash Tests/Scripts/compose-reuse.test.sh
+
       - name: Restore solution
         run: dotnet restore KUKULCAN.SharedKernel.Database.slnx
 
