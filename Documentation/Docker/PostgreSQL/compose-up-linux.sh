@@ -179,14 +179,12 @@ wait_for_http() {
 ensure_network
 
 if container_exists "$POSTGRES_CONTAINER"; then
-  POSTGRES_DB="$(container_env_value "$POSTGRES_CONTAINER" POSTGRES_DB "")"
-  POSTGRES_USER="$(container_env_value "$POSTGRES_CONTAINER" POSTGRES_USER "")"
-  POSTGRES_PASSWORD="$(container_env_value "$POSTGRES_CONTAINER" POSTGRES_PASSWORD "")"
+  POSTGRES_DB="$(container_env_value "$POSTGRES_CONTAINER" POSTGRES_DB "$POSTGRES_DB")"
+  POSTGRES_USER="$(container_env_value "$POSTGRES_CONTAINER" POSTGRES_USER "$POSTGRES_USER")"
+  POSTGRES_PASSWORD="$(container_env_value "$POSTGRES_CONTAINER" POSTGRES_PASSWORD "$POSTGRES_PASSWORD")"
+fi
 
-  [ -n "$POSTGRES_DB" ] || fail "Existing PostgreSQL container does not expose POSTGRES_DB."
-  [ -n "$POSTGRES_USER" ] || fail "Existing PostgreSQL container does not expose POSTGRES_USER."
-  [ -n "$POSTGRES_PASSWORD" ] || fail "Existing PostgreSQL container does not expose POSTGRES_PASSWORD."
-else
+if [ -z "$POSTGRES_DB" ] || [ -z "$POSTGRES_USER" ] || [ -z "$POSTGRES_PASSWORD" ]; then
   prompt_postgres_configuration
 fi
 
