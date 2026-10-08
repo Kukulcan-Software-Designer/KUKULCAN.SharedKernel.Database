@@ -57,11 +57,13 @@
 
   <Folder Name="/Solution Items/.github/" />
   <Folder Name="/Solution Items/.github/workflows/">
+    <File Path=".github/workflows/delete-merged-branches.yml" />
     <File Path=".github\workflows\ci.yml" />
     <File Path=".github\workflows\client.yml" />
     <File Path=".github\workflows\coverage.yml" />
-    <File Path=".github/workflows/delete-merged-branches.yml" />
+    <File Path=".github\workflows\integration-tests.yml" />
     <File Path=".github\workflows\publish-nuget.yml" />
+    <File Path=".github\workflows\unit-tests.yml" />
   </Folder>
 
   <Folder Name="/Source/">
@@ -82,6 +84,7 @@
   </Folder>
   <Folder Name="/Tests/Scripts/">
     <File Path="Tests\Scripts\compose-cross-platform.test.sh" />
+    <File Path="Tests\Scripts\compose-prompt-configuration.test.sh" />
     <File Path="Tests\Scripts\compose-reuse.test.sh" />
   </Folder>
 </Solution>
