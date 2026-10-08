@@ -30,8 +30,9 @@ env_value() {
 }
 
 POSTGRES_CONTAINER="$(env_value POSTGRES_HOST mypostgres)"
-POSTGRES_DB="$(env_value POSTGRES_DB Atlas)"
-POSTGRES_USER="$(env_value POSTGRES_USER postgres)"
+POSTGRES_DB=""
+POSTGRES_USER=""
+POSTGRES_PASSWORD=""
 HTTP_PORT="$(env_value KUKULCAN_I18N_HTTP_PORT 8080)"
 
 ensure_network() {
@@ -48,7 +49,7 @@ container_exists() {
 }
 
 container_running() {
-  [ "$(docker inspect -f '{{.State.Running}}' "$1")" = "true" ]
+  [ "$(docker inspect "$1" -f '{{.State.Running}}')" = "true" ]
 }
 
 container_env_value() {
@@ -57,7 +58,8 @@ container_env_value() {
   local default_value="$3"
   local value
 
-  value="$(docker inspect -f '{{range .Config.Env}}{{println .}}{{end}}' "$container"     | awk -v key="$key" -F= '$1 == key { sub(/^[^=]*=/, ""); print; exit }')"
+  value="$(docker inspect "$container" -f '{{range .Config.Env}}{{println .}}{{end}}' |
+    awk -v key="$key" -F= '$1 == key { sub(/^[^=]*=/, ""); print; exit }')"
   if [ -z "$value" ]; then
     value="$default_value"
   fi
@@ -66,8 +68,8 @@ container_env_value() {
 
 container_on_network() {
   docker network inspect "$NETWORK_NAME" \
-    --format '{{range .Containers}}{{.Name}}{{"\n"}}{{end}}' \
-    | grep -Fxq "$1"
+    --format '{{range .Containers}}{{.Name}}{{"\n"}}{{end}}' |
+    grep -Fxq "$1"
 }
 
 ensure_network_membership() {
@@ -84,24 +86,6 @@ ensure_network_membership() {
 ensure_service() {
   local service="$1"
   local container="$2"
-
-ensure_i18n_service() {
-  if container_exists "$I18N_CONTAINER"; then
-    ensure_service kukulcan-i18n "$I18N_CONTAINER"
-    return
-  fi
-
-  if [ -z "${KUKULCAN_I18N_JWT_SECRET:-}" ]; then
-    if command -v openssl >/dev/null 2>&1; then
-      export KUKULCAN_I18N_JWT_SECRET="$(openssl rand -base64 48 | tr -d '\n')"
-    else
-      export KUKULCAN_I18N_JWT_SECRET="$(head -c 48 /dev/urandom | base64 | tr -d '\n')"
-    fi
-    printf '[INFO] Generated a temporary local JWT secret for kukulcan-i18n.\n'
-  fi
-
-  ensure_service kukulcan-i18n "$I18N_CONTAINER"
-}
 
   if container_exists "$container"; then
     ensure_network_membership "$container"
@@ -120,6 +104,42 @@ ensure_i18n_service() {
     --env-file "$ENV_FILE" \
     -f "$COMPOSE_FILE" \
     up -d --no-deps "$service"
+}
+
+prompt_postgres_configuration() {
+  printf '[INFO] PostgreSQL container %s does not exist.\n' "$POSTGRES_CONTAINER"
+  printf '[INFO] Database access values must be supplied interactively.\n'
+
+  while [ -z "$POSTGRES_DB" ]; do
+    read -r -p 'PostgreSQL database name: ' POSTGRES_DB
+  done
+
+  while [ -z "$POSTGRES_USER" ]; do
+    read -r -p 'PostgreSQL username: ' POSTGRES_USER
+  done
+
+  while [ -z "$POSTGRES_PASSWORD" ]; do
+    read -r -s -p 'PostgreSQL password: ' POSTGRES_PASSWORD
+    printf '\n'
+  done
+}
+
+ensure_i18n_service() {
+  if container_exists "$I18N_CONTAINER"; then
+    ensure_service kukulcan-i18n "$I18N_CONTAINER"
+    return
+  fi
+
+  if [ -z "${KUKULCAN_I18N_JWT_SECRET:-}" ]; then
+    if command -v openssl >/dev/null 2>&1; then
+      export KUKULCAN_I18N_JWT_SECRET="$(openssl rand -base64 48 | tr -d '\n')"
+    else
+      export KUKULCAN_I18N_JWT_SECRET="$(head -c 48 /dev/urandom | base64 | tr -d '\n')"
+    fi
+    printf '[INFO] Generated a temporary local JWT secret for kukulcan-i18n.\n'
+  fi
+
+  ensure_service kukulcan-i18n "$I18N_CONTAINER"
 }
 
 wait_for_postgres() {
@@ -157,20 +177,26 @@ wait_for_http() {
 }
 
 ensure_network
+
 if container_exists "$POSTGRES_CONTAINER"; then
-  POSTGRES_HOST="$POSTGRES_CONTAINER"
-  POSTGRES_DB="$(container_env_value "$POSTGRES_CONTAINER" POSTGRES_DB "$POSTGRES_DB")"
-  POSTGRES_USER="$(container_env_value "$POSTGRES_CONTAINER" POSTGRES_USER "$POSTGRES_USER")"
-  POSTGRES_PASSWORD="$(container_env_value "$POSTGRES_CONTAINER" POSTGRES_PASSWORD "$(env_value POSTGRES_PASSWORD "")")"
+  POSTGRES_DB="$(container_env_value "$POSTGRES_CONTAINER" POSTGRES_DB "")"
+  POSTGRES_USER="$(container_env_value "$POSTGRES_CONTAINER" POSTGRES_USER "")"
+  POSTGRES_PASSWORD="$(container_env_value "$POSTGRES_CONTAINER" POSTGRES_PASSWORD "")"
+
+  [ -n "$POSTGRES_DB" ] || fail "Existing PostgreSQL container does not expose POSTGRES_DB."
+  [ -n "$POSTGRES_USER" ] || fail "Existing PostgreSQL container does not expose POSTGRES_USER."
+  [ -n "$POSTGRES_PASSWORD" ] || fail "Existing PostgreSQL container does not expose POSTGRES_PASSWORD."
+else
+  prompt_postgres_configuration
 fi
 
-export POSTGRES_HOST POSTGRES_DB POSTGRES_USER POSTGRES_PASSWORD
+export POSTGRES_HOST="$POSTGRES_CONTAINER"
+export POSTGRES_DB POSTGRES_USER POSTGRES_PASSWORD
 
 ensure_service mypostgres "$POSTGRES_CONTAINER"
 ensure_network_membership "$POSTGRES_CONTAINER"
 wait_for_postgres
 
-export POSTGRES_HOST POSTGRES_DB POSTGRES_USER POSTGRES_PASSWORD
 ensure_i18n_service
 ensure_network_membership "$I18N_CONTAINER"
 
