@@ -23,18 +23,23 @@ env_value() {
   local value
 
   value="$(awk -v key="$key" -F= '$1 == key { sub(/^[^=]*=/, ""); print; exit }' "$ENV_FILE")"
-  if [ -z "$value" ]; then value="$default_value"; fi
+  if [ -z "$value" ]; then
+    value="$default_value"
+  fi
   printf '%s' "$value"
 }
 
 POSTGRES_CONTAINER="$(env_value POSTGRES_HOST mypostgres)"
-POSTGRES_DB="$(env_value POSTGRES_DB Atlas)"
-POSTGRES_USER="$(env_value POSTGRES_USER postgres)"
+POSTGRES_DB=""
+POSTGRES_USER=""
+POSTGRES_PASSWORD=""
 HTTP_PORT="$(env_value KUKULCAN_I18N_HTTP_PORT 8080)"
-POSTGRES_PASSWORD="$(env_value POSTGRES_PASSWORD "")"
 
 ensure_network() {
-  if docker network inspect "$NETWORK_NAME" >/dev/null 2>&1; then return; fi
+  if docker network inspect "$NETWORK_NAME" >/dev/null 2>&1; then
+    return
+  fi
+
   printf '[INFO] Creating Docker network %s.\n' "$NETWORK_NAME"
   docker network create "$NETWORK_NAME" >/dev/null
 }
@@ -48,10 +53,16 @@ container_running() {
 }
 
 container_env_value() {
-  local container="$1" key="$2" default_value="$3" value
+  local container="$1"
+  local key="$2"
+  local default_value="$3"
+  local value
+
   value="$(docker inspect "$container" -f '{{range .Config.Env}}{{println .}}{{end}}' |
     awk -v key="$key" -F= '$1 == key { sub(/^[^=]*=/, ""); print; exit }')"
-  if [ -z "$value" ]; then value="$default_value"; fi
+  if [ -z "$value" ]; then
+    value="$default_value"
+  fi
   printf '%s' "$value"
 }
 
@@ -63,16 +74,22 @@ container_on_network() {
 
 ensure_network_membership() {
   local container="$1"
-  if container_on_network "$container"; then return; fi
+
+  if container_on_network "$container"; then
+    return
+  fi
+
   printf '[INFO] Connecting %s to %s.\n' "$container" "$NETWORK_NAME"
   docker network connect "$NETWORK_NAME" "$container"
 }
 
 ensure_service() {
-  local service="$1" container="$2"
+  local service="$1"
+  local container="$2"
 
   if container_exists "$container"; then
     ensure_network_membership "$container"
+
     if container_running "$container"; then
       printf '[INFO] Using existing running container %s.\n' "$container"
     else
@@ -83,7 +100,28 @@ ensure_service() {
   fi
 
   printf '[INFO] Container %s does not exist; creating service %s with Compose.\n' "$container" "$service"
-  docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" up -d --no-deps "$service"
+  docker compose \
+    --env-file "$ENV_FILE" \
+    -f "$COMPOSE_FILE" \
+    up -d --no-deps "$service"
+}
+
+prompt_postgres_configuration() {
+  printf '[INFO] PostgreSQL container %s does not exist.\n' "$POSTGRES_CONTAINER"
+  printf '[INFO] Database access values must be supplied interactively.\n'
+
+  while [ -z "$POSTGRES_DB" ]; do
+    read -r -p 'PostgreSQL database name: ' POSTGRES_DB
+  done
+
+  while [ -z "$POSTGRES_USER" ]; do
+    read -r -p 'PostgreSQL username: ' POSTGRES_USER
+  done
+
+  while [ -z "$POSTGRES_PASSWORD" ]; do
+    read -r -s -p 'PostgreSQL password: ' POSTGRES_PASSWORD
+    printf '\n'
+  done
 }
 
 ensure_i18n_service() {
@@ -106,6 +144,8 @@ ensure_i18n_service() {
 
 wait_for_postgres() {
   local attempt
+
+  printf '[INFO] Waiting for PostgreSQL readiness.\n'
   for attempt in $(seq 1 30); do
     if docker exec "$POSTGRES_CONTAINER" pg_isready -U "$POSTGRES_USER" -d "$POSTGRES_DB" >/dev/null 2>&1; then
       printf '[INFO] PostgreSQL is ready.\n'
@@ -113,12 +153,17 @@ wait_for_postgres() {
     fi
     sleep 2
   done
+
   docker logs "$POSTGRES_CONTAINER" >&2 2>/dev/null || true
   fail "PostgreSQL did not become ready."
 }
 
 wait_for_http() {
-  local name="$1" url="$2" attempt
+  local name="$1"
+  local url="$2"
+  local attempt
+
+  printf '[INFO] Waiting for %s.\n' "$name"
   for attempt in $(seq 1 30); do
     if curl --silent --show-error --fail "$url" >/dev/null 2>&1; then
       printf '[INFO] %s is UP.\n' "$name"
@@ -126,6 +171,7 @@ wait_for_http() {
     fi
     sleep 2
   done
+
   docker logs "$I18N_CONTAINER" >&2 2>/dev/null || true
   fail "$name did not become available."
 }
@@ -133,9 +179,15 @@ wait_for_http() {
 ensure_network
 
 if container_exists "$POSTGRES_CONTAINER"; then
-  POSTGRES_DB="$(container_env_value "$POSTGRES_CONTAINER" POSTGRES_DB "$POSTGRES_DB")"
-  POSTGRES_USER="$(container_env_value "$POSTGRES_CONTAINER" POSTGRES_USER "$POSTGRES_USER")"
-  POSTGRES_PASSWORD="$(container_env_value "$POSTGRES_CONTAINER" POSTGRES_PASSWORD "$(env_value POSTGRES_PASSWORD "")")"
+  POSTGRES_DB="$(container_env_value "$POSTGRES_CONTAINER" POSTGRES_DB "")"
+  POSTGRES_USER="$(container_env_value "$POSTGRES_CONTAINER" POSTGRES_USER "")"
+  POSTGRES_PASSWORD="$(container_env_value "$POSTGRES_CONTAINER" POSTGRES_PASSWORD "")"
+
+  [ -n "$POSTGRES_DB" ] || fail "Existing PostgreSQL container does not expose POSTGRES_DB."
+  [ -n "$POSTGRES_USER" ] || fail "Existing PostgreSQL container does not expose POSTGRES_USER."
+  [ -n "$POSTGRES_PASSWORD" ] || fail "Existing PostgreSQL container does not expose POSTGRES_PASSWORD."
+else
+  prompt_postgres_configuration
 fi
 
 export POSTGRES_HOST="$POSTGRES_CONTAINER"
