@@ -85,6 +85,24 @@ ensure_service() {
   local service="$1"
   local container="$2"
 
+ensure_i18n_service() {
+  if container_exists "$I18N_CONTAINER"; then
+    ensure_service kukulcan-i18n "$I18N_CONTAINER"
+    return
+  fi
+
+  if [ -z "${KUKULCAN_I18N_JWT_SECRET:-}" ]; then
+    if command -v openssl >/dev/null 2>&1; then
+      export KUKULCAN_I18N_JWT_SECRET="$(openssl rand -base64 48 | tr -d '\n')"
+    else
+      export KUKULCAN_I18N_JWT_SECRET="$(head -c 48 /dev/urandom | base64 | tr -d '\n')"
+    fi
+    printf '[INFO] Generated a temporary local JWT secret for kukulcan-i18n.\n'
+  fi
+
+  ensure_service kukulcan-i18n "$I18N_CONTAINER"
+}
+
   if container_exists "$container"; then
     ensure_network_membership "$container"
 
@@ -153,7 +171,7 @@ ensure_network_membership "$POSTGRES_CONTAINER"
 wait_for_postgres
 
 export POSTGRES_HOST POSTGRES_DB POSTGRES_USER POSTGRES_PASSWORD
-ensure_service kukulcan-i18n "$I18N_CONTAINER"
+ensure_i18n_service
 ensure_network_membership "$I18N_CONTAINER"
 
 wait_for_http "i18n liveness" "http://127.0.0.1:$HTTP_PORT/health/live"
