@@ -19,11 +19,13 @@ done
 assert_no_shell_literals() {
   local script="$1"
 
-  grep -Eq '^[[:space:]]*POSTGRES_(DB|USER|PASSWORD)="[^"$]+"' "$script" &&
+  if grep -Eq '^[[:space:]]*POSTGRES_(DB|USER|PASSWORD)="[^"$]+"' "$script"; then
     fail "Concrete PostgreSQL configuration literal found in $script."
+  fi
 
-  grep -Eq '^[[:space:]]*POSTGRES_(DB|USER|PASSWORD)=[^$[:space:]" ]+' "$script" &&
+  if grep -Eq '^[[:space:]]*POSTGRES_(DB|USER|PASSWORD)=[^$[:space:]" ]+' "$script"; then
     fail "Concrete PostgreSQL configuration literal found in $script."
+  fi
 }
 
 assert_no_powershell_literals() {
